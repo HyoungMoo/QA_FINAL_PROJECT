@@ -1,0 +1,6 @@
+pytest
+requests
+python-dotenv
+pandas
+openpyxl
+lxml
