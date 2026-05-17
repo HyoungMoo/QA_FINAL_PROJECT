@@ -1,0 +1,1 @@
+# .env 환경 변수 로딩, base_url/token/id 설정 관리

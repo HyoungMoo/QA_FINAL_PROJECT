@@ -1,0 +1,1 @@
+# requests 기반 API 호출 래퍼, header/token/호출 제한 처리

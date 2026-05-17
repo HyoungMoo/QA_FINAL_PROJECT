@@ -1,0 +1,12 @@
+# API automation
+pytest==9.0.2
+requests==2.32.5
+python-dotenv==1.1.1
+
+# report
+pytest-html==4.1.1
+
+# optional
+pytest-xdist==3.6.1
+pytest-cov==4.0.0
+coverage==7.2.7

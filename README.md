@@ -14,7 +14,7 @@
 ## 실행 준비
 
 ```bash
-pip install -r requirements.txt
+pip install -r part1_api_automation/requirements.txt
 ```
 
 환경 변수와 민감정보는 `.env` 파일에 작성하며, `.env`는 Git에 포함하지 않습니다.
