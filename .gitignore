@@ -12,8 +12,8 @@ venv/
 
 # 테스트/리포트 결과물은 실행 시 생성되는 산출물이므로 제외
 # 폴더 구조 유지를 위해 .gitkeep만 유지
-reports/
-!reports/.gitkeep
+**/reports/*
+!**/reports/.gitkeep
 
 # 제공받은 부하 테스트 원본 로그는 초기 push 대상에서 제외
 # 폴더 구조 유지를 위해 .gitkeep만 유지
