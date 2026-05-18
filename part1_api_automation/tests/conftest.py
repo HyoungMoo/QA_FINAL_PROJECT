@@ -31,9 +31,9 @@ def student_client(settings: Settings) -> APIClient:
     return APIClient(
         base_url=settings.base_classroom_url,
         token=settings.student_token,
-        org_name=settings.org_name,
+        org_name=settings.org,
         timeout=settings.request_timeout_seconds,
-        min_interval=settings.min_request_interval_seconds,
+        min_interval=0.3,
     )
 
 
@@ -41,11 +41,11 @@ def student_client(settings: Settings) -> APIClient:
 def dashboard_student_client(settings: Settings) -> APIClient:
     # api-dashboard 서버 호출 시 사용
     return APIClient(
-        base_url=settings.base_dashboard_url,
+        base_url="https://api-dashboard.elice.io",
         token=settings.student_token,
-        org_name=settings.org_name,
+        org_name=settings.org,
         timeout=settings.request_timeout_seconds,
-        min_interval=settings.min_request_interval_seconds,
+        min_interval=0.3,
     )
 
 
@@ -55,8 +55,8 @@ def teacher_client(settings: Settings) -> APIClient:
     # test_educator.py나 권한 경계 테스트에서 사용한다.
     return APIClient(
         base_url=settings.base_classroom_url,
-        token=settings.teacher_token,
-        org_name=settings.org_name,
+        token=None,
+        org_name=settings.org,
         timeout=settings.request_timeout_seconds,
-        min_interval=settings.min_request_interval_seconds,
+        min_interval=0.3,
     )
