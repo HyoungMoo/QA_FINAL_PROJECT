@@ -5,137 +5,87 @@
 #
 # 공통 client는 tests/conftest.py의 student_client fixture를 사용한다.
 
-import pytest
 
+def test_get_student_dashboard(dashboard_student_client, settings):
+    # Postman에서 성공 확인한 수강생 학습 현황 조회 API.
+    # Given-When-Then
+        # Given : 로그인 상태(토큰 발급 계정과 학습자 계정이 동일해야 함)
+        # When : 수강생 학습 현황 조회 API를 호출 : GET https://api-dashboard.elice.io/student/{student_id}?classroom_id={classroom_id}
+        # Then : response 결과 확인 : status_code가 200인지, body 확인
+    # 입력값 : 수강생 ID와 클래스룸 ID 준비 : student_id, classroom_id
+    
 
-class TestSchedule:
+    # Given : 로그인 상태(토큰 발급 계정과 학습자 계정이 동일해야 함)
+    student_id = settings.student_id
+    classroom_id = settings.classroom_id
 
-    def test_schedule_list(self, student_client, settings):
-        """수업 일정 진입 시 학습자의 수업 일정 목록이 정상 조회되는가?"""
-        response = student_client.get(
-            "/schedule",
-            params={
-                "classroom_id": settings.classroom_id,
-                "dt_start_ge": "2026-04-16T15:00:00.000Z",
-                "dt_start_le": "2026-06-14T14:59:59.999Z",
-                "count": 40,
-            },
-        )
-        assert response.status_code == 200
-        assert isinstance(response.json(), list)
+    # When : 수강생 학습 현황 조회 API를 호출 : GET https://api-dashboard.elice.io/student/{student_id}?classroom_id={classroom_id}
+    response = dashboard_student_client.get(
+        f"/student/{student_id}",
+        params={"classroom_id": classroom_id},
+    )
 
-    def test_schedule_by_date(self, student_client, settings):
-        """날짜를 지정하면 해당 날짜의 수업 일정 목록이 정상 조회되는가?"""
-        response = student_client.get(
-            "/schedule/by_date",
-            params={
-                "classroom_id": settings.classroom_id,
-                "date": "2026-05-15",
-            },
-        )
-        assert response.status_code == 200
-        assert isinstance(response.json(), list)
+    # Then : response 결과 확인 : status_code가 200인지, body 확인
+    # assert 1. response의 status code가 200인지 확인
+    assert response.status_code == 200, (
+        f"응답 상태 코드가 200이 아닙니다. "
+        f"status_code={response.status_code}, response={response.text}"
+    )
 
-    def test_schedule_count(self, student_client, settings):
-        """기간 내 수업 일정 개수가 정상 조회되는가?"""
-        response = student_client.get(
-            "/schedule/count",
-            params={
-                "classroom_id": settings.classroom_id,
-                "dt_start_ge": "2026-04-16T15:00:00.000Z",
-                "dt_start_le": "2026-06-14T14:59:59.999Z",
-            },
-        )
-        assert response.status_code == 200
-        data = response.json()
-        assert isinstance(data, (int, dict))
+    body = response.json()
 
-    def test_schedule_summary(self, student_client, settings):
-        """기간 내 수업 일정 요약 정보가 정상 조회되는가?"""
-        response = student_client.get(
-            "/schedule/summary",
-            params={
-                "classroom_id": settings.classroom_id,
-                "dt_start_ge": "2026-04-16T15:00:00.000Z",
-                "dt_start_le": "2026-06-14T14:59:59.999Z",
-            },
-        )
-        assert response.status_code == 200
-        assert isinstance(response.json(), (dict, list))
+    # assert 2. account : 계정 있는지 확인
+    assert "account" in body, (
+        f"응답 body에 'account' 항목이 없습니다. "
+        f"body keys={list(body.keys())}"
+    )
 
-    def test_schedule_detail(self, student_client, settings):
-        """특정 수업 일정의 상세 정보가 정상 조회되는가?"""
-        list_response = student_client.get(
-            "/schedule",
-            params={
-                "classroom_id": settings.classroom_id,
-                "dt_start_ge": "2026-04-16T15:00:00.000Z",
-                "dt_start_le": "2026-06-14T14:59:59.999Z",
-            },
-        )
-        schedules = list_response.json()
-        if not schedules:
-            pytest.skip("조회된 일정이 없어 상세 테스트를 건너뜁니다.")
+    # assert 3. account 내 id와 .env의 학습자 아이디가 동일한지 확인
+    assert body["account"]["id"] == int(settings.student_id), (
+        f"account.id가 .env의 student_id와 일치하지 않습니다. "
+        f"actual={body['account']['id']}, expected={settings.student_id}"
+    )
 
-        schedule_id = schedules[0]["id"]
-        response = student_client.get(f"/schedule/{schedule_id}")
-        assert response.status_code == 200
-        assert response.json()["id"] == schedule_id
+    # assert 4. learning_progress : 학습 진행률
+    assert "learning_progress" in body, (
+        f"응답 body에 'learning_progress' 항목이 없습니다. "
+        f"body keys={list(body.keys())}"
+    )
 
+    # assert 5. test_score : 테스트 평균 점수
+    assert "test_score" in body, (
+        f"응답 body에 'test_score' 항목이 없습니다. "
+        f"body keys={list(body.keys())}"
+    )
 
-class TestScheduleIcs:
+    # assert 6. practice_score : 평균 실습 자료 점수
+    assert "practice_score" in body, (
+        f"응답 body에 'practice_score' 항목이 없습니다. "
+        f"body keys={list(body.keys())}"
+    )
 
-    def test_schedule_ics(self, student_client, settings):
-        """수업 일정을 ICS 캘린더 형식으로 정상 다운로드할 수 있는가?"""
-        response = student_client.get(
-            "/schedule/ics",
-            params={
-                "classroom_id": settings.classroom_id,
-                "dt_start_ge": "2026-04-16T15:00:00.000Z",
-                "dt_start_le": "2026-06-14T14:59:59.999Z",
-                "offset": 0,
-                "count": 40,
-                "timezone": "Asia/Seoul",
-            },
-        )
-        assert response.status_code == 200
-        assert "text/calendar" in response.headers.get("content-type", "")
-        assert "BEGIN:VCALENDAR" in response.text
+    # assert 7. submit_cnt : ? : response body에는 있지만, 어떤 항목인지 미상
+    assert "submit_cnt" in body, (
+        f"응답 body에 'submit_cnt' 항목이 없습니다. "
+        f"body keys={list(body.keys())}"
+    )
 
-    def test_schedule_ics_no_token(self, settings):
-        """토큰 없이 ICS 요청 시 401을 반환하는가?"""
-        from utils.api_client import APIClient
-        no_auth_client = APIClient(
-            base_url=settings.classroom_base_url,
-            token=None,
-            org_name=settings.org_name,
-            timeout=settings.request_timeout_seconds,
-            min_interval=settings.min_request_interval_seconds,
-        )
-        response = no_auth_client.get(
-            "/schedule/ics",
-            params={
-                "classroom_id": settings.classroom_id,
-                "dt_start_ge": "2026-04-16T15:00:00.000Z",
-                "dt_start_le": "2026-06-14T14:59:59.999Z",
-                "offset": 0,
-                "count": 40,
-                "timezone": "Asia/Seoul",
-            },
-        )
-        assert response.status_code == 401
+    # assert 8. test_completed_cnt : ? : response body에는 있지만, 어떤 항목인지 미상
+    assert "test_completed_cnt" in body, (
+        f"응답 body에 'test_completed_cnt' 항목이 없습니다. "
+        f"body keys={list(body.keys())}"
+    )
 
-    def test_schedule_ics_invalid_classroom(self, student_client):
-        """존재하지 않는 classroom_id로 ICS 요청 시 404를 반환하는가?"""
-        response = student_client.get(
-            "/schedule/ics",
-            params={
-                "classroom_id": "00000000-0000-0000-0000-000000000000",
-                "dt_start_ge": "2026-04-16T15:00:00.000Z",
-                "dt_start_le": "2026-06-14T14:59:59.999Z",
-                "offset": 0,
-                "count": 40,
-                "timezone": "Asia/Seoul",
-            },
-        )
-        assert response.status_code in (403, 404)
+    # assert 9. learning_completed : 학습 완료 여부--classroom_id에 해당하는 수업
+    assert "learning_completed" in body, (
+        f"응답 body에 'learning_completed' 항목이 없습니다. "
+        f"body keys={list(body.keys())}"
+    )
+
+    # print(response.status_code)
+    # print("(학습 진행률)learning_progress", body["learning_progress"])
+    # print("(테스트 평균 점수)test_score:", body["test_score"])
+    # print("(평균 실습 자료)practice_score:", body["practice_score"])
+    # print("submit_cnt:", body["submit_cnt"])
+    # print("test_completed_cnt:", body["test_completed_cnt"])
+    # print("(학습 완료 여부)learning_completed:", body["learning_completed"])

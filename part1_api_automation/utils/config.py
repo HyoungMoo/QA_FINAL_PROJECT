@@ -70,6 +70,8 @@ def get_settings() -> Settings:
     테스트 파일이나 conftest.py에서는 이 함수만 호출하면
     필요한 환경 설정을 한 번에 가져올 수 있다.
     """
+    token = _get_env("token")
+
     return Settings(
         base_rest_url=_get_env("BASE_REST_URL"),
         base_classroom_url=_get_env("BASE_CLASSROOM_URL"),

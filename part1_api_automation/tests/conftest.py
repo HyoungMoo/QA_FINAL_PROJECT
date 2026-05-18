@@ -29,7 +29,19 @@ def student_client(settings: Settings) -> APIClient:
     # 수강생 권한으로 호출할 API client.
     # test_student.py에서 주로 사용한다.
     return APIClient(
-        base_url=settings.classroom_base_url,
+        base_url=settings.base_classroom_url,
+        token=settings.student_token,
+        org_name=settings.org_name,
+        timeout=settings.request_timeout_seconds,
+        min_interval=settings.min_request_interval_seconds,
+    )
+
+
+@pytest.fixture(scope="session")
+def dashboard_student_client(settings: Settings) -> APIClient:
+    # api-dashboard 서버 호출 시 사용
+    return APIClient(
+        base_url=settings.base_dashboard_url,
         token=settings.student_token,
         org_name=settings.org_name,
         timeout=settings.request_timeout_seconds,
@@ -42,7 +54,7 @@ def teacher_client(settings: Settings) -> APIClient:
     # 교육자 권한으로 호출할 API client.
     # test_educator.py나 권한 경계 테스트에서 사용한다.
     return APIClient(
-        base_url=settings.classroom_base_url,
+        base_url=settings.base_classroom_url,
         token=settings.teacher_token,
         org_name=settings.org_name,
         timeout=settings.request_timeout_seconds,
