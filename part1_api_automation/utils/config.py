@@ -35,9 +35,11 @@ class Settings:
     classroom_base_url: str
     rest_base_url: str
     course_base_url: str
+    dashboard_base_url: str
     org_name: str
     classroom_id: str
     course_id: str
+    student_id: str
     student_token: str
     teacher_token: str
     request_timeout_seconds: float
@@ -50,17 +52,21 @@ def get_settings() -> Settings:
     테스트 파일이나 conftest.py에서는 이 함수만 호출하면
     필요한 환경 설정을 한 번에 가져올 수 있다.
     """
+    token = _get_env("token")
+
     return Settings(
-        classroom_base_url=_get_env("CLASSROOM_BASE_URL"),
-        rest_base_url=_get_env("REST_BASE_URL"),
-        course_base_url=_get_env("COURSE_BASE_URL"),
-        org_name=_get_env("ORG_NAME"),
-        classroom_id=_get_env("CLASSROOM_ID"),
-        course_id=_get_env("COURSE_ID"),
-        student_token=_get_env("STUDENT_TOKEN"),
-        teacher_token=_get_env("TEACHER_TOKEN"),
-        request_timeout_seconds=_get_float_env("REQUEST_TIMEOUT_SECONDS", 10.0),
-        min_request_interval_seconds=_get_float_env("MIN_REQUEST_INTERVAL_SECONDS", 0.3),
+        classroom_base_url=_get_env("base_classroom_url"),
+        rest_base_url=_get_env("base_rest_url"),
+        course_base_url=_get_env("base_course_url"),
+        dashboard_base_url=_get_env("base_dashboard_url", "https://api-dashboard.elice.io"),
+        org_name=_get_env("org"),
+        classroom_id=_get_env("classroom_id"),
+        course_id=_get_env("week1_course_id"),
+        student_id=_get_env("student_id"),
+        student_token=_get_env("student_token", token),
+        teacher_token=_get_env("teacher_token", token),
+        request_timeout_seconds=_get_float_env("request_timeout_seconds", 10.0),
+        min_request_interval_seconds=_get_float_env("min_request_interval_seconds", 0.3),
     )
 
 

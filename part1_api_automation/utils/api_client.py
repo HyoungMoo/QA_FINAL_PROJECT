@@ -38,11 +38,13 @@ class APIClient:
         self._last_request_at = 0.0
 
         # 모든 요청에 공통으로 들어갈 header를 한 번만 설정한다.
-        # 실제 token 값은 .env에서 읽어온 값을 사용한다.
+        # .env의 token 값이 "Bearer ..." 형태이면 그대로 쓰고,
+        # 순수 토큰 값이면 여기서 Bearer를 붙인다.
+        authorization = token if token.startswith("Bearer ") else f"Bearer {token}"
         self.session = requests.Session()
         self.session.headers.update(
             {
-                "Authorization": f"Bearer {token}",
+                "Authorization": authorization,
                 "x-elice-org-name-short": org_name,
                 "Accept": "application/json",
             }
