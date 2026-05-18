@@ -26,7 +26,7 @@ class APIClient:
     def __init__(
         self,
         base_url: str,
-        token: str,
+        token: str | None,
         org_name: str,
         timeout: float,
         min_interval: float,
@@ -40,13 +40,13 @@ class APIClient:
         # 모든 요청에 공통으로 들어갈 header를 한 번만 설정한다.
         # 실제 token 값은 .env에서 읽어온 값을 사용한다.
         self.session = requests.Session()
-        self.session.headers.update(
-            {
-                "Authorization": f"Bearer {token}",
-                "x-elice-org-name-short": org_name,
-                "Accept": "application/json",
-            }
-        )
+        headers: dict[str, str] = {
+            "x-elice-org-name-short": org_name,
+            "Accept": "application/json",
+        }
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+        self.session.headers.update(headers)
 
     def request(self, method: str, path: str, **kwargs: Any) -> requests.Response:
         # 운영 서비스에 너무 빠르게 연속 요청을 보내지 않도록 최소 간격을 둔다.
