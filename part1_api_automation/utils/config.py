@@ -31,17 +31,37 @@ class Settings:
 
     frozen=True는 테스트 실행 중 설정값이 실수로 바뀌지 않게 막기 위한 옵션이다.
     """
+    base_rest_url: str
+    base_classroom_url: str
+    base_course_url: str
 
-    classroom_base_url: str
-    rest_base_url: str
-    course_base_url: str
-    org_name: str
+    org: str
+
     classroom_id: str
-    course_id: str
+
+    week1_course_id: str
+    week1_course_section_id: str
+
+    lecture_material_type: str
+
+    week1_2lecture_id: str
+    week1_2lecture_page_id: str
+    week1_2lecture_material_id: str
+
+    lecture_quiz_material_type: str
+
+    week1_2lecture_1quiz_page_id: str
+    week1_2lecture_1quiz_material_id: str
+
+    lecture_exercise_material_type: str
+
+    week1_2lecture_1exercise_page_id: str
+    week1_2lecture_1exercise_material_id: str
+    week1_2lecture_1exercise_room_id: str
+
     student_token: str
-    teacher_token: str
+
     request_timeout_seconds: float
-    min_request_interval_seconds: float
 
 
 def get_settings() -> Settings:
@@ -51,16 +71,67 @@ def get_settings() -> Settings:
     필요한 환경 설정을 한 번에 가져올 수 있다.
     """
     return Settings(
-        classroom_base_url=_get_env("CLASSROOM_BASE_URL"),
-        rest_base_url=_get_env("REST_BASE_URL"),
-        course_base_url=_get_env("COURSE_BASE_URL"),
-        org_name=_get_env("ORG_NAME"),
+        base_rest_url=_get_env("BASE_REST_URL"),
+        base_classroom_url=_get_env("BASE_CLASSROOM_URL"),
+        base_course_url=_get_env("BASE_COURSE_URL"),
+
+        org=_get_env("ORG"),
+
         classroom_id=_get_env("CLASSROOM_ID"),
-        course_id=_get_env("COURSE_ID"),
+
+        week1_course_id=_get_env("WEEK1_COURSE_ID"),
+        week1_course_section_id=_get_env("WEEK1_COURSE_SECTION_ID"),
+
+        lecture_material_type=_get_env(
+            "LECTURE_MATERIAL_TYPE"
+        ),
+
+        week1_2lecture_id=_get_env(
+            "WEEK1_2LECTURE_ID"
+        ),
+
+        week1_2lecture_page_id=_get_env(
+            "WEEK1_2LECTURE_PAGE_ID"
+        ),
+
+        week1_2lecture_material_id=_get_env(
+            "WEEK1_2LECTURE_MATERIAL_ID"
+        ),
+
+        lecture_quiz_material_type=_get_env(
+            "LECTURE_QUIZ_MATERIAL_TYPE"
+        ),
+
+        week1_2lecture_1quiz_page_id=_get_env(
+            "WEEK1_2LECTURE_1QUIZ_PAGE_ID"
+        ),
+
+        week1_2lecture_1quiz_material_id=_get_env(
+            "WEEK1_2LECTURE_1QUIZ_MATERIAL_ID"
+        ),
+
+        lecture_exercise_material_type=_get_env(
+            "LECTURE_EXERCISE_MATERIAL_TYPE"
+        ),
+
+        week1_2lecture_1exercise_page_id=_get_env(
+            "WEEK1_2LECTURE_1EXERCISE_PAGE_ID"
+        ),
+
+        week1_2lecture_1exercise_material_id=_get_env(
+            "WEEK1_2LECTURE_1EXERCISE_MATERIAL_ID"
+        ),
+
+        week1_2lecture_1exercise_room_id=_get_env(
+            "WEEK1_2LECTURE_1EXERCISE_ROOM_ID"
+        ),
+
         student_token=_get_env("STUDENT_TOKEN"),
-        teacher_token=_get_env("TEACHER_TOKEN"),
-        request_timeout_seconds=_get_float_env("REQUEST_TIMEOUT_SECONDS", 10.0),
-        min_request_interval_seconds=_get_float_env("MIN_REQUEST_INTERVAL_SECONDS", 0.3),
+
+        request_timeout_seconds=_get_float_env(
+            "REQUEST_TIMEOUT_SECONDS",
+            10.0,
+        ),
     )
 
 
@@ -73,6 +144,7 @@ def _get_env(name: str, default: str | None = None) -> str:
     value = os.getenv(name, default)
     if value is None or value == "":
         raise RuntimeError(f"환경 변수 {name} 값이 필요합니다.")
+
     return value
 
 
@@ -86,4 +158,5 @@ def _get_float_env(name: str, default: float) -> float:
     value = os.getenv(name)
     if value is None or value == "":
         return default
+
     return float(value)
