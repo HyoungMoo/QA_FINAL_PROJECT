@@ -35,7 +35,7 @@ class Settings:
     classroom_base_url: str
     rest_base_url: str
     course_base_url: str
-    dashboard_base_url: str
+    base_dashboard_url: str
     org_name: str
     classroom_id: str
     course_id: str
@@ -58,7 +58,7 @@ def get_settings() -> Settings:
         classroom_base_url=_get_env("base_classroom_url"),
         rest_base_url=_get_env("base_rest_url"),
         course_base_url=_get_env("base_course_url"),
-        dashboard_base_url=_get_env("base_dashboard_url", "https://api-dashboard.elice.io"),
+        base_dashboard_url=_get_env("base_dashboard_url", "https://api-dashboard.elice.io"),
         org_name=_get_env("org"),
         classroom_id=_get_env("classroom_id"),
         course_id=_get_env("week1_course_id"),

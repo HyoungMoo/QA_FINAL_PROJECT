@@ -41,7 +41,7 @@ def student_client(settings: Settings) -> APIClient:
 def dashboard_student_client(settings: Settings) -> APIClient:
     # api-dashboard 서버 호출 시 사용
     return APIClient(
-        base_url=settings.dashboard_base_url,
+        base_url=settings.base_dashboard_url,
         token=settings.student_token,
         org_name=settings.org_name,
         timeout=settings.request_timeout_seconds,
