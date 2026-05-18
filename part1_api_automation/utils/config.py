@@ -34,10 +34,12 @@ class Settings:
     base_rest_url: str
     base_classroom_url: str
     base_course_url: str
+    base_dashboard_url: str
 
     org: str
 
     classroom_id: str
+    student_id: str
 
     week1_course_id: str
     week1_course_section_id: str
@@ -70,16 +72,20 @@ def get_settings() -> Settings:
     테스트 파일이나 conftest.py에서는 이 함수만 호출하면
     필요한 환경 설정을 한 번에 가져올 수 있다.
     """
-    token = _get_env("token")
+    # token = _get_env("token")
+    student_token = _get_env("student_token")
+    teacher_token = _get_env("teacher_token")
 
     return Settings(
         base_rest_url=_get_env("BASE_REST_URL"),
         base_classroom_url=_get_env("BASE_CLASSROOM_URL"),
         base_course_url=_get_env("BASE_COURSE_URL"),
+        base_dashboard_url=_get_env("BASE_DASHBOARD_URL"),
 
         org=_get_env("ORG"),
 
         classroom_id=_get_env("CLASSROOM_ID"),
+        student_id=_get_env("STUDENT_ID"),
 
         week1_course_id=_get_env("WEEK1_COURSE_ID"),
         week1_course_section_id=_get_env("WEEK1_COURSE_SECTION_ID"),
