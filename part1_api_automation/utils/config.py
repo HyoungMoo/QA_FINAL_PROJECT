@@ -32,9 +32,9 @@ class Settings:
     frozen=True는 테스트 실행 중 설정값이 실수로 바뀌지 않게 막기 위한 옵션이다.
     """
 
-    classroom_base_url: str
-    rest_base_url: str
-    course_base_url: str
+    base_classroom_url: str
+    base_rest_url: str
+    base_course_url: str
     base_dashboard_url: str
     org_name: str
     classroom_id: str
@@ -55,9 +55,9 @@ def get_settings() -> Settings:
     token = _get_env("token")
 
     return Settings(
-        classroom_base_url=_get_env("base_classroom_url"),
-        rest_base_url=_get_env("base_rest_url"),
-        course_base_url=_get_env("base_course_url"),
+        base_classroom_url=_get_env("base_classroom_url"),
+        base_rest_url=_get_env("base_rest_url"),
+        base_course_url=_get_env("base_course_url"),
         base_dashboard_url=_get_env("base_dashboard_url", "https://api-dashboard.elice.io"),
         org_name=_get_env("org"),
         classroom_id=_get_env("classroom_id"),
