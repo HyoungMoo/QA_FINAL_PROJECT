@@ -6,6 +6,22 @@ base_dashboard_url = "https://api-dashboard.elice.io"
 
 base_course_url = "https://api-course.elice.io"
 
-org = "qatrack"
+base_org_url = "https://api-org.elice.io"
 
-classroom_id = "11968486-1a7b-4105-8ae3-b397ea4f54a7"
+base_account_url = "https://api-account.elice.io"
+
+base_community_url = "https://api-community.elice.io"
+
+base_file_url = "https://api-file.elice.io"
+
+base_notification_url = "https://api-notification.elice.io"
+
+base_billing2_url = "https://api-billing2.elice.io"
+
+base_channel_url = "https://api-channel.elice.io"
+
+org_student = "qatrack"
+
+org_teacher = "qaproject"
+
+student_classroom_id = "11968486-1a7b-4105-8ae3-b397ea4f54a7"
