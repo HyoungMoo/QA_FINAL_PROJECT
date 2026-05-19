@@ -8,6 +8,7 @@
 # 각 테스트 함수는 필요한 이름만 매개변수로 받아서 바로 사용할 수 있다.
 #
 # 실제 token/cookie/password 값은 코드에 직접 작성하지 않고 .env에서 불러온다.
+# 공통 URL/org 값은 common_data.py에서 관리한다.
 
 from __future__ import annotations
 
@@ -15,6 +16,7 @@ import pytest
 
 from utils.api_client import APIClient
 from utils.config import Settings, get_settings
+from utils.test_data import common_data
 
 
 @pytest.fixture(scope="session")
@@ -29,9 +31,9 @@ def student_client(settings: Settings) -> APIClient:
     # 수강생 권한으로 호출할 API client.
     # test_student.py에서 주로 사용한다.
     return APIClient(
-        base_url=settings.base_classroom_url,
+        base_url=common_data.base_classroom_url,
         token=settings.student_token,
-        org_name=settings.org,
+        org_name=common_data.org,
         timeout=settings.request_timeout_seconds,
         min_interval=0.3,
     )
@@ -41,9 +43,9 @@ def student_client(settings: Settings) -> APIClient:
 def dashboard_student_client(settings: Settings) -> APIClient:
     # api-dashboard 서버 호출 시 사용
     return APIClient(
-        base_url="https://api-dashboard.elice.io",
+        base_url=common_data.base_dashboard_url,
         token=settings.student_token,
-        org_name=settings.org,
+        org_name=common_data.org,
         timeout=settings.request_timeout_seconds,
         min_interval=0.3,
     )
@@ -54,9 +56,9 @@ def teacher_client(settings: Settings) -> APIClient:
     # 교육자 권한으로 호출할 API client.
     # test_educator.py나 권한 경계 테스트에서 사용한다.
     return APIClient(
-        base_url=settings.base_classroom_url,
-        token=None,
-        org_name=settings.org,
+        base_url=common_data.base_classroom_url,
+        token=settings.teacher_token,
+        org_name=common_data.org,
         timeout=settings.request_timeout_seconds,
         min_interval=0.3,
     )

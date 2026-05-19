@@ -1,15 +1,14 @@
-from utils.config import get_settings
 from utils.request_helper import get_auth_headers, get_request
+from utils.test_data import common_data
+from utils.test_data.student_material_data import lecture_case
 
 
-def test_get_week1_2lecture_material_pdf():
+def test_get_week1_2lecture_material_pdf(settings):
     # Given
     # 1주차 2번 강의자료 PDF 조회에 필요한 설정값 세팅
-    settings = get_settings()
-
     url = (
-        f"{settings.base_rest_url}"
-        f"/org/{settings.org}"
+        f"{common_data.base_rest_url}"
+        f"/org/{common_data.org}"
         f"/material_pdf/get/"
     )
 
@@ -18,7 +17,8 @@ def test_get_week1_2lecture_material_pdf():
     )
 
     params = {
-        "material_pdf_id": settings.week1_2lecture_material_id,
+        "material_pdf_id":
+            lecture_case["week1_2lecture_material_id"],
     }
 
     # When
@@ -29,7 +29,6 @@ def test_get_week1_2lecture_material_pdf():
         params=params,
         timeout=settings.request_timeout_seconds,
     )
-
 
     # Then
     # 강의자료 PDF 조회 성공 여부 확인
