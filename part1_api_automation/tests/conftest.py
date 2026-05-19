@@ -33,7 +33,19 @@ def student_client(settings: Settings) -> APIClient:
     return APIClient(
         base_url=common_data.base_classroom_url,
         token=settings.student_token,
-        org_name=common_data.org,
+        org_name=common_data.org_student,
+        timeout=settings.request_timeout_seconds,
+        min_interval=0.3,
+    )
+
+
+@pytest.fixture(scope="session")
+def account_student_client(settings: Settings) -> APIClient:
+    # api-account 서버 호출 시 사용
+    return APIClient(
+        base_url=common_data.base_account_url,
+        token=settings.student_token,
+        org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
         min_interval=0.3,
     )
@@ -45,7 +57,31 @@ def dashboard_student_client(settings: Settings) -> APIClient:
     return APIClient(
         base_url=common_data.base_dashboard_url,
         token=settings.student_token,
-        org_name=common_data.org,
+        org_name=common_data.org_student,
+        timeout=settings.request_timeout_seconds,
+        min_interval=0.3,
+    )
+
+
+@pytest.fixture(scope="session")
+def rest_student_client(settings: Settings) -> APIClient:
+    # api-rest 서버 호출 시 사용
+    return APIClient(
+        base_url=common_data.base_rest_url,
+        token=settings.student_token,
+        org_name=common_data.org_student,
+        timeout=settings.request_timeout_seconds,
+        min_interval=0.3,
+    )
+
+
+@pytest.fixture(scope="session")
+def billing2_student_client(settings: Settings) -> APIClient:
+    # api-billing2 서버 호출 시 사용
+    return APIClient(
+        base_url=common_data.base_billing2_url,
+        token=settings.student_token,
+        org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
         min_interval=0.3,
     )
@@ -58,7 +94,7 @@ def teacher_client(settings: Settings) -> APIClient:
     return APIClient(
         base_url=common_data.base_classroom_url,
         token=settings.teacher_token,
-        org_name=common_data.org,
+        org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
         min_interval=0.3,
     )

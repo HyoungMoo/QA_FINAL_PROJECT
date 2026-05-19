@@ -44,11 +44,11 @@ def get_settings() -> Settings:
     필요한 환경 설정을 한 번에 가져올 수 있다.
     """
     return Settings(
-        student_token=_get_env("STUDENT_TOKEN"),
-        teacher_token=_get_env("TEACHER_TOKEN"),
-        student_id=_get_env("STUDENT_ID"),
+        student_token=_get_env("student_token"),
+        teacher_token=_get_env("teacher_token"),
+        student_id=_get_env("student_id"),
         request_timeout_seconds=_get_float_env(
-            "REQUEST_TIMEOUT_SECONDS", 10.0,),
+            "request_timeout_seconds", 10.0,),
     )
 
 def _get_env(name: str, default: str | None = None) -> str:
