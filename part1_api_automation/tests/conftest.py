@@ -64,6 +64,18 @@ def dashboard_student_client(settings: Settings) -> APIClient:
 
 
 @pytest.fixture(scope="session")
+def course_student_client(settings: Settings) -> APIClient:
+    # api-course 서버 호출 시 사용
+    return APIClient(
+        base_url=common_data.base_course_url,
+        token=settings.student_token,
+        org_name=common_data.org_student,
+        timeout=settings.request_timeout_seconds,
+        min_interval=0.3,
+    )
+
+
+@pytest.fixture(scope="session")
 def rest_student_client(settings: Settings) -> APIClient:
     # api-rest 서버 호출 시 사용
     return APIClient(
@@ -88,13 +100,73 @@ def billing2_student_client(settings: Settings) -> APIClient:
 
 
 @pytest.fixture(scope="session")
+def channel_student_client(settings: Settings) -> APIClient:
+    # api-channel 서버 호출 시 사용
+    return APIClient(
+        base_url=common_data.base_channel_url,
+        token=settings.student_token,
+        org_name=common_data.org_student,
+        timeout=settings.request_timeout_seconds,
+        min_interval=0.3,
+    )
+
+
+@pytest.fixture(scope="session")
+def community_student_client(settings: Settings) -> APIClient:
+    # api-community 서버 호출 시 사용
+    return APIClient(
+        base_url=common_data.base_community_url,
+        token=settings.student_token,
+        org_name=common_data.org_student,
+        timeout=settings.request_timeout_seconds,
+        min_interval=0.3,
+    )
+
+
+@pytest.fixture(scope="session")
+def notification_student_client(settings: Settings) -> APIClient:
+    # api-notification 서버 호출 시 사용
+    return APIClient(
+        base_url=common_data.base_notification_url,
+        token=settings.student_token,
+        org_name=common_data.org_student,
+        timeout=settings.request_timeout_seconds,
+        min_interval=0.3,
+    )
+
+
+@pytest.fixture(scope="session")
+def org_student_client(settings: Settings) -> APIClient:
+    # api-org 서버 호출 시 사용
+    return APIClient(
+        base_url=common_data.base_org_url,
+        token=settings.student_token,
+        org_name=common_data.org_student,
+        timeout=settings.request_timeout_seconds,
+        min_interval=0.3,
+    )
+
+
+@pytest.fixture(scope="session")
+def file_student_client(settings: Settings) -> APIClient:
+    # api-file 서버 호출 시 사용
+    return APIClient(
+        base_url=common_data.base_file_url,
+        token=settings.student_token,
+        org_name=common_data.org_student,
+        timeout=settings.request_timeout_seconds,
+        min_interval=0.3,
+    )
+
+
+@pytest.fixture(scope="session")
 def teacher_client(settings: Settings) -> APIClient:
     # 교육자 권한으로 호출할 API client.
     # test_teacher.py나 권한 경계 테스트에서 사용한다.
     return APIClient(
         base_url=common_data.base_classroom_url,
         token=settings.teacher_token,
-        org_name=common_data.org_student,
+        org_name=common_data.org_teacher,
         timeout=settings.request_timeout_seconds,
         min_interval=0.3,
     )
