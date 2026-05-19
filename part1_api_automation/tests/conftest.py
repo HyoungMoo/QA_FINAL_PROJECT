@@ -90,7 +90,7 @@ def billing2_student_client(settings: Settings) -> APIClient:
 @pytest.fixture(scope="session")
 def teacher_client(settings: Settings) -> APIClient:
     # 교육자 권한으로 호출할 API client.
-    # test_educator.py나 권한 경계 테스트에서 사용한다.
+    # test_teacher.py나 권한 경계 테스트에서 사용한다.
     return APIClient(
         base_url=common_data.base_classroom_url,
         token=settings.teacher_token,
