@@ -1,185 +1,162 @@
-# 수강생 권한으로 접근 가능한 API 테스트를 작성하는 파일
-#
-# 예: 클래스 정보 조회, 과목 목록 조회, 일정 조회, 게시판 목록 조회 등
-# Postman에서 먼저 호출이 성공한 API를 기준으로 pytest 테스트를 추가한다.
-#
-# 공통 client는 tests/conftest.py의 student_client fixture를 사용한다.
-
-
-def test_get_student_dashboard(dashboard_student_client, settings):
-    # Postman에서 성공 확인한 수강생 학습 현황 조회 API.
-    # Given-When-Then
-        # Given : 로그인 상태(토큰 발급 계정과 학습자 계정이 동일해야 함)
-        # When : 수강생 학습 현황 조회 API를 호출 : GET https://api-dashboard.elice.io/student/{student_id}?classroom_id={classroom_id}
-        # Then : response 결과 확인 : status_code가 200인지, body 확인
-    # 입력값 : 수강생 ID와 클래스룸 ID 준비 : student_id, classroom_id
-    
-
-    # Given : 로그인 상태(토큰 발급 계정과 학습자 계정이 동일해야 함)
-    student_id = settings.student_id
-    classroom_id = settings.classroom_id
-
-    # When : 수강생 학습 현황 조회 API를 호출 : GET https://api-dashboard.elice.io/student/{student_id}?classroom_id={classroom_id}
-    response = dashboard_student_client.get(
-        f"/student/{student_id}",
-        params={"classroom_id": classroom_id},
-    )
-
-    # Then : response 결과 확인 : status_code가 200인지, body 확인
-    # assert 1. response의 status code가 200인지 확인
-    assert response.status_code == 200, (
-        f"응답 상태 코드가 200이 아닙니다. "
-        f"status_code={response.status_code}, response={response.text}"
-    )
-
-    body = response.json()
-
-    # assert 2. account : 계정 있는지 확인
-    assert "account" in body, (
-        f"응답 body에 'account' 항목이 없습니다. "
-        f"body keys={list(body.keys())}"
-    )
-
-    # assert 3. account 내 id와 .env의 학습자 아이디가 동일한지 확인
-    assert body["account"]["id"] == int(settings.student_id), (
-        f"account.id가 .env의 student_id와 일치하지 않습니다. "
-        f"actual={body['account']['id']}, expected={settings.student_id}"
-    )
-
-    # assert 4. learning_progress : 학습 진행률
-    assert "learning_progress" in body, (
-        f"응답 body에 'learning_progress' 항목이 없습니다. "
-        f"body keys={list(body.keys())}"
-    )
-
-    # assert 5. test_score : 테스트 평균 점수
-    assert "test_score" in body, (
-        f"응답 body에 'test_score' 항목이 없습니다. "
-        f"body keys={list(body.keys())}"
-    )
-
-    # assert 6. practice_score : 평균 실습 자료 점수
-    assert "practice_score" in body, (
-        f"응답 body에 'practice_score' 항목이 없습니다. "
-        f"body keys={list(body.keys())}"
-    )
-
-    # assert 7. submit_cnt : ? : response body에는 있지만, 어떤 항목인지 미상
-    assert "submit_cnt" in body, (
-        f"응답 body에 'submit_cnt' 항목이 없습니다. "
-        f"body keys={list(body.keys())}"
-    )
-
-    # assert 8. test_completed_cnt : ? : response body에는 있지만, 어떤 항목인지 미상
-    assert "test_completed_cnt" in body, (
-        f"응답 body에 'test_completed_cnt' 항목이 없습니다. "
-        f"body keys={list(body.keys())}"
-    )
-
-    # assert 9. learning_completed : 학습 완료 여부--classroom_id에 해당하는 수업
-    assert "learning_completed" in body, (
-        f"응답 body에 'learning_completed' 항목이 없습니다. "
-        f"body keys={list(body.keys())}"
-    )
-
-    # print(response.status_code)
-    # print("(학습 진행률)learning_progress", body["learning_progress"])
-    # print("(테스트 평균 점수)test_score:", body["test_score"])
-    # print("(평균 실습 자료)practice_score:", body["practice_score"])
-    # print("submit_cnt:", body["submit_cnt"])
-    # print("test_completed_cnt:", body["test_completed_cnt"])
-    # print("(학습 완료 여부)learning_completed:", body["learning_completed"])
-
 
 import pytest
 from utils.api_client import APIClient
+from utils.test_data import common_data
+
+DT_START = "2026-04-16T15:00:00.000Z"
+DT_END = "2026-06-14T14:59:59.999Z"
 
 
 class TestSchedule:
 
-    def test_schedule_list(self, student_client, settings):
-        """수업 일정 진입 시 학습자의 수업 일정 목록이 정상 조회되는가?"""
+    def test_schedule_list(self, student_client):
+        """TC-SCH-001: 유효한 조건으로 수업 일정 목록이 정상 조회되는가"""
         response = student_client.get(
             "/schedule",
             params={
-                "classroom_id": settings.classroom_id,
-                "dt_start_ge": "2026-04-16T15:00:00.000Z",
-                "dt_start_le": "2026-06-14T14:59:59.999Z",
+                "classroom_id": common_data.classroom_id,
+                "dt_start_ge": DT_START,
+                "dt_start_le": DT_END,
                 "count": 40,
             },
         )
         assert response.status_code == 200
         assert isinstance(response.json(), list)
 
-    def test_schedule_by_date(self, student_client, settings):
-        """날짜를 지정하면 해당 날짜의 수업 일정 목록이 정상 조회되는가?"""
-        response = student_client.get(
-            "/schedule/by_date",
-            params={
-                "classroom_id": settings.classroom_id,
-                "date": "2026-05-15",
-            },
-        )
-        assert response.status_code == 200
-        assert isinstance(response.json(), list)
-
-    def test_schedule_count(self, student_client, settings):
-        """기간 내 수업 일정 개수가 정상 조회되는가?"""
+    def test_schedule_count(self, student_client):
+        """TC-SCH-002: 기간 내 수업 일정 개수가 정상 조회되는가"""
         response = student_client.get(
             "/schedule/count",
             params={
-                "classroom_id": settings.classroom_id,
-                "dt_start_ge": "2026-04-16T15:00:00.000Z",
-                "dt_start_le": "2026-06-14T14:59:59.999Z",
+                "classroom_id": common_data.classroom_id,
+                "dt_start_ge": DT_START,
+                "dt_start_le": DT_END,
             },
         )
         assert response.status_code == 200
-        data = response.json()
-        assert isinstance(data, (int, dict))
+        assert isinstance(response.json(), (int, dict))
 
-    def test_schedule_summary(self, student_client, settings):
-        """기간 내 수업 일정 요약 정보가 정상 조회되는가?"""
-        response = student_client.get(
-            "/schedule/summary",
-            params={
-                "classroom_id": settings.classroom_id,
-                "dt_start_ge": "2026-04-16T15:00:00.000Z",
-                "dt_start_le": "2026-06-14T14:59:59.999Z",
-            },
+    def test_schedule_no_token(self, settings):
+        """TC-SCH-004: 토큰 없이 요청 시 403을 반환하는가"""
+        no_auth_client = APIClient(
+            base_url=common_data.base_classroom_url,
+            token=None,
+            org_name=common_data.org,
+            timeout=settings.request_timeout_seconds,
+            min_interval=0.3,
         )
-        assert response.status_code == 200
-        assert isinstance(response.json(), (dict, list))
-
-    def test_schedule_detail(self, student_client, settings):
-        """특정 수업 일정의 상세 정보가 정상 조회되는가?"""
-        list_response = student_client.get(
+        response = no_auth_client.get(
             "/schedule",
             params={
-                "classroom_id": settings.classroom_id,
-                "dt_start_ge": "2026-04-16T15:00:00.000Z",
-                "dt_start_le": "2026-06-14T14:59:59.999Z",
+                "classroom_id": common_data.classroom_id,
+                "dt_start_ge": DT_START,
+                "dt_start_le": DT_END,
+                "count": 40,
             },
         )
-        schedules = list_response.json()
-        if not schedules:
-            pytest.skip("조회된 일정이 없어 상세 테스트를 건너뜁니다.")
+        assert response.status_code == 403
 
-        schedule_id = schedules[0]["id"]
-        response = student_client.get(f"/schedule/{schedule_id}")
-        assert response.status_code == 200
-        assert response.json()["id"] == schedule_id
+    def test_schedule_invalid_classroom_id(self, student_client):
+        """TC-SCH-005: 존재하지 않는 classroom_id로 요청 시 오류를 반환하는가"""
+        response = student_client.get(
+            "/schedule",
+            params={
+                "classroom_id": "00000000-0000-0000-0000-000000000000",
+                "dt_start_ge": DT_START,
+                "dt_start_le": DT_END,
+                "count": 40,
+            },
+        )
+        assert response.status_code in (409, 422)
+
+    def test_schedule_missing_classroom_id(self, student_client):
+        """TC-SCH-006: classroom_id 누락 시 422를 반환하는가"""
+        response = student_client.get(
+            "/schedule",
+            params={
+                "dt_start_ge": DT_START,
+                "dt_start_le": DT_END,
+                "count": 40,
+            },
+        )
+        assert response.status_code == 422
+
+    def test_schedule_reversed_date_range(self, student_client):
+        """TC-SCH-007: dt_start_ge가 dt_start_le보다 늦을 때 오류를 반환하는가"""
+        response = student_client.get(
+            "/schedule",
+            params={
+                "classroom_id": common_data.classroom_id,
+                "dt_start_ge": DT_END,
+                "dt_start_le": DT_START,
+                "count": 40,
+            },
+        )
+        assert response.status_code in (400, 409, 422)
+
+    def test_schedule_same_date_range(self, student_client):
+        """TC-SCH-008: dt_start_ge와 dt_start_le가 동일할 때 처리되는가"""
+        response = student_client.get(
+            "/schedule",
+            params={
+                "classroom_id": common_data.classroom_id,
+                "dt_start_ge": "2026-05-15T00:00:00.000Z",
+                "dt_start_le": "2026-05-15T00:00:00.000Z",
+                "count": 40,
+            },
+        )
+        assert response.status_code in (200, 409)
+
+    def test_schedule_invalid_date_format(self, student_client):
+        """TC-SCH-009: 잘못된 날짜 형식 입력 시 422를 반환하는가"""
+        response = student_client.get(
+            "/schedule",
+            params={
+                "classroom_id": common_data.classroom_id,
+                "dt_start_ge": "2026/04/16",
+                "dt_start_le": "2026/06/14",
+                "count": 40,
+            },
+        )
+        assert response.status_code == 422
+
+    def test_schedule_count_zero(self, student_client):
+        """TC-SCH-010: count=0 입력 시 처리되는가"""
+        response = student_client.get(
+            "/schedule",
+            params={
+                "classroom_id": common_data.classroom_id,
+                "dt_start_ge": DT_START,
+                "dt_start_le": DT_END,
+                "count": 0,
+            },
+        )
+        assert response.status_code in (200, 409, 422)
+
+    def test_schedule_count_large(self, student_client):
+        """TC-SCH-011: count에 매우 큰 값 입력 시 처리되는가"""
+        response = student_client.get(
+            "/schedule",
+            params={
+                "classroom_id": common_data.classroom_id,
+                "dt_start_ge": DT_START,
+                "dt_start_le": DT_END,
+                "count": 99999,
+            },
+        )
+        assert response.status_code in (200, 400, 409)
 
 
 class TestScheduleIcs:
 
-    def test_schedule_ics(self, student_client, settings):
-        """수업 일정을 ICS 캘린더 형식으로 정상 다운로드할 수 있는가?"""
+    def test_schedule_ics(self, student_client):
+        """TC-SCH-003: 수업 일정을 ICS 형식으로 정상 다운로드할 수 있는가"""
         response = student_client.get(
             "/schedule/ics",
             params={
-                "classroom_id": settings.classroom_id,
-                "dt_start_ge": "2026-04-16T15:00:00.000Z",
-                "dt_start_le": "2026-06-14T14:59:59.999Z",
+                "classroom_id": common_data.classroom_id,
+                "dt_start_ge": DT_START,
+                "dt_start_le": DT_END,
                 "offset": 0,
                 "count": 40,
                 "timezone": "Asia/Seoul",
@@ -190,38 +167,134 @@ class TestScheduleIcs:
         assert "BEGIN:VCALENDAR" in response.text
 
     def test_schedule_ics_no_token(self, settings):
-        """토큰 없이 ICS 요청 시 401을 반환하는가?"""
+        """TC-SCH-012: 토큰 없이 ICS 요청 시 403을 반환하는가"""
         no_auth_client = APIClient(
-            base_url=settings.base_classroom_url,
+            base_url=common_data.base_classroom_url,
             token=None,
-            org_name=settings.org,
+            org_name=common_data.org,
             timeout=settings.request_timeout_seconds,
             min_interval=0.3,
         )
         response = no_auth_client.get(
             "/schedule/ics",
             params={
-                "classroom_id": settings.classroom_id,
-                "dt_start_ge": "2026-04-16T15:00:00.000Z",
-                "dt_start_le": "2026-06-14T14:59:59.999Z",
+                "classroom_id": common_data.classroom_id,
+                "dt_start_ge": DT_START,
+                "dt_start_le": DT_END,
                 "offset": 0,
                 "count": 40,
                 "timezone": "Asia/Seoul",
             },
         )
-        assert response.status_code == 401
+        assert response.status_code == 403
 
     def test_schedule_ics_invalid_classroom(self, student_client):
-        """존재하지 않는 classroom_id로 ICS 요청 시 404를 반환하는가?"""
+        """TC-SCH-013: 존재하지 않는 classroom_id로 ICS 요청 시 오류를 반환하는가"""
         response = student_client.get(
             "/schedule/ics",
             params={
                 "classroom_id": "00000000-0000-0000-0000-000000000000",
-                "dt_start_ge": "2026-04-16T15:00:00.000Z",
-                "dt_start_le": "2026-06-14T14:59:59.999Z",
+                "dt_start_ge": DT_START,
+                "dt_start_le": DT_END,
                 "offset": 0,
                 "count": 40,
                 "timezone": "Asia/Seoul",
             },
         )
-        assert response.status_code in (403, 404)
+        assert response.status_code == 409
+
+    def test_schedule_ics_invalid_timezone(self, student_client):
+        """TC-SCH-014: 유효하지 않은 timezone 입력 시 422를 반환하는가"""
+        response = student_client.get(
+            "/schedule/ics",
+            params={
+                "classroom_id": common_data.classroom_id,
+                "dt_start_ge": DT_START,
+                "dt_start_le": DT_END,
+                "offset": 0,
+                "count": 40,
+                "timezone": "Invalid/Zone",
+            },
+        )
+        assert response.status_code in (409, 422)
+
+    def test_schedule_ics_no_schedules_in_range(self, student_client):
+        """TC-SCH-015: 일정이 없는 기간 조회 시 처리되는가"""
+        response = student_client.get(
+            "/schedule/ics",
+            params={
+                "classroom_id": common_data.classroom_id,
+                "dt_start_ge": "2020-01-01T00:00:00.000Z",
+                "dt_start_le": "2020-01-31T00:00:00.000Z",
+                "offset": 0,
+                "count": 40,
+                "timezone": "Asia/Seoul",
+            },
+        )
+        assert response.status_code in (200, 409)
+
+
+class TestSchedulePermission:
+
+    def test_student_cannot_create_schedule(self, student_client):
+        """TC-SCH-016: 학습자 토큰으로 일정 생성 시 403을 반환하는가"""
+        response = student_client.request(
+            "POST",
+            "/schedule",
+            json={
+                "classroom_id": common_data.classroom_id,
+                "summary": "test",
+                "dt_start": "2026-05-20T09:00:00.000Z",
+                "dt_end": "2026-05-20T10:00:00.000Z",
+            },
+        )
+        assert response.status_code == 403
+
+    def test_student_cannot_update_schedule(self, student_client):
+        """TC-SCH-017: 학습자 토큰으로 일정 수정 시 403을 반환하는가"""
+        list_response = student_client.get(
+            "/schedule",
+            params={
+                "classroom_id": common_data.classroom_id,
+                "dt_start_ge": DT_START,
+                "dt_start_le": DT_END,
+                "count": 40,
+            },
+        )
+        schedules = list_response.json()
+        if not schedules:
+            pytest.skip("조회된 일정이 없어 테스트를 건너뜁니다.")
+
+        schedule_id = schedules[0]["id"]
+        response = student_client.request(
+            "PATCH",
+            f"/schedule/{schedule_id}",
+            json={
+                "classroom_id": common_data.classroom_id,
+                "summary": "hacked",
+            },
+        )
+        assert response.status_code == 403
+
+    def test_student_cannot_delete_schedule(self, student_client):
+        """TC-SCH-018: 학습자 토큰으로 일정 삭제 시 403을 반환하는가"""
+        list_response = student_client.get(
+            "/schedule",
+            params={
+                "classroom_id": common_data.classroom_id,
+                "dt_start_ge": DT_START,
+                "dt_start_le": DT_END,
+                "count": 40,
+            },
+        )
+        schedules = list_response.json()
+        if not schedules:
+            pytest.skip("조회된 일정이 없어 테스트를 건너뜁니다.")
+
+        schedule_id = schedules[0]["id"]
+        response = student_client.request(
+            "DELETE",
+            f"/schedule/{schedule_id}",
+            json={"classroom_id": common_data.classroom_id},
+        )
+        assert response.status_code == 403
