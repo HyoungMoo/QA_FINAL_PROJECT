@@ -14,7 +14,7 @@ class TestSchedule:
         response = student_client.get(
             "/schedule",
             params={
-                "classroom_id": common_data.classroom_id,
+                "classroom_id": common_data.student_classroom_id,
                 "dt_start_ge": DT_START,
                 "dt_start_le": DT_END,
                 "count": 40,
@@ -28,7 +28,7 @@ class TestSchedule:
         response = student_client.get(
             "/schedule/count",
             params={
-                "classroom_id": common_data.classroom_id,
+                "classroom_id": common_data.student_classroom_id,
                 "dt_start_ge": DT_START,
                 "dt_start_le": DT_END,
             },
@@ -41,14 +41,14 @@ class TestSchedule:
         no_auth_client = APIClient(
             base_url=common_data.base_classroom_url,
             token=None,
-            org_name=common_data.org,
+            org_name=common_data.org_student,
             timeout=settings.request_timeout_seconds,
             min_interval=0.3,
         )
         response = no_auth_client.get(
             "/schedule",
             params={
-                "classroom_id": common_data.classroom_id,
+                "classroom_id": common_data.student_classroom_id,
                 "dt_start_ge": DT_START,
                 "dt_start_le": DT_END,
                 "count": 40,
@@ -86,7 +86,7 @@ class TestSchedule:
         response = student_client.get(
             "/schedule",
             params={
-                "classroom_id": common_data.classroom_id,
+                "classroom_id": common_data.student_classroom_id,
                 "dt_start_ge": DT_END,
                 "dt_start_le": DT_START,
                 "count": 40,
@@ -99,7 +99,7 @@ class TestSchedule:
         response = student_client.get(
             "/schedule",
             params={
-                "classroom_id": common_data.classroom_id,
+                "classroom_id": common_data.student_classroom_id,
                 "dt_start_ge": "2026-05-15T00:00:00.000Z",
                 "dt_start_le": "2026-05-15T00:00:00.000Z",
                 "count": 40,
@@ -112,7 +112,7 @@ class TestSchedule:
         response = student_client.get(
             "/schedule",
             params={
-                "classroom_id": common_data.classroom_id,
+                "classroom_id": common_data.student_classroom_id,
                 "dt_start_ge": "2026/04/16",
                 "dt_start_le": "2026/06/14",
                 "count": 40,
@@ -125,7 +125,7 @@ class TestSchedule:
         response = student_client.get(
             "/schedule",
             params={
-                "classroom_id": common_data.classroom_id,
+                "classroom_id": common_data.student_classroom_id,
                 "dt_start_ge": DT_START,
                 "dt_start_le": DT_END,
                 "count": 0,
@@ -138,7 +138,7 @@ class TestSchedule:
         response = student_client.get(
             "/schedule",
             params={
-                "classroom_id": common_data.classroom_id,
+                "classroom_id": common_data.student_classroom_id,
                 "dt_start_ge": DT_START,
                 "dt_start_le": DT_END,
                 "count": 99999,
@@ -154,7 +154,7 @@ class TestScheduleIcs:
         response = student_client.get(
             "/schedule/ics",
             params={
-                "classroom_id": common_data.classroom_id,
+                "classroom_id": common_data.student_classroom_id,
                 "dt_start_ge": DT_START,
                 "dt_start_le": DT_END,
                 "offset": 0,
@@ -171,14 +171,14 @@ class TestScheduleIcs:
         no_auth_client = APIClient(
             base_url=common_data.base_classroom_url,
             token=None,
-            org_name=common_data.org,
+            org_name=common_data.org_student,
             timeout=settings.request_timeout_seconds,
             min_interval=0.3,
         )
         response = no_auth_client.get(
             "/schedule/ics",
             params={
-                "classroom_id": common_data.classroom_id,
+                "classroom_id": common_data.student_classroom_id,
                 "dt_start_ge": DT_START,
                 "dt_start_le": DT_END,
                 "offset": 0,
@@ -208,7 +208,7 @@ class TestScheduleIcs:
         response = student_client.get(
             "/schedule/ics",
             params={
-                "classroom_id": common_data.classroom_id,
+                "classroom_id": common_data.student_classroom_id,
                 "dt_start_ge": DT_START,
                 "dt_start_le": DT_END,
                 "offset": 0,
@@ -223,7 +223,7 @@ class TestScheduleIcs:
         response = student_client.get(
             "/schedule/ics",
             params={
-                "classroom_id": common_data.classroom_id,
+                "classroom_id": common_data.student_classroom_id,
                 "dt_start_ge": "2020-01-01T00:00:00.000Z",
                 "dt_start_le": "2020-01-31T00:00:00.000Z",
                 "offset": 0,
@@ -242,7 +242,7 @@ class TestSchedulePermission:
             "POST",
             "/schedule",
             json={
-                "classroom_id": common_data.classroom_id,
+                "classroom_id": common_data.student_classroom_id,
                 "summary": "test",
                 "dt_start": "2026-05-20T09:00:00.000Z",
                 "dt_end": "2026-05-20T10:00:00.000Z",
@@ -255,7 +255,7 @@ class TestSchedulePermission:
         list_response = student_client.get(
             "/schedule",
             params={
-                "classroom_id": common_data.classroom_id,
+                "classroom_id": common_data.student_classroom_id,
                 "dt_start_ge": DT_START,
                 "dt_start_le": DT_END,
                 "count": 40,
@@ -270,7 +270,7 @@ class TestSchedulePermission:
             "PATCH",
             f"/schedule/{schedule_id}",
             json={
-                "classroom_id": common_data.classroom_id,
+                "classroom_id": common_data.student_classroom_id,
                 "summary": "hacked",
             },
         )
@@ -281,7 +281,7 @@ class TestSchedulePermission:
         list_response = student_client.get(
             "/schedule",
             params={
-                "classroom_id": common_data.classroom_id,
+                "classroom_id": common_data.student_classroom_id,
                 "dt_start_ge": DT_START,
                 "dt_start_le": DT_END,
                 "count": 40,
@@ -295,6 +295,6 @@ class TestSchedulePermission:
         response = student_client.request(
             "DELETE",
             f"/schedule/{schedule_id}",
-            json={"classroom_id": common_data.classroom_id},
+            json={"classroom_id": common_data.student_classroom_id},
         )
         assert response.status_code == 403
