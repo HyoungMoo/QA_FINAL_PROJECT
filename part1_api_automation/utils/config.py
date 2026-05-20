@@ -31,8 +31,7 @@ class Settings:
 
     frozen=True는 테스트 실행 중 설정값이 실수로 바뀌지 않게 막기 위한 옵션이다.
     """
-    student_token: str
-    teacher_token: str
+    token: str
     student_id: str
     request_timeout_seconds: float
 
@@ -44,8 +43,7 @@ def get_settings() -> Settings:
     필요한 환경 설정을 한 번에 가져올 수 있다.
     """
     return Settings(
-        student_token=_get_env("student_token"),
-        teacher_token=_get_env("teacher_token"),
+        token=_get_env("token"),
         student_id=_get_env("student_id"),
         request_timeout_seconds=_get_float_env(
             "request_timeout_seconds", 10.0,),
