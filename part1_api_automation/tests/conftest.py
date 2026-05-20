@@ -32,7 +32,7 @@ def student_client(settings: Settings) -> APIClient:
     # test_student.py에서 주로 사용한다.
     return APIClient(
         base_url=common_data.base_classroom_url,
-        token=settings.student_token,
+        token=settings.token,
         org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
         min_interval=0.3,
@@ -44,7 +44,7 @@ def account_student_client(settings: Settings) -> APIClient:
     # api-account 서버 호출 시 사용
     return APIClient(
         base_url=common_data.base_account_url,
-        token=settings.student_token,
+        token=settings.token,
         org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
         min_interval=0.3,
@@ -56,7 +56,7 @@ def dashboard_student_client(settings: Settings) -> APIClient:
     # api-dashboard 서버 호출 시 사용
     return APIClient(
         base_url=common_data.base_dashboard_url,
-        token=settings.student_token,
+        token=settings.token,
         org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
         min_interval=0.3,
@@ -68,7 +68,7 @@ def course_student_client(settings: Settings) -> APIClient:
     # api-course 서버 호출 시 사용
     return APIClient(
         base_url=common_data.base_course_url,
-        token=settings.student_token,
+        token=settings.token,
         org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
         min_interval=0.3,
@@ -80,7 +80,7 @@ def rest_student_client(settings: Settings) -> APIClient:
     # api-rest 서버 호출 시 사용
     return APIClient(
         base_url=common_data.base_rest_url,
-        token=settings.student_token,
+        token=settings.token,
         org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
         min_interval=0.3,
@@ -92,7 +92,7 @@ def billing2_student_client(settings: Settings) -> APIClient:
     # api-billing2 서버 호출 시 사용
     return APIClient(
         base_url=common_data.base_billing2_url,
-        token=settings.student_token,
+        token=settings.token,
         org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
         min_interval=0.3,
@@ -104,7 +104,7 @@ def channel_student_client(settings: Settings) -> APIClient:
     # api-channel 서버 호출 시 사용
     return APIClient(
         base_url=common_data.base_channel_url,
-        token=settings.student_token,
+        token=settings.token,
         org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
         min_interval=0.3,
@@ -116,7 +116,7 @@ def community_student_client(settings: Settings) -> APIClient:
     # api-community 서버 호출 시 사용
     return APIClient(
         base_url=common_data.base_community_url,
-        token=settings.student_token,
+        token=settings.token,
         org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
         min_interval=0.3,
@@ -128,7 +128,7 @@ def notification_student_client(settings: Settings) -> APIClient:
     # api-notification 서버 호출 시 사용
     return APIClient(
         base_url=common_data.base_notification_url,
-        token=settings.student_token,
+        token=settings.token,
         org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
         min_interval=0.3,
@@ -140,7 +140,7 @@ def org_student_client(settings: Settings) -> APIClient:
     # api-org 서버 호출 시 사용
     return APIClient(
         base_url=common_data.base_org_url,
-        token=settings.student_token,
+        token=settings.token,
         org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
         min_interval=0.3,
@@ -152,7 +152,7 @@ def file_student_client(settings: Settings) -> APIClient:
     # api-file 서버 호출 시 사용
     return APIClient(
         base_url=common_data.base_file_url,
-        token=settings.student_token,
+        token=settings.token,
         org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
         min_interval=0.3,
@@ -165,7 +165,7 @@ def teacher_client(settings: Settings) -> APIClient:
     # test_teacher.py나 권한 경계 테스트에서 사용한다.
     return APIClient(
         base_url=common_data.base_classroom_url,
-        token=settings.teacher_token,
+        token=settings.token,
         org_name=common_data.org_teacher,
         timeout=settings.request_timeout_seconds,
         min_interval=0.3,
