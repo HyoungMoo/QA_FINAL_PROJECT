@@ -14,7 +14,7 @@ def test_get_week1_2lecture_material_pdf(settings):
     )
 
     headers = get_auth_headers(
-        settings.student_token
+        settings.token
     )
 
     params = {
@@ -76,7 +76,7 @@ def test_get_week1_2lecture_quiz_material(settings):
     )
 
     headers = get_auth_headers(
-        settings.student_token
+        settings.token
     )
 
     params = {
@@ -122,7 +122,7 @@ def test_get_week1_2lecture_exercise_material(settings):
     )
 
     headers = get_auth_headers(
-        settings.student_token
+        settings.token
     )
 
     params = {
@@ -217,7 +217,7 @@ def test_submit_week1_2lecture_quiz_correct_answer(settings):
     )
 
     headers = get_auth_headers(
-        settings.student_token
+        settings.token
     )
 
     submit_files = {
@@ -312,7 +312,7 @@ def test_submit_week1_2lecture_quiz_wrong_answer(settings):
     )
 
     headers = get_auth_headers(
-        settings.student_token
+        settings.token
     )
 
     submit_files = {
@@ -401,7 +401,7 @@ def test_run_week1_2lecture_exercise(settings):
     # Given
     # 1주차 2번 강의 코딩 실습 실행에 필요한 설정값 세팅
     headers = get_auth_headers(
-        settings.student_token
+        settings.token
     )
 
     join_url = (
@@ -457,7 +457,7 @@ def test_move_next_lesson_from_material_pdf(settings):
     )
 
     headers = get_auth_headers(
-        settings.student_token
+        settings.token
     )
 
     params = {
@@ -505,7 +505,7 @@ def test_move_previous_lesson_from_quiz(settings):
     )
 
     headers = get_auth_headers(
-        settings.student_token
+        settings.token
     )
 
     params = {
@@ -552,7 +552,7 @@ def test_get_material_pdf_without_material_pdf_id(settings):
     )
 
     headers = get_auth_headers(
-        settings.student_token
+        settings.token
     )
 
     params = {}
@@ -600,7 +600,7 @@ def test_get_quiz_with_invalid_material_id(settings):
     )
 
     headers = get_auth_headers(
-        settings.student_token
+        settings.token
     )
 
     params = {
@@ -650,7 +650,7 @@ def test_get_exercise_with_invalid_room_id(settings):
     # Given
     # 존재하지 않는 실습 room_id 조회에 필요한 설정값 세팅
     headers = get_auth_headers(
-        settings.student_token
+        settings.token
     )
 
     url = (
@@ -700,7 +700,7 @@ def test_submit_available_exercise(settings):
     # Given
     # 제출 가능한 코딩 실습 제출에 필요한 설정값 세팅
     headers = get_auth_headers(
-        settings.student_token
+        settings.token
     )
 
     join_url = (
