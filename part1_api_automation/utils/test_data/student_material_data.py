@@ -22,3 +22,9 @@ lecture_case = {
 
 
 }
+teacher_course_case = {
+    "lecture_page_id": 55220388,
+    "course_id": 776162,
+    "lecture_id": 6729529,
+    "move_lecture_page_id": 55218465,
+}
