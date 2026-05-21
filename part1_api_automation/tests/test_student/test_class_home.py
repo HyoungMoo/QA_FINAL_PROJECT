@@ -1716,6 +1716,19 @@ def test_get_account_cert_list(rest_student_client, settings):
         f"list_count={len(body['account_cert_info_list'])}"
     )
 
+    # assert 9. 전체 개수와 요청 count를 기준으로 응답 목록 수가 누락 없이 내려왔는지 확인
+    expected_cert_info_count = min(
+        params["count"],
+        body["account_cert_info_count"],
+    )
+    assert len(body["account_cert_info_list"]) == expected_cert_info_count, (
+        f"본인인증 정보 목록 수가 기대값과 일치하지 않습니다. "
+        f"actual={len(body['account_cert_info_list'])}, "
+        f"expected={expected_cert_info_count}, "
+        f"total_count={body['account_cert_info_count']}, "
+        f"request_count={params['count']}"
+    )
+
     # assert 9. 본인인증 정보가 있는 경우, 첫 번째 항목이 dict 형식인지 확인
     if body["account_cert_info_list"]:
         first_cert_info = body["account_cert_info_list"][0]
@@ -2452,6 +2465,16 @@ def test_get_chat_room_list(rest_student_client):
     assert room_count >= len(body["rooms"]), (
         f"전체 채팅방 개수가 현재 응답 목록 수보다 작습니다. "
         f"room_count={room_count}, rooms_count={len(body['rooms'])}"
+    )
+
+    # assert 10. 전체 개수와 요청 count를 기준으로 응답 목록 수가 누락 없이 내려왔는지 확인
+    expected_room_count = min(params["count"], room_count)
+    assert len(body["rooms"]) == expected_room_count, (
+        f"채팅방 목록 수가 기대값과 일치하지 않습니다. "
+        f"actual={len(body['rooms'])}, "
+        f"expected={expected_room_count}, "
+        f"total_count={room_count}, "
+        f"request_count={params['count']}"
     )
 
     # 채팅방 목록이 없는 경우도 가능하므로 rooms가 있을 때만 상세 검증

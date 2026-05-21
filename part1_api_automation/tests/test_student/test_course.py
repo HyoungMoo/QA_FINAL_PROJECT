@@ -350,6 +350,7 @@ def test_run_week1_2lecture_exercise(rest_student_client):
     )
 
     # 코딩 실습 실행 화면 진입 payload
+    # 1주차 2번 강의 코딩 실습 실행에 필요한 설정값 세팅
     join_files = {
         "exercise_room_id": (
             None,
@@ -607,6 +608,7 @@ def test_submit_available_exercise(rest_student_client):
     )
 
     # 코딩 실습 제출 화면 진입 payload
+    # 제출 가능한 코딩 실습 제출에 필요한 설정값 세팅
     join_files = {
         "exercise_room_id": (
             None,

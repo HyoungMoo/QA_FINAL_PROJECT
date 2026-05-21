@@ -177,7 +177,7 @@ def test_teacher_can_edit_lecture_title(rest_teacher_client):
 
 
 
-def test_teacher_can_move_lecture_page(rest_teacher_client,):
+def test_teacher_can_move_lecture_page(rest_teacher_client):
     # Given
     # 수업자료 목록 조회
     list_response = rest_teacher_client.get(
@@ -550,5 +550,3 @@ def test_teacher_can_reorder_course(teacher_client):
     assert body == {}, (
         f"과목 순서 변경 응답 body가 예상 결과와 다름: {body}"
     )
-
-    
