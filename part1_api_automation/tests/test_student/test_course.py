@@ -1,5 +1,4 @@
-import requests
-from utils.request_helper import get_auth_headers, get_request
+from utils.api_client import APIClient
 from utils.test_data import common_data
 from utils.test_data.student_material_data import lecture_case
 
@@ -127,13 +126,13 @@ def test_get_week1_2lecture_exercise_material(rest_student_client):
 def test_get_material_pdf_without_token(settings):
     # Given
     # Authorization Token 없이 강의자료 PDF 조회에 필요한 설정값 세팅
-    url = (
-        f"{common_data.base_rest_url}"
-        f"/org/{common_data.org_student}"
-        f"/material_pdf/get/"
+    no_auth_client = APIClient(
+        base_url=common_data.base_rest_url,
+        token=None,
+        org_name=common_data.org_student,
+        timeout=settings.request_timeout_seconds,
+        min_interval=common_data.min_request_interval_seconds,
     )
-
-    headers = {}
 
     params = {
         "material_pdf_id":
@@ -142,11 +141,9 @@ def test_get_material_pdf_without_token(settings):
 
     # When
     # Authorization Token 없이 강의자료 PDF 조회 API 요청
-    response = get_request(
-        url=url,
-        headers=headers,
+    response = no_auth_client.get(
+        f"/org/{common_data.org_student}/material_pdf/get/",
         params=params,
-        timeout=settings.request_timeout_seconds,
     )
 
     # Then
@@ -172,19 +169,9 @@ def test_get_material_pdf_without_token(settings):
     )
 
 
-def test_submit_week1_2lecture_quiz_correct_answer(settings, rest_student_client):
+def test_submit_week1_2lecture_quiz_correct_answer(rest_student_client):
     # Given
     # 1주차 2번 강의 퀴즈 정답 제출에 필요한 설정값 세팅
-    submit_url = (
-        f"{common_data.base_rest_url}"
-        f"/org/{common_data.org_student}"
-        f"/material_quiz/response/add/"
-    )
-
-    headers = get_auth_headers(
-        settings.token
-    )
-
     submit_files = {
         "material_quiz_id": (
             None,
@@ -198,11 +185,10 @@ def test_submit_week1_2lecture_quiz_correct_answer(settings, rest_student_client
 
     # When
     # 퀴즈 정답 제출 API 요청
-    submit_response = requests.post(
-        url=submit_url,
-        headers=headers,
+    submit_response = rest_student_client.request(
+        "POST",
+        f"/org/{common_data.org_student}/material_quiz/response/add/",
         files=submit_files,
-        timeout=settings.request_timeout_seconds,
     )
 
     # Then
@@ -259,19 +245,9 @@ def test_submit_week1_2lecture_quiz_correct_answer(settings, rest_student_client
     )
 
 
-def test_submit_week1_2lecture_quiz_wrong_answer(settings, rest_student_client):
+def test_submit_week1_2lecture_quiz_wrong_answer(rest_student_client):
     # Given
     # 1주차 2번 강의 퀴즈 오답 제출에 필요한 설정값 세팅
-    submit_url = (
-        f"{common_data.base_rest_url}"
-        f"/org/{common_data.org_student}"
-        f"/material_quiz/response/add/"
-    )
-
-    headers = get_auth_headers(
-        settings.token
-    )
-
     submit_files = {
         "material_quiz_id": (
             None,
@@ -285,11 +261,10 @@ def test_submit_week1_2lecture_quiz_wrong_answer(settings, rest_student_client):
 
     # When
     # 퀴즈 오답 제출 API 요청
-    submit_response = requests.post(
-        url=submit_url,
-        headers=headers,
+    submit_response = rest_student_client.request(
+        "POST",
+        f"/org/{common_data.org_student}/material_quiz/response/add/",
         files=submit_files,
-        timeout=settings.request_timeout_seconds,
     )
 
     # Then
@@ -346,19 +321,9 @@ def test_submit_week1_2lecture_quiz_wrong_answer(settings, rest_student_client):
     )
 
 
-def test_run_week1_2lecture_exercise(settings):
+def test_run_week1_2lecture_exercise(rest_student_client):
     # Given
     # 1주차 2번 강의 코딩 실습 실행에 필요한 설정값 세팅
-    headers = get_auth_headers(
-        settings.token
-    )
-
-    join_url = (
-        f"{common_data.base_rest_url}"
-        f"/org/{common_data.org_student}"
-        f"/runner_room/exercise_room/join/"
-    )
-
     join_files = {
         "exercise_room_id": (
             None,
@@ -368,11 +333,10 @@ def test_run_week1_2lecture_exercise(settings):
 
     # When
     # 코딩 실습 실행 화면 진입 API 요청
-    join_response = requests.post(
-        url=join_url,
-        headers=headers,
+    join_response = rest_student_client.request(
+        "POST",
+        f"/org/{common_data.org_student}/runner_room/exercise_room/join/",
         files=join_files,
-        timeout=settings.request_timeout_seconds,
     )
 
     # Then
@@ -548,19 +512,9 @@ def test_get_quiz_with_invalid_material_id(rest_student_client):
     )
 
 
-def test_get_exercise_with_invalid_room_id(settings):
+def test_get_exercise_with_invalid_room_id(rest_student_client):
     # Given
     # 존재하지 않는 실습 room_id 조회에 필요한 설정값 세팅
-    headers = get_auth_headers(
-        settings.token
-    )
-
-    url = (
-        f"{common_data.base_rest_url}"
-        f"/org/{common_data.org_student}"
-        f"/runner_room/exercise_room/join/"
-    )
-
     files = {
         "exercise_room_id": (
             None,
@@ -570,11 +524,10 @@ def test_get_exercise_with_invalid_room_id(settings):
 
     # When
     # 존재하지 않는 실습 room_id 조회 API 요청
-    response = requests.post(
-        url=url,
-        headers=headers,
+    response = rest_student_client.request(
+        "POST",
+        f"/org/{common_data.org_student}/runner_room/exercise_room/join/",
         files=files,
-        timeout=settings.request_timeout_seconds,
     )
 
     # Then
@@ -599,19 +552,9 @@ def test_get_exercise_with_invalid_room_id(settings):
     )
 
 
-def test_submit_available_exercise(settings):
+def test_submit_available_exercise(rest_student_client):
     # Given
     # 제출 가능한 코딩 실습 제출에 필요한 설정값 세팅
-    headers = get_auth_headers(
-        settings.token
-    )
-
-    join_url = (
-        f"{common_data.base_rest_url}"
-        f"/org/{common_data.org_student}"
-        f"/runner_room/exercise_room/join/"
-    )
-
     join_files = {
         "exercise_room_id": (
             None,
@@ -621,11 +564,10 @@ def test_submit_available_exercise(settings):
 
     # When
     # 코딩 실습 제출 화면 진입 API 요청
-    join_response = requests.post(
-        url=join_url,
-        headers=headers,
+    join_response = rest_student_client.request(
+        "POST",
+        f"/org/{common_data.org_student}/runner_room/exercise_room/join/",
         files=join_files,
-        timeout=settings.request_timeout_seconds,
     )
 
     # Then
@@ -652,12 +594,6 @@ def test_submit_available_exercise(settings):
     room_token = join_data["room_token"]
     exercise_image_id = join_data["exercise_image_id"]
 
-    submit_url = (
-        f"{common_data.base_rest_url}"
-        f"/org/{common_data.org_student}"
-        f"/material_exercise/exercise_running/submit/"
-    )
-
     submit_files = {
         "room_token": (
             None,
@@ -675,11 +611,10 @@ def test_submit_available_exercise(settings):
 
     # When
     # 코딩 실습 제출 API 요청
-    submit_response = requests.post(
-        url=submit_url,
-        headers=headers,
+    submit_response = rest_student_client.request(
+        "POST",
+        f"/org/{common_data.org_student}/material_exercise/exercise_running/submit/",
         files=submit_files,
-        timeout=settings.request_timeout_seconds,
     )
 
     # Then
