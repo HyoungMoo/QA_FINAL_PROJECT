@@ -677,999 +677,10 @@ def test_student_cannot_get_classroom_ticket_info(student_client):
     print("(에러 상세)detail:", body["detail"])
 
 
-@pytest.mark.p0
-def test_get_classroom_course_list(student_client):
-    # 우선순위 : P0
-    # TC ID: TC_CLASSHOME_006
-    # Postman에서 성공 확인한 클래스룸 과목 목록 조회 API.
-    # Given-When-Then
-        # Given : 로그인 상태(유효한 학습자 토큰 보유), 클래스룸 ID 보유
-        # When : 과목 목록 조회 API를 호출 : GET https://api-classroom.elice.io/classroom/{classroom_id}/course?filter_title=%%&skip=0&count=40
-        # Then : response 결과 확인 : status_code가 200인지, body에 과목 목록 정보가 있는지 확인
-    # 입력값 : 클래스룸 ID, filter_title, skip, count 준비 : classroom_id, %%, 0, 40
-
-    # Given : 로그인 상태(유효한 학습자 토큰 보유), 클래스룸 ID 보유
-    classroom_id = common_data.student_classroom_id
-    params = {
-        "filter_title": "%%",
-        "skip": 0,
-        "count": 40,
-    }
-
-    # When : 과목 목록 조회 API를 호출
-    response = student_client.get(
-        f"/classroom/{classroom_id}/course",
-        params=params,
-    )
-
-    # Then : response 결과 확인
-
-    # assert 1. response의 status code가 200인지 확인
-    assert response.status_code == 200, (
-        f"응답 상태 코드가 200이 아닙니다. "
-        f"status_code={response.status_code}, response={response.text}"
-    )
-
-    # assert 2. 응답 Content-Type이 JSON 형식인지 확인
-    content_type = response.headers.get("Content-Type", "")
-    assert "application/json" in content_type, (
-        f"응답 Content-Type이 JSON 형식이 아닙니다. "
-        f"content_type={content_type}, response={response.text}"
-    )
-
-    body = response.json()
-
-    # assert 3. 응답 body가 list 형식인지 확인
-    assert isinstance(body, list), (
-        f"응답 body가 list 형식이 아닙니다. "
-        f"type={type(body).__name__}, body={body}"
-    )
-
-    # assert 4. 과목 목록이 1개 이상 조회되는지 확인
-    assert len(body) > 0, (
-        "과목 목록이 비어 있습니다."
-    )
-
-    # assert 5. 응답 과목 수가 요청 count 이하인지 확인
-    assert len(body) <= params["count"], (
-        f"응답 과목 수가 요청 count보다 많습니다. "
-        f"actual={len(body)}, expected_max={params['count']}"
-    )
-
-    first_course = body[0]
-
-    # assert 6. 첫 번째 과목에 필수 key가 모두 있는지 확인
-    required_keys = [
-        "id",
-        "title",
-        "classroom_course_status",
-    ]
-
-    missing_keys = [
-        key for key in required_keys
-        if key not in first_course
-    ]
-
-    assert not missing_keys, (
-        f"첫 번째 과목에 필수 항목이 없습니다. "
-        f"missing_keys={missing_keys}, "
-        f"course_keys={list(first_course.keys())}"
-    )
-
-    # assert 7. id가 int 또는 str 형식이고 빈 값이 아닌지 확인
-    assert isinstance(first_course["id"], (int, str)), (
-        f"id가 int 또는 str 형식이 아닙니다. "
-        f"type={type(first_course['id']).__name__}, "
-        f"value={first_course['id']}"
-    )
-
-    assert str(first_course["id"]).strip() != "", (
-        f"id 값이 비어 있습니다. id={first_course['id']!r}"
-    )
-
-    # assert 8. title이 str 형식이고 빈 문자열이 아닌지 확인
-    assert isinstance(first_course["title"], str), (
-        f"title이 str 형식이 아닙니다. "
-        f"type={type(first_course['title']).__name__}, "
-        f"value={first_course['title']}"
-    )
-
-    assert first_course["title"].strip() != "", (
-        f"과목 title 값이 비어 있습니다. title={first_course['title']!r}"
-    )
-
-    # assert 9. classroom_course_status가 str 형식이고 빈 문자열이 아닌지 확인
-    assert isinstance(first_course["classroom_course_status"], str), (
-        f"classroom_course_status가 str 형식이 아닙니다. "
-        f"type={type(first_course['classroom_course_status']).__name__}, "
-        f"value={first_course['classroom_course_status']}"
-    )
-
-    assert first_course["classroom_course_status"].strip() != "", (
-        f"classroom_course_status 값이 비어 있습니다. "
-        f"classroom_course_status={first_course['classroom_course_status']!r}"
-    )
-
-    # assert 10. classroom_course_status가 허용된 상태 값 중 하나인지 확인
-    allowed_course_statuses = [
-        "published",
-        "unpublished",
-        "opened",
-        "closed",
-        "active",
-        "inactive",
-        "completed",
-    ]
-
-    assert first_course["classroom_course_status"] in allowed_course_statuses, (
-        f"classroom_course_status가 허용된 상태 값이 아닙니다. "
-        f"actual={first_course['classroom_course_status']}, "
-        f"allowed={allowed_course_statuses}"
-    )
-
-    # assert 11. 응답 목록 전체의 과목 필수 key와 기본 타입 확인
-    for course in body:
-        missing_course_keys = [
-            key for key in required_keys
-            if key not in course
-        ]
-
-        assert not missing_course_keys, (
-            f"과목 항목에 필수 key가 없습니다. "
-            f"missing_keys={missing_course_keys}, "
-            f"course_keys={list(course.keys())}"
-        )
-
-        assert isinstance(course["title"], str), (
-            f"과목 title이 str 형식이 아닙니다. "
-            f"course_id={course.get('id')}, "
-            f"type={type(course['title']).__name__}, "
-            f"value={course['title']}"
-        )
-
-        assert course["title"].strip() != "", (
-            f"과목 title 값이 비어 있습니다. "
-            f"course_id={course.get('id')}, "
-            f"title={course['title']!r}"
-        )
-
-        assert isinstance(course["classroom_course_status"], str), (
-            f"classroom_course_status가 str 형식이 아닙니다. "
-            f"course_id={course.get('id')}, "
-            f"type={type(course['classroom_course_status']).__name__}, "
-            f"value={course['classroom_course_status']}"
-        )
-
-    print("")
-    print("")
-    print("TC_NO:TC_CLASSHOME_006")
-    print("status_code", response.status_code)
-    print("(과목 목록 수)course_count:", len(body))
-    print("(첫 번째 과목 ID)id:", first_course["id"])
-    print("(첫 번째 과목 제목)title:", first_course["title"])
-    print(
-        "(첫 번째 과목 상태)classroom_course_status:",
-        first_course["classroom_course_status"],
-    )
-
-
-@pytest.mark.p1
-def test_get_schedule_list(student_client):
-    # 우선순위 : P1
-    # TC ID: TC_CLASSHOME_007
-    # Postman에서 성공 확인한 수업 일정 목록 조회 API.
-    # Given-When-Then
-        # Given : 로그인 상태(유효한 학습자 토큰 보유), 클래스룸 ID와 조회 기간 보유
-        # When : 일정 목록 조회 API를 호출 : GET https://api-classroom.elice.io/schedule?classroom_id={classroom_id}&dt_start_ge=2026-04-16T15:00:00.000Z&dt_start_le=2026-06-14T14:59:59.999Z&count=40
-        # Then : response 결과 확인 : status_code가 200인지, body에 일정 목록 정보가 있는지 확인
-    # 입력값 : 클래스룸 ID, 조회 시작일, 조회 종료일, count 준비 : classroom_id, dt_start_ge, dt_start_le, 40
-
-    # 날짜 문자열을 timezone-aware datetime으로 변환
-    def parse_datetime(value):
-        dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
-
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-
-        return dt
-
-    # Given : 로그인 상태(유효한 학습자 토큰 보유), 클래스룸 ID와 조회 기간 보유
-    classroom_id = common_data.student_classroom_id
-    params = {
-        "classroom_id": classroom_id,
-        "dt_start_ge": "2026-04-16T15:00:00.000Z",
-        "dt_start_le": "2026-06-14T14:59:59.999Z",
-        "count": 40,
-    }
-
-    # When : 일정 목록 조회 API를 호출
-    response = student_client.get(
-        "/schedule",
-        params=params,
-    )
-
-    # Then : response 결과 확인
-
-    # assert 1. response의 status code가 200인지 확인
-    assert response.status_code == 200, (
-        f"응답 상태 코드가 200이 아닙니다. "
-        f"status_code={response.status_code}, response={response.text}"
-    )
-
-    # assert 2. 응답 Content-Type이 JSON 형식인지 확인
-    content_type = response.headers.get("Content-Type", "")
-    assert "application/json" in content_type, (
-        f"응답 Content-Type이 JSON 형식이 아닙니다. "
-        f"content_type={content_type}, response={response.text}"
-    )
-
-    body = response.json()
-
-    # assert 3. 응답 body가 list 형식인지 확인
-    assert isinstance(body, list), (
-        f"응답 body가 list 형식이 아닙니다. "
-        f"type={type(body).__name__}, body={body}"
-    )
-
-    # assert 4. 일정 목록이 1개 이상 조회되는지 확인
-    assert len(body) > 0, (
-        "일정 목록이 비어 있습니다."
-    )
-
-    # assert 5. 응답 일정 수가 요청 count 이하인지 확인
-    assert len(body) <= params["count"], (
-        f"응답 일정 수가 요청 count보다 많습니다. "
-        f"actual={len(body)}, expected_max={params['count']}"
-    )
-
-    first_schedule = body[0]
-
-    # assert 6. 첫 번째 일정에 필수 key가 모두 있는지 확인
-    required_keys = [
-        "id",
-        "summary",
-        "dt_start",
-        "dt_end",
-    ]
-
-    missing_keys = [
-        key for key in required_keys
-        if key not in first_schedule
-    ]
-
-    assert not missing_keys, (
-        f"첫 번째 일정에 필수 항목이 없습니다. "
-        f"missing_keys={missing_keys}, "
-        f"schedule_keys={list(first_schedule.keys())}"
-    )
-
-    # assert 7. id가 int 또는 str 형식이고 빈 값이 아닌지 확인
-    assert isinstance(first_schedule["id"], (int, str)), (
-        f"id가 int 또는 str 형식이 아닙니다. "
-        f"type={type(first_schedule['id']).__name__}, "
-        f"value={first_schedule['id']}"
-    )
-
-    assert str(first_schedule["id"]).strip() != "", (
-        f"id 값이 비어 있습니다. id={first_schedule['id']!r}"
-    )
-
-    # assert 8. summary가 str 형식이고 빈 문자열이 아닌지 확인
-    assert isinstance(first_schedule["summary"], str), (
-        f"summary가 str 형식이 아닙니다. "
-        f"type={type(first_schedule['summary']).__name__}, "
-        f"value={first_schedule['summary']}"
-    )
-
-    assert first_schedule["summary"].strip() != "", (
-        f"summary 값이 비어 있습니다. "
-        f"summary={first_schedule['summary']!r}"
-    )
-
-    # assert 9. dt_start, dt_end가 str 형식이고 빈 문자열이 아닌지 확인
-    assert isinstance(first_schedule["dt_start"], str), (
-        f"dt_start가 str 형식이 아닙니다. "
-        f"type={type(first_schedule['dt_start']).__name__}, "
-        f"value={first_schedule['dt_start']}"
-    )
-
-    assert first_schedule["dt_start"].strip() != "", (
-        f"dt_start 값이 비어 있습니다. "
-        f"dt_start={first_schedule['dt_start']!r}"
-    )
-
-    assert isinstance(first_schedule["dt_end"], str), (
-        f"dt_end가 str 형식이 아닙니다. "
-        f"type={type(first_schedule['dt_end']).__name__}, "
-        f"value={first_schedule['dt_end']}"
-    )
-
-    assert first_schedule["dt_end"].strip() != "", (
-        f"dt_end 값이 비어 있습니다. "
-        f"dt_end={first_schedule['dt_end']!r}"
-    )
-
-    # assert 10. 첫 번째 일정의 시작 시간이 종료 시간보다 늦지 않은지 확인
-    first_dt_start = parse_datetime(first_schedule["dt_start"])
-    first_dt_end = parse_datetime(first_schedule["dt_end"])
-
-    assert first_dt_start <= first_dt_end, (
-        f"일정 시작 시간이 종료 시간보다 늦습니다. "
-        f"dt_start={first_schedule['dt_start']}, "
-        f"dt_end={first_schedule['dt_end']}"
-    )
-
-    # 요청 기간 값은 출력/참고용으로만 변환
-    request_dt_start_ge = parse_datetime(params["dt_start_ge"])
-    request_dt_start_le = parse_datetime(params["dt_start_le"])
-
-    # assert 11. 응답 목록 전체의 필수 key, 시간 형식, 시작/종료 시간 관계 확인
-    for schedule in body:
-        missing_schedule_keys = [
-            key for key in required_keys
-            if key not in schedule
-        ]
-
-        assert not missing_schedule_keys, (
-            f"일정 항목에 필수 key가 없습니다. "
-            f"missing_keys={missing_schedule_keys}, "
-            f"schedule_keys={list(schedule.keys())}"
-        )
-
-        assert isinstance(schedule["summary"], str), (
-            f"일정 summary가 str 형식이 아닙니다. "
-            f"schedule_id={schedule.get('id')}, "
-            f"type={type(schedule['summary']).__name__}, "
-            f"value={schedule['summary']}"
-        )
-
-        assert schedule["summary"].strip() != "", (
-            f"일정 summary 값이 비어 있습니다. "
-            f"schedule_id={schedule.get('id')}, "
-            f"summary={schedule['summary']!r}"
-        )
-
-        assert isinstance(schedule["dt_start"], str), (
-            f"dt_start가 str 형식이 아닙니다. "
-            f"schedule_id={schedule.get('id')}, "
-            f"type={type(schedule['dt_start']).__name__}, "
-            f"value={schedule['dt_start']}"
-        )
-
-        assert isinstance(schedule["dt_end"], str), (
-            f"dt_end가 str 형식이 아닙니다. "
-            f"schedule_id={schedule.get('id')}, "
-            f"type={type(schedule['dt_end']).__name__}, "
-            f"value={schedule['dt_end']}"
-        )
-
-        schedule_dt_start = parse_datetime(schedule["dt_start"])
-        schedule_dt_end = parse_datetime(schedule["dt_end"])
-
-        assert schedule_dt_start <= schedule_dt_end, (
-            f"일정 시작 시간이 종료 시간보다 늦습니다. "
-            f"schedule_id={schedule.get('id')}, "
-            f"dt_start={schedule['dt_start']}, "
-            f"dt_end={schedule['dt_end']}"
-        )
-
-    print("")
-    print("")
-    print("TC_NO:TC_CLASSHOME_007")
-    print("status_code", response.status_code)
-    print("(일정 목록 수)schedule_count:", len(body))
-    print("(요청 조회 시작)dt_start_ge:", params["dt_start_ge"])
-    print("(요청 조회 종료)dt_start_le:", params["dt_start_le"])
-    print("(첫 번째 일정 ID)id:", first_schedule["id"])
-    print("(첫 번째 일정 제목)summary:", first_schedule["summary"])
-    print("(첫 번째 일정 시작)dt_start:", first_schedule["dt_start"])
-    print("(첫 번째 일정 종료)dt_end:", first_schedule["dt_end"])
-
-
-@pytest.mark.p1
-def test_get_schedule_by_date(student_client):
-    # 우선순위 : P1
-    # TC ID: TC_CLASSHOME_008
-    # Postman에서 성공 확인한 일자별 수업 일정 목록 조회 API.
-    # Given-When-Then
-        # Given : 로그인 상태(유효한 학습자 토큰 보유), 클래스룸 ID와 조회 날짜 보유
-        # When : 일자별 일정 목록 조회 API를 호출 : GET https://api-classroom.elice.io/schedule/by_date?classroom_id={classroom_id}&date=2026-05-15
-        # Then : response 결과 확인 : status_code가 200인지, body에 해당 날짜의 일정 정보가 있는지 확인
-    # 입력값 : 클래스룸 ID, 조회 날짜 준비 : classroom_id, 2026-05-15
-
-    # 날짜 문자열을 timezone-aware datetime으로 변환
-    def parse_datetime(value):
-        dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
-
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-
-        return dt
-
-    # Given : 로그인 상태(유효한 학습자 토큰 보유), 클래스룸 ID와 조회 날짜 보유
-    classroom_id = common_data.student_classroom_id
-    # TODO: 조회 날짜는 현재 TC 기준 임시 테스트 데이터다.
-    # 추후 팀 기준에 따라 fixture 또는 별도 test data 파일로 이동할 수 있다.
-    target_date = "2026-05-15"
-    params = {
-        "classroom_id": classroom_id,
-        "date": target_date,
-    }
-
-    # When : 일자별 일정 목록 조회 API를 호출
-    response = student_client.get(
-        "/schedule/by_date",
-        params=params,
-    )
-
-    # Then : response 결과 확인
-
-    # assert 1. response의 status code가 200인지 확인
-    assert response.status_code == 200, (
-        f"응답 상태 코드가 200이 아닙니다. "
-        f"status_code={response.status_code}, response={response.text}"
-    )
-
-    # assert 2. 응답 Content-Type이 JSON 형식인지 확인
-    content_type = response.headers.get("Content-Type", "")
-    assert "application/json" in content_type, (
-        f"응답 Content-Type이 JSON 형식이 아닙니다. "
-        f"content_type={content_type}, response={response.text}"
-    )
-
-    body = response.json()
-
-    # assert 3. 응답 body가 list 형식인지 확인
-    assert isinstance(body, list), (
-        f"응답 body가 list 형식이 아닙니다. "
-        f"type={type(body).__name__}, body={body}"
-    )
-
-    # assert 4. 일자별 일정 목록이 1개 이상 조회되는지 확인
-    assert len(body) > 0, (
-        "일자별 일정 목록이 비어 있습니다."
-    )
-
-    first_date_schedule = body[0]
-
-    # assert 5. 첫 번째 일자별 일정 그룹에 필수 key가 모두 있는지 확인
-    required_date_group_keys = [
-        "date",
-        "schedules",
-    ]
-
-    missing_date_group_keys = [
-        key for key in required_date_group_keys
-        if key not in first_date_schedule
-    ]
-
-    assert not missing_date_group_keys, (
-        f"첫 번째 일자별 일정에 필수 항목이 없습니다. "
-        f"missing_keys={missing_date_group_keys}, "
-        f"keys={list(first_date_schedule.keys())}"
-    )
-
-    # assert 6. date가 str 형식이고 빈 문자열이 아닌지 확인
-    assert isinstance(first_date_schedule["date"], str), (
-        f"date가 str 형식이 아닙니다. "
-        f"type={type(first_date_schedule['date']).__name__}, "
-        f"value={first_date_schedule['date']}"
-    )
-
-    assert first_date_schedule["date"].strip() != "", (
-        f"date 값이 비어 있습니다. "
-        f"date={first_date_schedule['date']!r}"
-    )
-
-    # assert 7. date가 요청한 target_date와 일치하는지 확인
-    assert first_date_schedule["date"] == target_date, (
-        f"응답 date가 요청한 날짜와 일치하지 않습니다. "
-        f"actual={first_date_schedule['date']}, expected={target_date}"
-    )
-
-    # assert 8. schedules가 list 형식인지 확인
-    assert isinstance(first_date_schedule["schedules"], list), (
-        f"schedules가 list 형식이 아닙니다. "
-        f"type={type(first_date_schedule['schedules']).__name__}, "
-        f"schedules={first_date_schedule['schedules']}"
-    )
-
-    # assert 9. relative_date가 있는 경우 None 또는 str 형식인지 확인
-    if "relative_date" in first_date_schedule:
-        assert first_date_schedule["relative_date"] is None or isinstance(
-            first_date_schedule["relative_date"], str
-        ), (
-            f"relative_date가 None 또는 str 형식이 아닙니다. "
-            f"type={type(first_date_schedule['relative_date']).__name__}, "
-            f"value={first_date_schedule['relative_date']}"
-        )
-
-    # assert 10. 응답 날짜 그룹 전체의 기본 구조 확인
-    for date_group in body:
-        missing_keys = [
-            key for key in required_date_group_keys
-            if key not in date_group
-        ]
-
-        assert not missing_keys, (
-            f"일자별 일정 그룹에 필수 key가 없습니다. "
-            f"missing_keys={missing_keys}, "
-            f"keys={list(date_group.keys())}"
-        )
-
-        assert isinstance(date_group["date"], str), (
-            f"date가 str 형식이 아닙니다. "
-            f"type={type(date_group['date']).__name__}, "
-            f"value={date_group['date']}"
-        )
-
-        assert date_group["date"].strip() != "", (
-            f"date 값이 비어 있습니다. "
-            f"date={date_group['date']!r}"
-        )
-
-        assert isinstance(date_group["schedules"], list), (
-            f"schedules가 list 형식이 아닙니다. "
-            f"date={date_group.get('date')}, "
-            f"type={type(date_group['schedules']).__name__}, "
-            f"schedules={date_group['schedules']}"
-        )
-
-    # assert 11. 첫 번째 날짜 그룹에 일정이 있는 경우, 일정 항목 구조 확인
-    if first_date_schedule["schedules"]:
-        first_schedule = first_date_schedule["schedules"][0]
-
-        required_schedule_keys = [
-            "id",
-            "summary",
-            "dt_start",
-            "dt_end",
-        ]
-
-        missing_schedule_keys = [
-            key for key in required_schedule_keys
-            if key not in first_schedule
-        ]
-
-        assert not missing_schedule_keys, (
-            f"첫 번째 일정에 필수 항목이 없습니다. "
-            f"missing_keys={missing_schedule_keys}, "
-            f"schedule_keys={list(first_schedule.keys())}"
-        )
-
-        # assert 12. 첫 번째 일정 id가 int 또는 str 형식이고 빈 값이 아닌지 확인
-        assert isinstance(first_schedule["id"], (int, str)), (
-            f"일정 id가 int 또는 str 형식이 아닙니다. "
-            f"type={type(first_schedule['id']).__name__}, "
-            f"value={first_schedule['id']}"
-        )
-
-        assert str(first_schedule["id"]).strip() != "", (
-            f"일정 id 값이 비어 있습니다. "
-            f"id={first_schedule['id']!r}"
-        )
-
-        # assert 13. 첫 번째 일정 summary가 str 형식이고 빈 문자열이 아닌지 확인
-        assert isinstance(first_schedule["summary"], str), (
-            f"일정 summary가 str 형식이 아닙니다. "
-            f"type={type(first_schedule['summary']).__name__}, "
-            f"value={first_schedule['summary']}"
-        )
-
-        assert first_schedule["summary"].strip() != "", (
-            f"일정 summary 값이 비어 있습니다. "
-            f"summary={first_schedule['summary']!r}"
-        )
-
-        # assert 14. 첫 번째 일정 dt_start, dt_end가 str 형식이고 빈 문자열이 아닌지 확인
-        assert isinstance(first_schedule["dt_start"], str), (
-            f"dt_start가 str 형식이 아닙니다. "
-            f"type={type(first_schedule['dt_start']).__name__}, "
-            f"value={first_schedule['dt_start']}"
-        )
-
-        assert first_schedule["dt_start"].strip() != "", (
-            f"dt_start 값이 비어 있습니다. "
-            f"dt_start={first_schedule['dt_start']!r}"
-        )
-
-        assert isinstance(first_schedule["dt_end"], str), (
-            f"dt_end가 str 형식이 아닙니다. "
-            f"type={type(first_schedule['dt_end']).__name__}, "
-            f"value={first_schedule['dt_end']}"
-        )
-
-        assert first_schedule["dt_end"].strip() != "", (
-            f"dt_end 값이 비어 있습니다. "
-            f"dt_end={first_schedule['dt_end']!r}"
-        )
-
-        # assert 15. 첫 번째 일정의 시작 시간이 종료 시간보다 늦지 않은지 확인
-        first_dt_start = parse_datetime(first_schedule["dt_start"])
-        first_dt_end = parse_datetime(first_schedule["dt_end"])
-
-        assert first_dt_start <= first_dt_end, (
-            f"일정 시작 시간이 종료 시간보다 늦습니다. "
-            f"dt_start={first_schedule['dt_start']}, "
-            f"dt_end={first_schedule['dt_end']}"
-        )
-
-        # assert 16. 첫 번째 날짜 그룹 내 모든 일정의 기본 구조와 시간 관계 확인
-        for schedule in first_date_schedule["schedules"]:
-            missing_keys = [
-                key for key in required_schedule_keys
-                if key not in schedule
-            ]
-
-            assert not missing_keys, (
-                f"일정 항목에 필수 key가 없습니다. "
-                f"missing_keys={missing_keys}, "
-                f"schedule_keys={list(schedule.keys())}"
-            )
-
-            assert isinstance(schedule["summary"], str), (
-                f"일정 summary가 str 형식이 아닙니다. "
-                f"schedule_id={schedule.get('id')}, "
-                f"type={type(schedule['summary']).__name__}, "
-                f"value={schedule['summary']}"
-            )
-
-            assert schedule["summary"].strip() != "", (
-                f"일정 summary 값이 비어 있습니다. "
-                f"schedule_id={schedule.get('id')}, "
-                f"summary={schedule['summary']!r}"
-            )
-
-            schedule_dt_start = parse_datetime(schedule["dt_start"])
-            schedule_dt_end = parse_datetime(schedule["dt_end"])
-
-            assert schedule_dt_start <= schedule_dt_end, (
-                f"일정 시작 시간이 종료 시간보다 늦습니다. "
-                f"schedule_id={schedule.get('id')}, "
-                f"dt_start={schedule['dt_start']}, "
-                f"dt_end={schedule['dt_end']}"
-            )
-
-    print("")
-    print("")
-    print("TC_NO:TC_CLASSHOME_008")
-    print("status_code", response.status_code)
-    print("(조회 결과 날짜 수)date_group_count:", len(body))
-    print("(첫 번째 조회 날짜)date:", first_date_schedule["date"])
-    print("(상대 날짜)relative_date:", first_date_schedule.get("relative_date"))
-    print("(일정 목록 수)schedules_count:", len(first_date_schedule["schedules"]))
-
-    if first_date_schedule["schedules"]:
-        first_schedule = first_date_schedule["schedules"][0]
-        print("(첫 번째 일정 ID)id:", first_schedule.get("id"))
-        print("(첫 번째 일정 제목)summary:", first_schedule.get("summary"))
-        print("(첫 번째 일정 시작)dt_start:", first_schedule.get("dt_start"))
-        print("(첫 번째 일정 종료)dt_end:", first_schedule.get("dt_end"))
-
-
-@pytest.mark.p2
-def test_get_schedule_count(student_client):
-    # 우선순위 : P2
-    # TC ID: TC_CLASSHOME_009
-    # Postman에서 성공 확인한 일정 개수 조회 API.
-    # Given-When-Then
-        # Given : 로그인 상태(유효한 학습자 토큰 보유), 클래스룸 ID와 조회 기간 보유
-        # When : 일정 개수 조회 API를 호출 : GET https://api-classroom.elice.io/schedule/count
-        # Then : response 결과 확인 : status_code가 200인지, body에 일정 개수 count가 있는지 확인
-    # 입력값 : 클래스룸 ID, 조회 시작일, 조회 종료일 준비 : classroom_id, dt_start_ge, dt_start_le
-
-    # Given : 로그인 상태(유효한 학습자 토큰 보유), 클래스룸 ID와 조회 기간 보유
-    classroom_id = common_data.student_classroom_id
-    params = {
-        "classroom_id": classroom_id,
-        "dt_start_ge": "2026-04-16T15:00:00.000Z",
-        "dt_start_le": "2026-06-14T14:59:59.999Z",
-    }
-
-    # When : 일정 개수 조회 API를 호출
-    response = student_client.get("/schedule/count", params=params)
-
-    # Then : response 결과 확인
-
-    # assert 1. response의 status code가 200인지 확인
-    assert response.status_code == 200, (
-        f"응답 상태 코드가 200이 아닙니다. "
-        f"status_code={response.status_code}, response={response.text}"
-    )
-
-    # assert 2. 응답 Content-Type이 JSON 형식인지 확인
-    content_type = response.headers.get("Content-Type", "")
-    assert "application/json" in content_type, (
-        f"응답 Content-Type이 JSON 형식이 아닙니다. "
-        f"content_type={content_type}, response={response.text}"
-    )
-
-    body = response.json()
-
-    # assert 3. 응답 body가 dict 형식인지 확인
-    assert isinstance(body, dict), (
-        f"응답 body가 dict 형식이 아닙니다. "
-        f"type={type(body).__name__}, body={body}"
-    )
-
-    # assert 4. count 항목이 있는지 확인
-    assert "count" in body, (
-        f"응답 body에 'count' 항목이 없습니다. "
-        f"body keys={list(body.keys())}"
-    )
-
-    # assert 5. count 값이 int 형식인지 확인
-    assert isinstance(body["count"], int), (
-        f"count 값이 int 형식이 아닙니다. "
-        f"type={type(body['count']).__name__}, count={body['count']}"
-    )
-
-    # assert 6. count 값이 0 이상인지 확인
-    assert body["count"] >= 0, (
-        f"일정 개수가 음수입니다. "
-        f"count={body['count']}"
-    )
-
-    print("")
-    print("")
-    print("TC_NO:TC_CLASSHOME_009")
-    print("status_code", response.status_code)
-    print("(일정 개수)schedule_count:", body["count"])
-
-
-@pytest.mark.p1
-def test_get_schedule_summary(student_client):
-    # 우선순위 : P1
-    # TC ID: TC_CLASSHOME_010
-    # Postman에서 성공 확인한 수업 일정 요약 조회 API.
-    # Given-When-Then
-        # Given : 로그인 상태(유효한 학습자 토큰 보유), 클래스룸 ID와 조회 기간 보유
-        # When : 일정 요약 조회 API를 호출 : GET https://api-classroom.elice.io/schedule/summary?classroom_id={classroom_id}&date_start=2026-05-10&date_end=2026-05-16
-        # Then : response 결과 확인 : status_code가 200인지, body에 일자별 일정 존재 여부가 있는지 확인
-    # 입력값 : 클래스룸 ID, 조회 시작일, 조회 종료일 준비 : classroom_id, 2026-05-10, 2026-05-16
-
-    # Given : 로그인 상태(유효한 학습자 토큰 보유), 클래스룸 ID와 조회 기간 보유
-    classroom_id = common_data.student_classroom_id
-    # TODO: 조회 기간은 현재 TC 기준 임시 테스트 데이터다.
-    # 추후 팀 기준에 따라 fixture 또는 별도 test data 파일로 이동할 수 있다.
-    date_start = "2026-05-10"
-    date_end = "2026-05-16"
-    params = {
-        "classroom_id": classroom_id,
-        "date_start": date_start,
-        "date_end": date_end,
-    }
-
-    # When : 일정 요약 조회 API를 호출
-    response = student_client.get(
-        "/schedule/summary",
-        params=params,
-    )
-
-    # Then : response 결과 확인
-
-    # assert 1. response의 status code가 200인지 확인
-    assert response.status_code == 200, (
-        f"응답 상태 코드가 200이 아닙니다. "
-        f"status_code={response.status_code}, response={response.text}"
-    )
-
-    # assert 2. 응답 Content-Type이 JSON 형식인지 확인
-    content_type = response.headers.get("Content-Type", "")
-    assert "application/json" in content_type, (
-        f"응답 Content-Type이 JSON 형식이 아닙니다. "
-        f"content_type={content_type}, response={response.text}"
-    )
-
-    body = response.json()
-
-    # assert 3. 응답 body가 dict 형식인지 확인
-    assert isinstance(body, dict), (
-        f"응답 body가 dict 형식이 아닙니다. "
-        f"type={type(body).__name__}, body={body}"
-    )
-
-    # assert 4. days 항목이 있는지 확인
-    assert "days" in body, (
-        f"응답 body에 'days' 항목이 없습니다. "
-        f"body keys={list(body.keys())}"
-    )
-
-    # assert 5. days가 list 형식인지 확인
-    assert isinstance(body["days"], list), (
-        f"days가 list 형식이 아닙니다. "
-        f"type={type(body['days']).__name__}, days={body['days']}"
-    )
-
-    # assert 6. 일자별 요약 목록이 1개 이상 조회되는지 확인
-    assert len(body["days"]) > 0, (
-        "일자별 일정 요약 목록이 비어 있습니다."
-    )
-
-    first_day = body["days"][0]
-
-    # assert 7. 첫 번째 일정 요약에 필수 key가 모두 있는지 확인
-    required_day_keys = [
-        "date",
-        "schedule_exists",
-    ]
-
-    missing_day_keys = [
-        key for key in required_day_keys
-        if key not in first_day
-    ]
-
-    assert not missing_day_keys, (
-        f"첫 번째 일정 요약에 필수 항목이 없습니다. "
-        f"missing_keys={missing_day_keys}, "
-        f"day_keys={list(first_day.keys())}"
-    )
-
-    # assert 8. date가 str 형식이고 빈 문자열이 아닌지 확인
-    assert isinstance(first_day["date"], str), (
-        f"date가 str 형식이 아닙니다. "
-        f"type={type(first_day['date']).__name__}, "
-        f"value={first_day['date']}"
-    )
-
-    assert first_day["date"].strip() != "", (
-        f"date 값이 비어 있습니다. "
-        f"date={first_day['date']!r}"
-    )
-
-    # assert 9. 첫 번째 date가 요청 기간 안에 있는지 확인
-    assert date_start <= first_day["date"] <= date_end, (
-        f"첫 번째 요약 날짜가 요청 기간 밖에 있습니다. "
-        f"actual={first_day['date']}, "
-        f"expected_range={date_start} ~ {date_end}"
-    )
-
-    # assert 10. schedule_exists 값이 bool 형식인지 확인
-    assert isinstance(first_day["schedule_exists"], bool), (
-        f"schedule_exists 값이 bool 형식이 아닙니다. "
-        f"type={type(first_day['schedule_exists']).__name__}, "
-        f"value={first_day['schedule_exists']}"
-    )
-
-    # assert 11. 응답 days 전체의 기본 구조와 날짜 범위 확인
-    for day in body["days"]:
-        missing_keys = [
-            key for key in required_day_keys
-            if key not in day
-        ]
-
-        assert not missing_keys, (
-            f"일정 요약 항목에 필수 key가 없습니다. "
-            f"missing_keys={missing_keys}, "
-            f"day_keys={list(day.keys())}"
-        )
-
-        assert isinstance(day["date"], str), (
-            f"date가 str 형식이 아닙니다. "
-            f"type={type(day['date']).__name__}, "
-            f"value={day['date']}"
-        )
-
-        assert day["date"].strip() != "", (
-            f"date 값이 비어 있습니다. "
-            f"date={day['date']!r}"
-        )
-
-        assert date_start <= day["date"] <= date_end, (
-            f"요약 날짜가 요청 기간 밖에 있습니다. "
-            f"actual={day['date']}, "
-            f"expected_range={date_start} ~ {date_end}"
-        )
-
-        assert isinstance(day["schedule_exists"], bool), (
-            f"schedule_exists 값이 bool 형식이 아닙니다. "
-            f"date={day.get('date')}, "
-            f"type={type(day['schedule_exists']).__name__}, "
-            f"value={day['schedule_exists']}"
-        )
-
-    print("")
-    print("")
-    print("TC_NO:TC_CLASSHOME_010")
-    print("status_code", response.status_code)
-    print("(일정 요약 수)days_count:", len(body["days"]))
-    print("(첫 번째 요약 날짜)date:", first_day["date"])
-    print("(일정 존재 여부)schedule_exists:", first_day["schedule_exists"])
-
-
-@pytest.mark.p1
-def test_get_course_progress_list(student_client):
-    # 우선순위 : P1
-    # TC ID: TC_CLASSHOME_011
-    # Postman에서 성공 확인한 과목별 학습 진도 목록 조회 API.
-    # Given-When-Then
-        # Given : 로그인 상태(유효한 학습자 토큰 보유), 클래스룸 ID 보유
-        # When : 과목 진도 목록 조회 API를 호출 : GET https://api-classroom.elice.io/v2/classroom/{classroom_id}/course/progress?skip=0&count=40
-        # Then : response 결과 확인 : status_code가 200인지, body가 과목 진도 목록 배열인지 확인
-    # 입력값 : 클래스룸 ID, skip, count 준비 : classroom_id, 0, 40
-
-    # Given : 로그인 상태(유효한 학습자 토큰 보유), 클래스룸 ID 보유
-    classroom_id = common_data.student_classroom_id
-    params = {
-        "skip": 0,
-        "count": 40,
-    }
-
-    # When : 과목 진도 목록 조회 API를 호출
-    response = student_client.get(
-        f"/v2/classroom/{classroom_id}/course/progress",
-        params=params,
-    )
-
-    # Then : response 결과 확인
-
-    # assert 1. response의 status code가 200인지 확인
-    assert response.status_code == 200, (
-        f"응답 상태 코드가 200이 아닙니다. "
-        f"status_code={response.status_code}, response={response.text}"
-    )
-
-    # assert 2. 응답 Content-Type이 JSON 형식인지 확인
-    content_type = response.headers.get("Content-Type", "")
-    assert "application/json" in content_type, (
-        f"응답 Content-Type이 JSON 형식이 아닙니다. "
-        f"content_type={content_type}, response={response.text}"
-    )
-
-    body = response.json()
-
-    # assert 3. 응답 body가 list 형식인지 확인
-    assert isinstance(body, list), (
-        f"응답 body가 list 형식이 아닙니다. "
-        f"type={type(body).__name__}, body={body}"
-    )
-
-    # assert 4. 응답 과목 진도 목록 수가 요청 count 이하인지 확인
-    assert len(body) <= params["count"], (
-        f"응답 과목 진도 목록 수가 요청 count보다 많습니다. "
-        f"actual={len(body)}, expected_max={params['count']}"
-    )
-
-    # assert 5. 응답 목록이 비어 있지 않은 경우, 첫 번째 항목이 dict 형식인지 확인
-    if body:
-        first_progress = body[0]
-
-        assert isinstance(first_progress, dict), (
-            f"첫 번째 과목 진도 항목이 dict 형식이 아닙니다. "
-            f"type={type(first_progress).__name__}, "
-            f"value={first_progress}"
-        )
-
-        # assert 6. 응답 목록 전체 항목이 dict 형식인지 확인
-        for progress in body:
-            assert isinstance(progress, dict), (
-                f"과목 진도 항목이 dict 형식이 아닙니다. "
-                f"type={type(progress).__name__}, "
-                f"value={progress}"
-            )
-
-        # assert 7. 첫 번째 항목에 식별 가능한 key가 1개 이상 있는지 확인
-        assert len(first_progress.keys()) > 0, (
-            f"첫 번째 과목 진도 항목에 key가 없습니다. "
-            f"first_progress={first_progress}"
-        )
-
-    print("")
-    print("")
-    print("TC_NO:TC_CLASSHOME_011")
-    print("status_code", response.status_code)
-    print("(과목 진도 목록 수)course_progress_count:", len(body))
-
-    if body:
-        first_progress = body[0]
-        print("(첫 번째 과목 진도 key 목록)first_progress_keys:", list(first_progress.keys()))
-        print("(첫 번째 과목 진도 데이터)first_progress:", first_progress)
-
-
 @pytest.mark.p2
 def test_get_ai_model_list(community_student_client):
     # 우선순위 : P2
-    # TC ID: TC_CLASSHOME_012
+    # TC ID: TC_CLASSHOME_006
     # Postman에서 성공 확인한 AI 모델 목록 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유), 활성화 필터 보유
@@ -1827,7 +838,7 @@ def test_get_ai_model_list(community_student_client):
 
     print("")
     print("")
-    print("TC_NO:TC_CLASSHOME_012")
+    print("TC_NO:TC_CLASSHOME_006")
     print("status_code", response.status_code)
     print("(AI 모델 목록 수)model_count:", len(body))
 
@@ -1841,7 +852,7 @@ def test_get_ai_model_list(community_student_client):
 @pytest.mark.p2
 def test_get_token_grant_list(community_student_client):
     # 우선순위 : P2
-    # TC ID: TC_CLASSHOME_013
+    # TC ID: TC_CLASSHOME_007
     # Postman에서 성공 확인한 토큰 부여 정보 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유), 조회 시작일 필터 보유
@@ -2038,7 +1049,7 @@ def test_get_token_grant_list(community_student_client):
 
     print("")
     print("")
-    print("TC_NO:TC_CLASSHOME_013")
+    print("TC_NO:TC_CLASSHOME_007")
     print("status_code", response.status_code)
     print("(토큰 부여 정보 수)token_grant_count:", len(body))
 
@@ -2053,7 +1064,7 @@ def test_get_token_grant_list(community_student_client):
 @pytest.mark.p2
 def test_get_token_quota_by_account(community_student_client, settings):
     # 우선순위 : P2
-    # TC ID: TC_CLASSHOME_014
+    # TC ID: TC_CLASSHOME_008
     # Postman에서 성공 확인한 토큰 쿼터 정보 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유), 학습자 ID 보유
@@ -2149,7 +1160,7 @@ def test_get_token_quota_by_account(community_student_client, settings):
 
     print("")
     print("")
-    print("TC_NO:TC_CLASSHOME_014")
+    print("TC_NO:TC_CLASSHOME_008")
     print("status_code", response.status_code)
     print("(학습자 ID)account_id:", params["account_id"])
     print("(쿼터 사용 여부)is_quota_enabled:", body["is_quota_enabled"])
@@ -2160,132 +1171,10 @@ def test_get_token_quota_by_account(community_student_client, settings):
         print("(쿼터 정보 key 목록)quota_info_keys:", list(body["quota_info"].keys()))
 
 
-@pytest.mark.p1
-def test_get_course_next_lecture_page(course_student_client):
-    # 우선순위 : P1
-    # TC ID: TC_CLASSHOME_015
-    # Postman에서 성공 확인한 과목 기준 다음 학습 강의 페이지 조회 API.
-    # Given-When-Then
-        # Given : 로그인 상태(유효한 학습자 토큰 보유), 과목 ID 보유
-        # When : 다음 학습 강의 페이지 조회 API를 호출 : GET https://api-course.elice.io/course/{course_id_1}/next_lecture_page?fallback=true&elice_course_id={elice_course_id}
-        # Then : response 결과 확인 : status_code가 200인지, body에 다음 학습 강의 페이지 정보가 있는지 확인
-    # 입력값 : 과목 ID, fallback, elice_course_id 준비 : course_id_1, true, elice_course_id
-
-    # Given : 로그인 상태(유효한 학습자 토큰 보유), 과목 ID 보유
-    # TODO: course_id_1, elice_course_id는 현재 TC 기준 임시 테스트 데이터다.
-    # 추후 팀 기준에 따라 fixture 또는 별도 test data 파일로 이동할 수 있다.
-    course_id_1 = 768498
-    elice_course_id = 768498
-    params = {
-        "fallback": "true",
-        "elice_course_id": elice_course_id,
-    }
-
-    # When : 다음 학습 강의 페이지 조회 API를 호출
-    response = course_student_client.get(
-        f"/course/{course_id_1}/next_lecture_page",
-        params=params,
-    )
-
-    # Then : response 결과 확인
-
-    # assert 1. response의 status code가 200인지 확인
-    assert response.status_code == 200, (
-        f"응답 상태 코드가 200이 아닙니다. "
-        f"status_code={response.status_code}, response={response.text}"
-    )
-
-    # assert 2. 응답 Content-Type이 JSON 형식인지 확인
-    content_type = response.headers.get("Content-Type", "")
-    assert "application/json" in content_type, (
-        f"응답 Content-Type이 JSON 형식이 아닙니다. "
-        f"content_type={content_type}, response={response.text}"
-    )
-
-    body = response.json()
-
-    # assert 3. 응답 body가 dict 형식인지 확인
-    assert isinstance(body, dict), (
-        f"응답 body가 dict 형식이 아닙니다. "
-        f"type={type(body).__name__}, body={body}"
-    )
-
-    # assert 4. 응답 body에 필수 key가 모두 있는지 확인
-    required_keys = [
-        "lecture_id",
-        "lecture_page_id",
-        "completed",
-        "lecture_page_title",
-    ]
-
-    missing_keys = [
-        key for key in required_keys
-        if key not in body
-    ]
-
-    assert not missing_keys, (
-        f"응답 body에 필수 항목이 없습니다. "
-        f"missing_keys={missing_keys}, "
-        f"body_keys={list(body.keys())}"
-    )
-
-    # assert 5. lecture_id가 int 형식이고 0보다 큰지 확인
-    assert isinstance(body["lecture_id"], int), (
-        f"lecture_id가 int 형식이 아닙니다. "
-        f"type={type(body['lecture_id']).__name__}, "
-        f"value={body['lecture_id']}"
-    )
-
-    assert body["lecture_id"] > 0, (
-        f"lecture_id 값이 0 이하입니다. "
-        f"lecture_id={body['lecture_id']}"
-    )
-
-    # assert 6. lecture_page_id가 int 형식이고 0보다 큰지 확인
-    assert isinstance(body["lecture_page_id"], int), (
-        f"lecture_page_id가 int 형식이 아닙니다. "
-        f"type={type(body['lecture_page_id']).__name__}, "
-        f"value={body['lecture_page_id']}"
-    )
-
-    assert body["lecture_page_id"] > 0, (
-        f"lecture_page_id 값이 0 이하입니다. "
-        f"lecture_page_id={body['lecture_page_id']}"
-    )
-
-    # assert 7. completed가 bool 형식인지 확인
-    assert isinstance(body["completed"], bool), (
-        f"completed가 bool 형식이 아닙니다. "
-        f"type={type(body['completed']).__name__}, "
-        f"value={body['completed']}"
-    )
-
-    # assert 8. lecture_page_title이 str 형식이고 빈 문자열이 아닌지 확인
-    assert isinstance(body["lecture_page_title"], str), (
-        f"lecture_page_title이 str 형식이 아닙니다. "
-        f"type={type(body['lecture_page_title']).__name__}, "
-        f"value={body['lecture_page_title']}"
-    )
-
-    assert body["lecture_page_title"].strip() != "", (
-        f"lecture_page_title 값이 비어 있습니다. "
-        f"lecture_page_title={body['lecture_page_title']!r}"
-    )
-
-    print("")
-    print("")
-    print("TC_NO:TC_CLASSHOME_015")
-    print("status_code", response.status_code)
-    print("(강의 ID)lecture_id:", body["lecture_id"])
-    print("(강의 페이지 ID)lecture_page_id:", body["lecture_page_id"])
-    print("(강의 페이지명)lecture_page_title:", body["lecture_page_title"])
-    print("(완료 여부)completed:", body["completed"])
-
-
 @pytest.mark.p0
 def test_get_classroom_next_lecture_page(dashboard_student_client):
     # 우선순위 : P0
-    # TC ID: TC_CLASSHOME_016
+    # TC ID: TC_CLASSHOME_009
     # Postman에서 성공 확인한 클래스룸 다음 학습 강의 페이지 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유), 클래스룸 ID 보유
@@ -2414,7 +1303,7 @@ def test_get_classroom_next_lecture_page(dashboard_student_client):
 
     print("")
     print("")
-    print("TC_NO:TC_CLASSHOME_016")
+    print("TC_NO:TC_CLASSHOME_009")
     print("status_code", response.status_code)
     print("(과목 ID)course_id:", body["course_id"])
     print("(강의 ID)lecture_id:", body["lecture_id"])
@@ -2427,7 +1316,7 @@ def test_get_classroom_next_lecture_page(dashboard_student_client):
 @pytest.mark.p0
 def test_get_student_dashboard(dashboard_student_client, settings):
     # 우선순위 : P0
-    # TC ID: TC_CLASSHOME_017
+    # TC ID: TC_CLASSHOME_010
     # Postman에서 성공 확인한 수강생 학습 현황 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(토큰 발급 계정과 학습자 계정이 동일해야 함)
@@ -2602,7 +1491,7 @@ def test_get_student_dashboard(dashboard_student_client, settings):
 
     print("")
     print("")
-    print("TC_NO:TC_CLASSHOME_017")
+    print("TC_NO:TC_CLASSHOME_010")
     print("status_code", response.status_code)
     print("(계정 ID)account.id:", body["account"]["id"])
     print("(학습 진행률)learning_progress:", body["learning_progress"])
@@ -2613,364 +1502,10 @@ def test_get_student_dashboard(dashboard_student_client, settings):
     print("(학습 완료 여부)learning_completed:", body["learning_completed"])
 
 
-@pytest.mark.p0
-def test_get_student_course_progress_list(dashboard_student_client, settings):
-    # 우선순위 : P0
-    # TC ID: TC_CLASSHOME_018
-    # Postman에서 성공 확인한 학습자 과목별 진행 현황 조회 API.
-    # Given-When-Then
-        # Given : 로그인 상태(유효한 학습자 토큰 보유), 학습자 ID와 클래스룸 ID 보유
-        # When : 학습자 과목별 진행 현황 조회 API를 호출 : GET https://api-dashboard.elice.io/student/{student_id}/course?classroom_id={classroom_id}&sort_by=stats_updated_desc&offset=0&count=3
-        # Then : response 결과 확인 : status_code가 200인지, body에 과목별 학습 진행 현황 정보가 있는지 확인
-    # 입력값 : 학습자 ID, 클래스룸 ID, 정렬 기준, offset, count 준비 : student_id, classroom_id, stats_updated_desc, 0, 3
-
-    # 숫자 또는 숫자 문자열을 float으로 변환하는 helper
-    def to_number(value, field_name):
-        if value is None:
-            return None
-
-        assert isinstance(value, (int, float, str)), (
-            f"{field_name}이 None, int, float 또는 str 형식이 아닙니다. "
-            f"type={type(value).__name__}, value={value}"
-        )
-
-        try:
-            return float(value)
-        except ValueError:
-            pytest.fail(
-                f"{field_name}을 숫자로 변환할 수 없습니다. "
-                f"value={value}"
-            )
-
-    # Given : 로그인 상태(유효한 학습자 토큰 보유), 학습자 ID와 클래스룸 ID 보유
-    student_id = settings.student_id
-    classroom_id = common_data.student_classroom_id
-    params = {
-        "classroom_id": classroom_id,
-        "sort_by": "stats_updated_desc",
-        "offset": 0,
-        "count": 3,
-    }
-
-    # When : 학습자 과목별 진행 현황 조회 API를 호출
-    response = dashboard_student_client.get(
-        f"/student/{student_id}/course",
-        params=params,
-    )
-
-    # Then : response 결과 확인
-
-    # assert 1. response의 status code가 200인지 확인
-    assert response.status_code == 200, (
-        f"응답 상태 코드가 200이 아닙니다. "
-        f"status_code={response.status_code}, response={response.text}"
-    )
-
-    # assert 2. 응답 Content-Type이 JSON 형식인지 확인
-    content_type = response.headers.get("Content-Type", "")
-    assert "application/json" in content_type, (
-        f"응답 Content-Type이 JSON 형식이 아닙니다. "
-        f"content_type={content_type}, response={response.text}"
-    )
-
-    body = response.json()
-
-    # assert 3. 응답 body가 list 형식인지 확인
-    assert isinstance(body, list), (
-        f"응답 body가 list 형식이 아닙니다. "
-        f"type={type(body).__name__}, body={body}"
-    )
-
-    # assert 4. 과목별 진행 현황 목록이 1개 이상 조회되는지 확인
-    assert len(body) > 0, (
-        "과목별 진행 현황 목록이 비어 있습니다."
-    )
-
-    # assert 5. 응답 과목별 진행 현황 수가 요청 count 이하인지 확인
-    assert len(body) <= params["count"], (
-        f"응답 과목별 진행 현황 수가 요청 count보다 많습니다. "
-        f"actual={len(body)}, expected_max={params['count']}"
-    )
-
-    first_course_progress = body[0]
-
-    # assert 6. 첫 번째 과목 진행 현황이 dict 형식인지 확인
-    assert isinstance(first_course_progress, dict), (
-        f"첫 번째 과목 진행 현황이 dict 형식이 아닙니다. "
-        f"type={type(first_course_progress).__name__}, "
-        f"value={first_course_progress}"
-    )
-
-    # assert 7. 첫 번째 과목 진행 현황에 필수 key가 모두 있는지 확인
-    required_progress_keys = [
-        "course",
-        "learning_progress",
-        "test_score",
-        "practice_score",
-    ]
-
-    missing_progress_keys = [
-        key for key in required_progress_keys
-        if key not in first_course_progress
-    ]
-
-    assert not missing_progress_keys, (
-        f"첫 번째 과목 진행 현황에 필수 항목이 없습니다. "
-        f"missing_keys={missing_progress_keys}, "
-        f"keys={list(first_course_progress.keys())}"
-    )
-
-    course = first_course_progress["course"]
-
-    # assert 8. course가 dict 형식인지 확인
-    assert isinstance(course, dict), (
-        f"course가 dict 형식이 아닙니다. "
-        f"type={type(course).__name__}, value={course}"
-    )
-
-    # assert 9. course에 필수 key가 모두 있는지 확인
-    required_course_keys = [
-        "id",
-        "title",
-    ]
-
-    missing_course_keys = [
-        key for key in required_course_keys
-        if key not in course
-    ]
-
-    assert not missing_course_keys, (
-        f"course 항목에 필수 key가 없습니다. "
-        f"missing_keys={missing_course_keys}, "
-        f"course_keys={list(course.keys())}"
-    )
-
-    # assert 10. course.id가 int 또는 str 형식이고 빈 값이 아닌지 확인
-    assert isinstance(course["id"], (int, str)), (
-        f"course.id가 int 또는 str 형식이 아닙니다. "
-        f"type={type(course['id']).__name__}, value={course['id']}"
-    )
-
-    assert str(course["id"]).strip() != "", (
-        f"course.id 값이 비어 있습니다. course.id={course['id']!r}"
-    )
-
-    # assert 11. course.title이 str 형식이고 빈 문자열이 아닌지 확인
-    assert isinstance(course["title"], str), (
-        f"course.title이 str 형식이 아닙니다. "
-        f"type={type(course['title']).__name__}, value={course['title']}"
-    )
-
-    assert course["title"].strip() != "", (
-        f"course.title 값이 비어 있습니다. course.title={course['title']!r}"
-    )
-
-    # assert 12. learning_progress가 숫자로 변환 가능하고 0~100 범위인지 확인
-    learning_progress = to_number(
-        first_course_progress["learning_progress"],
-        "learning_progress",
-    )
-
-    assert learning_progress is not None, (
-        "learning_progress 값이 None입니다."
-    )
-
-    assert 0 <= learning_progress <= 100, (
-        f"learning_progress가 0~100 범위를 벗어났습니다. "
-        f"learning_progress={first_course_progress['learning_progress']}"
-    )
-
-    # assert 13. test_score가 None 또는 숫자로 변환 가능한 값인지 확인
-    test_score = to_number(
-        first_course_progress["test_score"],
-        "test_score",
-    )
-
-    if test_score is not None:
-        assert 0 <= test_score <= 100, (
-            f"test_score가 0~100 범위를 벗어났습니다. "
-            f"test_score={first_course_progress['test_score']}"
-        )
-
-    # assert 14. practice_score가 None 또는 숫자로 변환 가능한 값인지 확인
-    practice_score = to_number(
-        first_course_progress["practice_score"],
-        "practice_score",
-    )
-
-    if practice_score is not None:
-        assert 0 <= practice_score <= 100, (
-            f"practice_score가 0~100 범위를 벗어났습니다. "
-            f"practice_score={first_course_progress['practice_score']}"
-        )
-
-    # assert 15. 응답 목록 전체의 기본 구조 확인
-    for course_progress in body:
-        assert isinstance(course_progress, dict), (
-            f"과목 진행 현황 항목이 dict 형식이 아닙니다. "
-            f"type={type(course_progress).__name__}, value={course_progress}"
-        )
-
-        missing_keys = [
-            key for key in required_progress_keys
-            if key not in course_progress
-        ]
-
-        assert not missing_keys, (
-            f"과목 진행 현황 항목에 필수 key가 없습니다. "
-            f"missing_keys={missing_keys}, "
-            f"keys={list(course_progress.keys())}"
-        )
-
-        assert isinstance(course_progress["course"], dict), (
-            f"course가 dict 형식이 아닙니다. "
-            f"value={course_progress['course']}"
-        )
-
-        course_data = course_progress["course"]
-
-        missing_course_keys = [
-            key for key in required_course_keys
-            if key not in course_data
-        ]
-
-        assert not missing_course_keys, (
-            f"course 항목에 필수 key가 없습니다. "
-            f"missing_keys={missing_course_keys}, "
-            f"course_keys={list(course_data.keys())}"
-        )
-
-        assert isinstance(course_data["title"], str), (
-            f"course.title이 str 형식이 아닙니다. "
-            f"course_id={course_data.get('id')}, "
-            f"type={type(course_data['title']).__name__}, "
-            f"value={course_data['title']}"
-        )
-
-        assert course_data["title"].strip() != "", (
-            f"course.title 값이 비어 있습니다. "
-            f"course_id={course_data.get('id')}, "
-            f"title={course_data['title']!r}"
-        )
-
-        item_learning_progress = to_number(
-            course_progress["learning_progress"],
-            "learning_progress",
-        )
-
-        assert item_learning_progress is not None, (
-            f"learning_progress 값이 None입니다. "
-            f"course_id={course_data.get('id')}"
-        )
-
-        assert 0 <= item_learning_progress <= 100, (
-            f"learning_progress가 0~100 범위를 벗어났습니다. "
-            f"course_id={course_data.get('id')}, "
-            f"learning_progress={course_progress['learning_progress']}"
-        )
-
-        item_test_score = to_number(
-            course_progress["test_score"],
-            "test_score",
-        )
-
-        if item_test_score is not None:
-            assert 0 <= item_test_score <= 100, (
-                f"test_score가 0~100 범위를 벗어났습니다. "
-                f"course_id={course_data.get('id')}, "
-                f"test_score={course_progress['test_score']}"
-            )
-
-        item_practice_score = to_number(
-            course_progress["practice_score"],
-            "practice_score",
-        )
-
-        if item_practice_score is not None:
-            assert 0 <= item_practice_score <= 100, (
-                f"practice_score가 0~100 범위를 벗어났습니다. "
-                f"course_id={course_data.get('id')}, "
-                f"practice_score={course_progress['practice_score']}"
-            )
-
-    print("")
-    print("")
-    print("TC_NO:TC_CLASSHOME_018")
-    print("status_code", response.status_code)
-    print("(과목별 진행 현황 수)course_progress_count:", len(body))
-    print("(첫 번째 과목 ID)course.id:", course["id"])
-    print("(첫 번째 과목명)course.title:", course["title"])
-    print("(학습 진행률)learning_progress:", first_course_progress["learning_progress"])
-    print("(테스트 평균 점수)test_score:", first_course_progress["test_score"])
-    print("(평균 실습 자료)practice_score:", first_course_progress["practice_score"])
-
-
-@pytest.mark.p1
-def test_get_student_course_count(dashboard_student_client, settings):
-    # 우선순위 : P1
-    # TC ID: TC_CLASSHOME_019
-    # Postman에서 성공 확인한 학습자 과목 개수 조회 API.
-    # Given-When-Then
-        # Given : 로그인 상태(유효한 학습자 토큰 보유), 학습자 ID와 클래스룸 ID 보유
-        # When : 학습자 과목 개수 조회 API를 호출 : GET https://api-dashboard.elice.io/student/{student_id}/course/count?classroom_id={classroom_id}
-        # Then : response 결과 확인 : status_code가 200인지, body가 과목 개수인지 확인
-    # 입력값 : 학습자 ID, 클래스룸 ID 준비 : student_id, classroom_id
-
-    # Given : 로그인 상태(유효한 학습자 토큰 보유), 학습자 ID와 클래스룸 ID 보유
-    student_id = settings.student_id
-    classroom_id = common_data.student_classroom_id
-    params = {
-        "classroom_id": classroom_id,
-    }
-
-    # When : 학습자 과목 개수 조회 API를 호출
-    response = dashboard_student_client.get(
-        f"/student/{student_id}/course/count",
-        params=params,
-    )
-
-    # Then : response 결과 확인
-
-    # assert 1. response의 status code가 200인지 확인
-    assert response.status_code == 200, (
-        f"응답 상태 코드가 200이 아닙니다. "
-        f"status_code={response.status_code}, response={response.text}"
-    )
-
-    # assert 2. 응답 Content-Type이 JSON 형식인지 확인
-    content_type = response.headers.get("Content-Type", "")
-    assert "application/json" in content_type, (
-        f"응답 Content-Type이 JSON 형식이 아닙니다. "
-        f"content_type={content_type}, response={response.text}"
-    )
-
-    body = response.json()
-
-    # assert 3. 응답 body가 int 형식인지 확인
-    assert isinstance(body, int), (
-        f"응답 body가 int 형식이 아닙니다. "
-        f"type={type(body).__name__}, body={body}"
-    )
-
-    # assert 4. 과목 개수가 0 이상인지 확인
-    assert body >= 0, (
-        f"과목 개수가 음수입니다. "
-        f"count={body}"
-    )
-
-    print("")
-    print("")
-    print("TC_NO:TC_CLASSHOME_019")
-    print("status_code", response.status_code)
-    print("(학습자 ID)student_id:", student_id)
-    print("(클래스룸 ID)classroom_id:", classroom_id)
-    print("(학습자 과목 개수)course_count:", body)
-
-
 @pytest.mark.p2
 def test_get_notification_stat(notification_student_client):
     # 우선순위 : P2
-    # TC ID: TC_CLASSHOME_020
+    # TC ID: TC_CLASSHOME_011
     # Postman에서 성공 확인한 알림 상태 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유)
@@ -3027,15 +1562,193 @@ def test_get_notification_stat(notification_student_client):
 
     print("")
     print("")
-    print("TC_NO:TC_CLASSHOME_020")
+    print("TC_NO:TC_CLASSHOME_011")
     print("status_code", response.status_code)
     print("(미확인 알림 개수)unchecked_count:", body["unchecked_count"])
 
 
 @pytest.mark.p0
+def test_get_session_count(org_student_client):
+    # 우선순위 : P2
+    # TC ID: TC_CLASSHOME_012
+    # Postman에서 성공 확인한 세션 개수 조회 API.
+    # Given-When-Then
+        # Given : 로그인 상태(유효한 학습자 토큰 보유)
+        # When : 세션 개수 조회 API를 호출 : GET https://api-org.elice.io/session/count
+        # Then : response 결과 확인 : status_code가 200인지, body가 세션 개수인지 확인
+    # 입력값 : 없음
+
+    # Given : 로그인 상태(유효한 학습자 토큰 보유)
+
+    # When : 세션 개수 조회 API를 호출
+    response = org_student_client.get("/session/count")
+
+    # Then : response 결과 확인
+
+    # assert 1. response의 status code가 200인지 확인
+    assert response.status_code == 200, (
+        f"응답 상태 코드가 200이 아닙니다. "
+        f"status_code={response.status_code}, response={response.text}"
+    )
+
+    # assert 2. 응답 Content-Type이 JSON 형식인지 확인
+    content_type = response.headers.get("Content-Type", "")
+    assert "application/json" in content_type, (
+        f"응답 Content-Type이 JSON 형식이 아닙니다. "
+        f"content_type={content_type}, response={response.text}"
+    )
+
+    body = response.json()
+
+    # assert 3. 응답 body가 int 형식인지 확인
+    assert isinstance(body, int), (
+        f"응답 body가 int 형식이 아닙니다. "
+        f"type={type(body).__name__}, body={body}"
+    )
+
+    # assert 4. 세션 개수가 0 이상인지 확인
+    assert body >= 0, (
+        f"세션 개수가 0보다 작습니다. "
+        f"session_count={body}"
+    )
+
+    print("")
+    print("")
+    print("TC_NO:TC_CLASSHOME_012")
+    print("status_code", response.status_code)
+    print("(세션 개수)session_count:", body)
+
+
+@pytest.mark.p2
+def test_get_account_cert_list(rest_student_client, settings):
+    # 우선순위 : P2
+    # TC ID: TC_CLASSHOME_013
+    # Postman에서 성공 확인한 본인인증 정보 조회 API.
+    # Given-When-Then
+        # Given : 로그인 상태(유효한 학습자 토큰 보유), 학습자 ID 보유
+        # When : 본인인증 정보 조회 API를 호출 : GET https://api-rest.elice.io/global/account/cert/list/
+        # Then : response 결과 확인 : status_code가 200인지, body에 본인인증 정보 목록이 있는지 확인
+    # 입력값 : 학습자 ID, offset, count 준비 : student_id, 0, 1
+
+    # Given : 로그인 상태(유효한 학습자 토큰 보유), 학습자 ID 보유
+    params = {
+        "account_id": settings.student_id,
+        "offset": 0,
+        "count": 1,
+    }
+
+    # When : 본인인증 정보 조회 API를 호출
+    response = rest_student_client.get(
+        "/global/account/cert/list/",
+        params=params,
+    )
+
+    # Then : response 결과 확인
+
+    # assert 1. response의 status code가 200인지 확인
+    assert response.status_code == 200, (
+        f"응답 상태 코드가 200이 아닙니다. "
+        f"status_code={response.status_code}, response={response.text}"
+    )
+
+    # assert 2. 응답 Content-Type이 JSON 형식인지 확인
+    content_type = response.headers.get("Content-Type", "")
+    assert "application/json" in content_type, (
+        f"응답 Content-Type이 JSON 형식이 아닙니다. "
+        f"content_type={content_type}, response={response.text}"
+    )
+
+    body = response.json()
+
+    # assert 3. 응답 body가 dict 형식인지 확인
+    assert isinstance(body, dict), (
+        f"응답 body가 dict 형식이 아닙니다. "
+        f"type={type(body).__name__}, body={body}"
+    )
+
+    # assert 4. 응답 body에 필수 key가 모두 있는지 확인
+    required_keys = [
+        "account_cert_info_count",
+        "account_cert_info_list",
+    ]
+
+    missing_keys = [
+        key for key in required_keys
+        if key not in body
+    ]
+
+    assert not missing_keys, (
+        f"응답 body에 필수 항목이 없습니다. "
+        f"missing_keys={missing_keys}, "
+        f"body_keys={list(body.keys())}"
+    )
+
+    # assert 5. account_cert_info_count가 int 형식이고 0 이상인지 확인
+    assert isinstance(body["account_cert_info_count"], int), (
+        f"account_cert_info_count가 int 형식이 아닙니다. "
+        f"type={type(body['account_cert_info_count']).__name__}, "
+        f"value={body['account_cert_info_count']}"
+    )
+
+    assert body["account_cert_info_count"] >= 0, (
+        f"account_cert_info_count가 0보다 작습니다. "
+        f"account_cert_info_count={body['account_cert_info_count']}"
+    )
+
+    # assert 6. account_cert_info_list가 list 형식인지 확인
+    assert isinstance(body["account_cert_info_list"], list), (
+        f"account_cert_info_list가 list 형식이 아닙니다. "
+        f"type={type(body['account_cert_info_list']).__name__}, "
+        f"value={body['account_cert_info_list']}"
+    )
+
+    # assert 7. 응답 목록 수가 요청 count 이하인지 확인
+    assert len(body["account_cert_info_list"]) <= params["count"], (
+        f"본인인증 정보 목록 수가 요청 count보다 많습니다. "
+        f"actual={len(body['account_cert_info_list'])}, "
+        f"expected_max={params['count']}"
+    )
+
+    # assert 8. 전체 본인인증 정보 개수가 현재 응답 목록 수보다 작지 않은지 확인
+    assert body["account_cert_info_count"] >= len(body["account_cert_info_list"]), (
+        f"전체 본인인증 정보 개수가 현재 응답 목록 수보다 작습니다. "
+        f"account_cert_info_count={body['account_cert_info_count']}, "
+        f"list_count={len(body['account_cert_info_list'])}"
+    )
+
+    # assert 9. 본인인증 정보가 있는 경우, 첫 번째 항목이 dict 형식인지 확인
+    if body["account_cert_info_list"]:
+        first_cert_info = body["account_cert_info_list"][0]
+
+        assert isinstance(first_cert_info, dict), (
+            f"첫 번째 본인인증 정보 항목이 dict 형식이 아닙니다. "
+            f"type={type(first_cert_info).__name__}, "
+            f"value={first_cert_info}"
+        )
+
+        assert len(first_cert_info.keys()) > 0, (
+            f"첫 번째 본인인증 정보 항목에 key가 없습니다. "
+            f"first_cert_info={first_cert_info}"
+        )
+
+    print("")
+    print("")
+    print("TC_NO:TC_CLASSHOME_013")
+    print("status_code", response.status_code)
+    print("(본인인증 정보 개수)account_cert_info_count:", body["account_cert_info_count"])
+    print("(본인인증 정보 목록 수)account_cert_info_list_count:", len(body["account_cert_info_list"]))
+
+    if body["account_cert_info_list"]:
+        print(
+            "(첫 번째 본인인증 정보 key 목록)cert_info_keys:",
+            list(body["account_cert_info_list"][0].keys()),
+        )
+
+
+@pytest.mark.p1
 def test_get_global_account_detail(rest_student_client):
     # 우선순위 : P0
-    # TC ID: TC_CLASSHOME_023
+    # TC ID: TC_CLASSHOME_014
     # Postman에서 성공 확인한 현재 로그인 사용자 계정 상세 정보 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유)
@@ -3199,7 +1912,7 @@ def test_get_global_account_detail(rest_student_client):
 
     print("")
     print("")
-    print("TC_NO:TC_CLASSHOME_023")
+    print("TC_NO:TC_CLASSHOME_014")
     print("status_code", response.status_code)
     print("(계정 ID)account.id:", account["id"])
     print("(이름)account.fullname:", account["fullname"])
@@ -3215,187 +1928,9 @@ def test_get_global_account_detail(rest_student_client):
 
 
 @pytest.mark.p2
-def test_get_session_count(org_student_client):
-    # 우선순위 : P2
-    # TC ID: TC_CLASSHOME_021
-    # Postman에서 성공 확인한 세션 개수 조회 API.
-    # Given-When-Then
-        # Given : 로그인 상태(유효한 학습자 토큰 보유)
-        # When : 세션 개수 조회 API를 호출 : GET https://api-org.elice.io/session/count
-        # Then : response 결과 확인 : status_code가 200인지, body가 세션 개수인지 확인
-    # 입력값 : 없음
-
-    # Given : 로그인 상태(유효한 학습자 토큰 보유)
-
-    # When : 세션 개수 조회 API를 호출
-    response = org_student_client.get("/session/count")
-
-    # Then : response 결과 확인
-
-    # assert 1. response의 status code가 200인지 확인
-    assert response.status_code == 200, (
-        f"응답 상태 코드가 200이 아닙니다. "
-        f"status_code={response.status_code}, response={response.text}"
-    )
-
-    # assert 2. 응답 Content-Type이 JSON 형식인지 확인
-    content_type = response.headers.get("Content-Type", "")
-    assert "application/json" in content_type, (
-        f"응답 Content-Type이 JSON 형식이 아닙니다. "
-        f"content_type={content_type}, response={response.text}"
-    )
-
-    body = response.json()
-
-    # assert 3. 응답 body가 int 형식인지 확인
-    assert isinstance(body, int), (
-        f"응답 body가 int 형식이 아닙니다. "
-        f"type={type(body).__name__}, body={body}"
-    )
-
-    # assert 4. 세션 개수가 0 이상인지 확인
-    assert body >= 0, (
-        f"세션 개수가 0보다 작습니다. "
-        f"session_count={body}"
-    )
-
-    print("")
-    print("")
-    print("TC_NO:TC_CLASSHOME_021")
-    print("status_code", response.status_code)
-    print("(세션 개수)session_count:", body)
-
-
-@pytest.mark.p2
-def test_get_account_cert_list(rest_student_client, settings):
-    # 우선순위 : P2
-    # TC ID: TC_CLASSHOME_022
-    # Postman에서 성공 확인한 본인인증 정보 조회 API.
-    # Given-When-Then
-        # Given : 로그인 상태(유효한 학습자 토큰 보유), 학습자 ID 보유
-        # When : 본인인증 정보 조회 API를 호출 : GET https://api-rest.elice.io/global/account/cert/list/
-        # Then : response 결과 확인 : status_code가 200인지, body에 본인인증 정보 목록이 있는지 확인
-    # 입력값 : 학습자 ID, offset, count 준비 : student_id, 0, 1
-
-    # Given : 로그인 상태(유효한 학습자 토큰 보유), 학습자 ID 보유
-    params = {
-        "account_id": settings.student_id,
-        "offset": 0,
-        "count": 1,
-    }
-
-    # When : 본인인증 정보 조회 API를 호출
-    response = rest_student_client.get(
-        "/global/account/cert/list/",
-        params=params,
-    )
-
-    # Then : response 결과 확인
-
-    # assert 1. response의 status code가 200인지 확인
-    assert response.status_code == 200, (
-        f"응답 상태 코드가 200이 아닙니다. "
-        f"status_code={response.status_code}, response={response.text}"
-    )
-
-    # assert 2. 응답 Content-Type이 JSON 형식인지 확인
-    content_type = response.headers.get("Content-Type", "")
-    assert "application/json" in content_type, (
-        f"응답 Content-Type이 JSON 형식이 아닙니다. "
-        f"content_type={content_type}, response={response.text}"
-    )
-
-    body = response.json()
-
-    # assert 3. 응답 body가 dict 형식인지 확인
-    assert isinstance(body, dict), (
-        f"응답 body가 dict 형식이 아닙니다. "
-        f"type={type(body).__name__}, body={body}"
-    )
-
-    # assert 4. 응답 body에 필수 key가 모두 있는지 확인
-    required_keys = [
-        "account_cert_info_count",
-        "account_cert_info_list",
-    ]
-
-    missing_keys = [
-        key for key in required_keys
-        if key not in body
-    ]
-
-    assert not missing_keys, (
-        f"응답 body에 필수 항목이 없습니다. "
-        f"missing_keys={missing_keys}, "
-        f"body_keys={list(body.keys())}"
-    )
-
-    # assert 5. account_cert_info_count가 int 형식이고 0 이상인지 확인
-    assert isinstance(body["account_cert_info_count"], int), (
-        f"account_cert_info_count가 int 형식이 아닙니다. "
-        f"type={type(body['account_cert_info_count']).__name__}, "
-        f"value={body['account_cert_info_count']}"
-    )
-
-    assert body["account_cert_info_count"] >= 0, (
-        f"account_cert_info_count가 0보다 작습니다. "
-        f"account_cert_info_count={body['account_cert_info_count']}"
-    )
-
-    # assert 6. account_cert_info_list가 list 형식인지 확인
-    assert isinstance(body["account_cert_info_list"], list), (
-        f"account_cert_info_list가 list 형식이 아닙니다. "
-        f"type={type(body['account_cert_info_list']).__name__}, "
-        f"value={body['account_cert_info_list']}"
-    )
-
-    # assert 7. 응답 목록 수가 요청 count 이하인지 확인
-    assert len(body["account_cert_info_list"]) <= params["count"], (
-        f"본인인증 정보 목록 수가 요청 count보다 많습니다. "
-        f"actual={len(body['account_cert_info_list'])}, "
-        f"expected_max={params['count']}"
-    )
-
-    # assert 8. 전체 본인인증 정보 개수가 현재 응답 목록 수보다 작지 않은지 확인
-    assert body["account_cert_info_count"] >= len(body["account_cert_info_list"]), (
-        f"전체 본인인증 정보 개수가 현재 응답 목록 수보다 작습니다. "
-        f"account_cert_info_count={body['account_cert_info_count']}, "
-        f"list_count={len(body['account_cert_info_list'])}"
-    )
-
-    # assert 9. 본인인증 정보가 있는 경우, 첫 번째 항목이 dict 형식인지 확인
-    if body["account_cert_info_list"]:
-        first_cert_info = body["account_cert_info_list"][0]
-
-        assert isinstance(first_cert_info, dict), (
-            f"첫 번째 본인인증 정보 항목이 dict 형식이 아닙니다. "
-            f"type={type(first_cert_info).__name__}, "
-            f"value={first_cert_info}"
-        )
-
-        assert len(first_cert_info.keys()) > 0, (
-            f"첫 번째 본인인증 정보 항목에 key가 없습니다. "
-            f"first_cert_info={first_cert_info}"
-        )
-
-    print("")
-    print("")
-    print("TC_NO:TC_CLASSHOME_022")
-    print("status_code", response.status_code)
-    print("(본인인증 정보 개수)account_cert_info_count:", body["account_cert_info_count"])
-    print("(본인인증 정보 목록 수)account_cert_info_list_count:", len(body["account_cert_info_list"]))
-
-    if body["account_cert_info_list"]:
-        print(
-            "(첫 번째 본인인증 정보 key 목록)cert_info_keys:",
-            list(body["account_cert_info_list"][0].keys()),
-        )
-
-
-@pytest.mark.p1
 def test_get_global_organization_detail(rest_student_client):
     # 우선순위 : P1
-    # TC ID: TC_CLASSHOME_024
+    # TC ID: TC_CLASSHOME_015
     # Postman에서 성공 확인한 조직 상세 정보 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유), 조직 도메인 보유
@@ -3544,7 +2079,7 @@ def test_get_global_organization_detail(rest_student_client):
 
     print("")
     print("")
-    print("TC_NO:TC_CLASSHOME_024")
+    print("TC_NO:TC_CLASSHOME_015")
     print("status_code", response.status_code)
     print("(조직 ID)organization.id:", organization["id"])
     print("(조직명)organization.name:", organization["name"])
@@ -3555,7 +2090,7 @@ def test_get_global_organization_detail(rest_student_client):
 @pytest.mark.p2
 def test_get_global_organization_unread_message_count(rest_student_client):
     # 우선순위 : P2
-    # TC ID: TC_CLASSHOME_025
+    # TC ID: TC_CLASSHOME_016
     # Postman에서 성공 확인한 조직 미확인 메시지 개수 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유), 조직 ID 보유
@@ -3628,7 +2163,7 @@ def test_get_global_organization_unread_message_count(rest_student_client):
 
     print("")
     print("")
-    print("TC_NO:TC_CLASSHOME_025")
+    print("TC_NO:TC_CLASSHOME_016")
     print("status_code", response.status_code)
     print("(조직 ID)organization_id:", org_no_1)
     print("(미확인 메시지 개수)unread_message_count:", body["unread_message_count"])
@@ -3637,7 +2172,7 @@ def test_get_global_organization_unread_message_count(rest_student_client):
 @pytest.mark.p1
 def test_get_org_user(rest_student_client):
     # 우선순위 : P1
-    # TC ID: TC_CLASSHOME_026
+    # TC ID: TC_CLASSHOME_017
     # Postman에서 성공 확인한 현재 로그인 사용자의 조직 내 사용자 정보 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유), 조직 정보 보유
@@ -3807,7 +2342,7 @@ def test_get_org_user(rest_student_client):
 
     print("")
     print("")
-    print("TC_NO:TC_CLASSHOME_026")
+    print("TC_NO:TC_CLASSHOME_017")
     print("status_code", response.status_code)
     print("(조직 사용자 ID)user.id:", user["id"])
     print("(이름)user.fullname:", user["fullname"])
@@ -3819,7 +2354,7 @@ def test_get_org_user(rest_student_client):
 @pytest.mark.p2
 def test_get_chat_room_list(rest_student_client):
     # 우선순위 : P2
-    # TC ID: TC_CLASSHOME_027
+    # TC ID: TC_CLASSHOME_018
     # Postman에서 성공 확인한 채팅방 목록 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유), 조직 정보 보유
@@ -4017,7 +2552,7 @@ def test_get_chat_room_list(rest_student_client):
 
     print("")
     print("")
-    print("TC_NO:TC_CLASSHOME_027")
+    print("TC_NO:TC_CLASSHOME_018")
     print("status_code", response.status_code)
     print("(채팅방 개수)room_count:", body["room_count"])
     print("(채팅방 목록 수)rooms_count:", len(body["rooms"]))

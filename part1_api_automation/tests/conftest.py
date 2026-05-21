@@ -35,7 +35,7 @@ def student_client(settings: Settings) -> APIClient:
         token=settings.token,
         org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
-        min_interval=0.3,
+        min_interval=common_data.min_request_interval_seconds,
     )
 
 
@@ -47,7 +47,7 @@ def account_student_client(settings: Settings) -> APIClient:
         token=settings.token,
         org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
-        min_interval=0.3,
+        min_interval=common_data.min_request_interval_seconds,
     )
 
 
@@ -59,7 +59,7 @@ def dashboard_student_client(settings: Settings) -> APIClient:
         token=settings.token,
         org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
-        min_interval=0.3,
+        min_interval=common_data.min_request_interval_seconds,
     )
 
 
@@ -71,7 +71,7 @@ def course_student_client(settings: Settings) -> APIClient:
         token=settings.token,
         org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
-        min_interval=0.3,
+        min_interval=common_data.min_request_interval_seconds,
     )
 
 
@@ -83,7 +83,7 @@ def rest_student_client(settings: Settings) -> APIClient:
         token=settings.token,
         org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
-        min_interval=0.3,
+        min_interval=common_data.min_request_interval_seconds,
     )
 
 
@@ -95,7 +95,7 @@ def billing2_student_client(settings: Settings) -> APIClient:
         token=settings.token,
         org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
-        min_interval=0.3,
+        min_interval=common_data.min_request_interval_seconds,
     )
 
 
@@ -107,7 +107,7 @@ def channel_student_client(settings: Settings) -> APIClient:
         token=settings.token,
         org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
-        min_interval=0.3,
+        min_interval=common_data.min_request_interval_seconds,
     )
 
 
@@ -119,7 +119,7 @@ def community_student_client(settings: Settings) -> APIClient:
         token=settings.token,
         org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
-        min_interval=0.3,
+        min_interval=common_data.min_request_interval_seconds,
     )
 
 
@@ -131,7 +131,7 @@ def notification_student_client(settings: Settings) -> APIClient:
         token=settings.token,
         org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
-        min_interval=0.3,
+        min_interval=common_data.min_request_interval_seconds,
     )
 
 
@@ -143,7 +143,7 @@ def org_student_client(settings: Settings) -> APIClient:
         token=settings.token,
         org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
-        min_interval=0.3,
+        min_interval=common_data.min_request_interval_seconds,
     )
 
 
@@ -155,7 +155,7 @@ def file_student_client(settings: Settings) -> APIClient:
         token=settings.token,
         org_name=common_data.org_student,
         timeout=settings.request_timeout_seconds,
-        min_interval=0.3,
+        min_interval=common_data.min_request_interval_seconds,
     )
 
 
@@ -168,5 +168,5 @@ def teacher_client(settings: Settings) -> APIClient:
         token=settings.token,
         org_name=common_data.org_teacher,
         timeout=settings.request_timeout_seconds,
-        min_interval=0.3,
+        min_interval=common_data.min_request_interval_seconds,
     )
