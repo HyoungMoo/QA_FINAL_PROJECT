@@ -59,8 +59,8 @@ elice_lxp_test_team3/
 │   │   ├── test_data/
 │   │   │   ├── common_data.py          # 공통 테스트 데이터
 │   │   │   └── student_material_data.py # 학습 자료 테스트 데이터
-│   │   ├── api_client.py               # API 요청 client wrapper
 │   │   ├── config.py                   # .env 기반 환경 설정 로더
+│   │   ├── api_client.py               # API 요청 client wrapper
 │   │   └── request_helper.py           # API 요청 helper
 │   ├── reports/                        # 테스트 리포트 출력 경로
 │   ├── .env.example                    # 로컬 환경 변수 샘플
