@@ -4,19 +4,9 @@ from utils.test_data import common_data
 from utils.test_data.student_material_data import lecture_case
 
 
-def test_get_week1_2lecture_material_pdf(settings):
+def test_get_week1_2lecture_material_pdf(rest_student_client):
     # Given
     # 1주차 2번 강의자료 PDF 조회에 필요한 설정값 세팅
-    url = (
-        f"{common_data.base_rest_url}"
-        f"/org/{common_data.org_student}"
-        f"/material_pdf/get/"
-    )
-
-    headers = get_auth_headers(
-        settings.token
-    )
-
     params = {
         "material_pdf_id":
             lecture_case["week1_2lecture_material_id"],
@@ -24,11 +14,9 @@ def test_get_week1_2lecture_material_pdf(settings):
 
     # When
     # 강의자료 PDF 조회 API 요청
-    response = get_request(
-        url=url,
-        headers=headers,
+    response = rest_student_client.get(
+        f"/org/{common_data.org_student}/material_pdf/get/",
         params=params,
-        timeout=settings.request_timeout_seconds,
     )
 
     # Then
@@ -66,19 +54,9 @@ def test_get_week1_2lecture_material_pdf(settings):
     )
 
 
-def test_get_week1_2lecture_quiz_material(settings):
+def test_get_week1_2lecture_quiz_material(rest_student_client):
     # Given
     # 1주차 2번 강의 퀴즈 자료 조회에 필요한 설정값 세팅
-    url = (
-        f"{common_data.base_rest_url}"
-        f"/org/{common_data.org_student}"
-        f"/lecture_page/resolve/"
-    )
-
-    headers = get_auth_headers(
-        settings.token
-    )
-
     params = {
         "material_id":
             lecture_case["week1_2lecture_1quiz_material_id"],
@@ -88,11 +66,9 @@ def test_get_week1_2lecture_quiz_material(settings):
 
     # When
     # 퀴즈 자료 조회 API 요청
-    response = get_request(
-        url=url,
-        headers=headers,
+    response = rest_student_client.get(
+        f"/org/{common_data.org_student}/lecture_page/resolve/",
         params=params,
-        timeout=settings.request_timeout_seconds,
     )
 
     # Then
@@ -112,19 +88,10 @@ def test_get_week1_2lecture_quiz_material(settings):
         "응답 데이터에 lecture_page_id 정보가 없습니다."
     )
 
-def test_get_week1_2lecture_exercise_material(settings):
+
+def test_get_week1_2lecture_exercise_material(rest_student_client):
     # Given
     # 1주차 2번 강의 코딩 실습 자료 조회에 필요한 설정값 세팅
-    url = (
-        f"{common_data.base_rest_url}"
-        f"/org/{common_data.org_student}"
-        f"/lecture_page/resolve/"
-    )
-
-    headers = get_auth_headers(
-        settings.token
-    )
-
     params = {
         "material_id":
             lecture_case["week1_2lecture_1exercise_material_id"],
@@ -134,11 +101,9 @@ def test_get_week1_2lecture_exercise_material(settings):
 
     # When
     # 코딩 실습 자료 조회 API 요청
-    response = get_request(
-        url=url,
-        headers=headers,
+    response = rest_student_client.get(
+        f"/org/{common_data.org_student}/lecture_page/resolve/",
         params=params,
-        timeout=settings.request_timeout_seconds,
     )
 
     # Then
@@ -207,7 +172,7 @@ def test_get_material_pdf_without_token(settings):
     )
 
 
-def test_submit_week1_2lecture_quiz_correct_answer(settings):
+def test_submit_week1_2lecture_quiz_correct_answer(settings, rest_student_client):
     # Given
     # 1주차 2번 강의 퀴즈 정답 제출에 필요한 설정값 세팅
     submit_url = (
@@ -259,23 +224,15 @@ def test_submit_week1_2lecture_quiz_correct_answer(settings):
 
     quiz_response_id = submit_data["quiz_response_id"]
 
-    get_url = (
-        f"{common_data.base_rest_url}"
-        f"/org/{common_data.org_student}"
-        f"/material_quiz/response/get/"
-    )
-
     get_params = {
         "quiz_response_id": quiz_response_id,
     }
 
     # When
     # 퀴즈 정답 제출 결과 조회 API 요청
-    get_response = get_request(
-        url=get_url,
-        headers=headers,
+    get_response = rest_student_client.get(
+        f"/org/{common_data.org_student}/material_quiz/response/get/",
         params=get_params,
-        timeout=settings.request_timeout_seconds,
     )
 
     # Then
@@ -302,7 +259,7 @@ def test_submit_week1_2lecture_quiz_correct_answer(settings):
     )
 
 
-def test_submit_week1_2lecture_quiz_wrong_answer(settings):
+def test_submit_week1_2lecture_quiz_wrong_answer(settings, rest_student_client):
     # Given
     # 1주차 2번 강의 퀴즈 오답 제출에 필요한 설정값 세팅
     submit_url = (
@@ -354,23 +311,15 @@ def test_submit_week1_2lecture_quiz_wrong_answer(settings):
 
     quiz_response_id = submit_data["quiz_response_id"]
 
-    get_url = (
-        f"{common_data.base_rest_url}"
-        f"/org/{common_data.org_student}"
-        f"/material_quiz/response/get/"
-    )
-
     get_params = {
         "quiz_response_id": quiz_response_id,
     }
 
     # When
     # 퀴즈 오답 제출 결과 조회 API 요청
-    get_response = get_request(
-        url=get_url,
-        headers=headers,
+    get_response = rest_student_client.get(
+        f"/org/{common_data.org_student}/material_quiz/response/get/",
         params=get_params,
-        timeout=settings.request_timeout_seconds,
     )
 
     # Then
@@ -447,19 +396,10 @@ def test_run_week1_2lecture_exercise(settings):
         "코딩 실습 실행 환경 정보가 정상적으로 반환되지 않았습니다."
     )
 
-def test_move_next_lesson_from_material_pdf(settings):
+
+def test_move_next_lesson_from_material_pdf(rest_student_client):
     # Given
     # 강의자료에서 다음 수업 이동에 필요한 설정값 세팅
-    url = (
-        f"{common_data.base_rest_url}"
-        f"/org/{common_data.org_student}"
-        f"/lecture_page/resolve/"
-    )
-
-    headers = get_auth_headers(
-        settings.token
-    )
-
     params = {
         "material_id":
             lecture_case["week1_2lecture_1quiz_material_id"],
@@ -469,11 +409,9 @@ def test_move_next_lesson_from_material_pdf(settings):
 
     # When
     # 강의자료에서 다음 수업 이동 API 요청
-    response = get_request(
-        url=url,
-        headers=headers,
+    response = rest_student_client.get(
+        f"/org/{common_data.org_student}/lecture_page/resolve/",
         params=params,
-        timeout=settings.request_timeout_seconds,
     )
 
     # Then
@@ -494,20 +432,9 @@ def test_move_next_lesson_from_material_pdf(settings):
     )
 
 
-
-def test_move_previous_lesson_from_quiz(settings):
+def test_move_previous_lesson_from_quiz(rest_student_client):
     # Given
     # 퀴즈 화면에서 이전 수업 이동에 필요한 설정값 세팅
-    url = (
-        f"{common_data.base_rest_url}"
-        f"/org/{common_data.org_student}"
-        f"/lecture_page/resolve/"
-    )
-
-    headers = get_auth_headers(
-        settings.token
-    )
-
     params = {
         "material_id":
             lecture_case["week1_2lecture_material_id"],
@@ -517,11 +444,9 @@ def test_move_previous_lesson_from_quiz(settings):
 
     # When
     # 퀴즈 화면에서 이전 수업 이동 API 요청
-    response = get_request(
-        url=url,
-        headers=headers,
+    response = rest_student_client.get(
+        f"/org/{common_data.org_student}/lecture_page/resolve/",
         params=params,
-        timeout=settings.request_timeout_seconds,
     )
 
     # Then
@@ -542,28 +467,16 @@ def test_move_previous_lesson_from_quiz(settings):
     )
 
 
-def test_get_material_pdf_without_material_pdf_id(settings):
+def test_get_material_pdf_without_material_pdf_id(rest_student_client):
     # Given
     # material_pdf_id 없이 강의자료 PDF 조회에 필요한 설정값 세팅
-    url = (
-        f"{common_data.base_rest_url}"
-        f"/org/{common_data.org_student}"
-        f"/material_pdf/get/"
-    )
-
-    headers = get_auth_headers(
-        settings.token
-    )
-
     params = {}
 
     # When
     # material_pdf_id 없이 강의자료 PDF 조회 API 요청
-    response = get_request(
-        url=url,
-        headers=headers,
+    response = rest_student_client.get(
+        f"/org/{common_data.org_student}/material_pdf/get/",
         params=params,
-        timeout=settings.request_timeout_seconds,
     )
 
     # Then
@@ -590,19 +503,9 @@ def test_get_material_pdf_without_material_pdf_id(settings):
     )
 
 
-def test_get_quiz_with_invalid_material_id(settings):
+def test_get_quiz_with_invalid_material_id(rest_student_client):
     # Given
     # 존재하지 않는 퀴즈 material_id 조회에 필요한 설정값 세팅
-    url = (
-        f"{common_data.base_rest_url}"
-        f"/org/{common_data.org_student}"
-        f"/lecture_page/resolve/"
-    )
-
-    headers = get_auth_headers(
-        settings.token
-    )
-
     params = {
         "material_type":
             lecture_case["lecture_quiz_material_type"],
@@ -614,11 +517,9 @@ def test_get_quiz_with_invalid_material_id(settings):
 
     # When
     # 존재하지 않는 퀴즈 material_id 조회 API 요청
-    response = get_request(
-        url=url,
-        headers=headers,
+    response = rest_student_client.get(
+        f"/org/{common_data.org_student}/lecture_page/resolve/",
         params=params,
-        timeout=settings.request_timeout_seconds,
     )
 
     # Then
@@ -645,6 +546,7 @@ def test_get_quiz_with_invalid_material_id(settings):
     assert "lecture_page_id" not in data, (
         "존재하지 않는 퀴즈 데이터가 반환되었습니다."
     )
+
 
 def test_get_exercise_with_invalid_room_id(settings):
     # Given
@@ -689,12 +591,13 @@ def test_get_exercise_with_invalid_room_id(settings):
     )
 
     assert data["fail_code"] == "not_found_exercise_room", (
-    "존재하지 않는 실습 room_id 오류가 정상적으로 반환되지 않았습니다."
-)
+        "존재하지 않는 실습 room_id 오류가 정상적으로 반환되지 않았습니다."
+    )
 
     assert "room_token" not in data, (
         "존재하지 않는 실습 room 정보가 반환되었습니다."
     )
+
 
 def test_submit_available_exercise(settings):
     # Given
