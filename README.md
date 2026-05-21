@@ -39,18 +39,21 @@ elice_lxp_test_team3/
 ├── README.md
 ├── part1_api_automation/
 │   ├── tests/
+│   │   ├── __init__.py                 # pytest 모듈 충돌 방지를 위한 패키지 표시
+│   │   ├── conftest.py                 # pytest 공통 fixture 및 API client 설정
+│   │   ├── test_auth.py                # 인증/권한 관련 테스트
 │   │   ├── test_student/
+│   │   │   ├── __init__.py             # 학습자 테스트 패키지 표시
 │   │   │   ├── test_board.py           # 학습자 게시판 API 테스트
 │   │   │   ├── test_class_home.py      # 학습자 클래스 홈 API 테스트
 │   │   │   ├── test_course.py          # 학습자 학습 과목 API 테스트
 │   │   │   └── test_schedule.py        # 학습자 수업 일정 API 테스트
-│   │   ├── test_teacher/
-│   │   │   ├── test_baord.py           # 교육자 권한 게시판 API 테스트
-│   │   │   ├── test_class_home.py      # 교육자 권한 클래스 홈 API 테스트
-│   │   │   ├── test_course.py          # 교육자 권한 학습 과목 API 테스트
-│   │   │   └── test_schedule.py        # 교육자 권한 수업 일정 API 테스트
-│   │   ├── conftest.py                 # pytest 공통 fixture 및 API client 설정
-│   │   └── test_auth.py                # 인증/권한 관련 테스트
+│   │   └── test_teacher/
+│   │       ├── __init__.py             # 교육자 권한 패키지 표시
+│   │       ├── test_board.py           # 교육자 권한 게시판 API 테스트
+│   │       ├── test_class_home.py      # 교육자 권한 클래스 홈 API 테스트
+│   │       ├── test_course.py          # 교육자 권한 학습 과목 API 테스트
+│   │       └── test_schedule.py        # 교육자 권한 수업 일정 API 테스트
 │   ├── utils/
 │   │   ├── test_data/
 │   │   │   ├── common_data.py          # 공통 테스트 데이터
