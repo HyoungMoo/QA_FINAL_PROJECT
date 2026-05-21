@@ -173,10 +173,25 @@ def teacher_client(settings: Settings) -> APIClient:
 
 @pytest.fixture(scope="session")
 def rest_teacher_client(settings: Settings) -> APIClient:
+    # 교육자 권한으로 호출할 API client.
+    # test_teacher.py나 권한 경계 테스트에서 사용한다.
     return APIClient(
-        base_url=common_data.base_rest_url,
+        base_url=common_data.base_base_rest_url,
         token=settings.token,
         org_name=common_data.org_teacher,
         timeout=settings.request_timeout_seconds,
-        min_interval=0.3,
+        min_interval=common_data.min_request_interval_seconds,
+    )
+
+
+@pytest.fixture(scope="session")
+def rest_teacher_client(settings: Settings) -> APIClient:
+    # 교육자 권한으로 호출할 API client.
+    # test_teacher.py나 권한 경계 테스트에서 사용한다.
+    return APIClient(
+        base_url=common_data.base_base_rest_url,
+        token=settings.token,
+        org_name=common_data.org_teacher,
+        timeout=settings.request_timeout_seconds,
+        min_interval=common_data.min_request_interval_seconds,
     )
