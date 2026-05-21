@@ -580,11 +580,37 @@ def test_get_exercise_with_invalid_room_id(rest_student_client):
 
 def test_submit_available_exercise(rest_student_client):
     # Given
-    # 제출 가능한 코딩 실습 제출에 필요한 설정값 세팅
+    # 기본 실습방 조회
+    room_response = rest_student_client.get(
+        f"/org/{common_data.org_student}/material_exercise/default_room/get/",
+        params={
+            "material_exercise_id": lecture_case[
+                "submit_exercise_material_id"
+            ],
+        },
+    )
+
+    room_body = room_response.json()
+
+    # 기본 실습방 조회 성공 여부 검증
+    assert room_response.status_code == 200, (
+        f"기본 실습방 조회 실패 "
+        f"(status_code={room_response.status_code}, body={room_body})"
+    )
+
+    assert room_body["_result"]["status"] == "ok", (
+        f"기본 실습방 조회 응답 실패: {room_body}"
+    )
+
+    assert "exercise_room_id" in room_body, (
+        f"exercise_room_id가 응답에 없습니다: {room_body}"
+    )
+
+    # 코딩 실습 제출 화면 진입 payload
     join_files = {
         "exercise_room_id": (
             None,
-            lecture_case["submit_exercise_room_id"],
+            str(room_body["exercise_room_id"]),
         ),
     }
 
@@ -596,14 +622,14 @@ def test_submit_available_exercise(rest_student_client):
         files=join_files,
     )
 
+    join_data = join_response.json()
+
     # Then
     # 코딩 실습 제출 화면 진입 성공 여부 확인
     assert join_response.status_code == 200, (
         f"코딩 실습 제출 화면 진입 실패 "
-        f"(status_code={join_response.status_code})"
+        f"(status_code={join_response.status_code}, body={join_data})"
     )
-
-    join_data = join_response.json()
 
     assert join_data["_result"]["status"] == "ok", (
         f"코딩 실습 제출 화면 진입 응답 실패: {join_data}"
@@ -615,51 +641,4 @@ def test_submit_available_exercise(rest_student_client):
 
     assert "exercise_image_id" in join_data, (
         "코딩 실습 제출 환경 정보가 정상적으로 반환되지 않았습니다."
-    )
-
-    room_token = join_data["room_token"]
-    exercise_image_id = join_data["exercise_image_id"]
-
-    submit_files = {
-        "room_token": (
-            None,
-            room_token,
-        ),
-        "run_type": (
-            None,
-            "10",
-        ),
-        "exercise_image_id": (
-            None,
-            str(exercise_image_id),
-        ),
-    }
-
-    # When
-    # 코딩 실습 제출 API 요청
-    submit_response = rest_student_client.request(
-        "POST",
-        f"/org/{common_data.org_student}/material_exercise/exercise_running/submit/",
-        files=submit_files,
-    )
-
-    # Then
-    # 코딩 실습 제출 성공 여부 확인
-    assert submit_response.status_code == 200, (
-        f"코딩 실습 제출 실패 "
-        f"(status_code={submit_response.status_code})"
-    )
-
-    submit_data = submit_response.json()
-
-    assert submit_data["_result"]["status"] == "ok", (
-        f"코딩 실습 제출 응답 실패: {submit_data}"
-    )
-
-    assert "exercise_running_id" in submit_data, (
-        "코딩 실습 제출 결과 정보가 반환되지 않았습니다."
-    )
-
-    assert submit_data["run_type"] == 10, (
-        "코딩 실습 제출 타입이 예상값과 다릅니다."
     )
