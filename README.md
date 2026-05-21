@@ -36,6 +36,7 @@ API 테스트는 아래 기능을 중심으로 진행합니다.
 
 ```text
 elice_lxp_test_team3/
+├── .gitignore
 ├── README.md
 ├── part1_api_automation/
 │   ├── tests/
@@ -126,7 +127,7 @@ pytest --html=reports/report.html --self-contained-html
 ```
 
 ### 테스트 마커
-- smoke 테스트 등 스크립트 작성 진행에 맞춰 마커 추가 예정
+- `smoke`: 빠른 핵심 검증용 마커, 현재 테스트 적용 범위는 확장 예정
 
 우선순위별 테스트 실행:
 
