@@ -1,8 +1,12 @@
 
+import re
+
 import pytest
 import requests
 from utils.api_client import APIClient
 from utils.test_data import common_data
+
+UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', re.I)
 
 # 실제 수업 기간에 해당하는 테스트 범위 (이 기간에 실제 일정 데이터가 존재함)
 DT_START = "2026-04-16T15:00:00.000Z"
@@ -56,11 +60,30 @@ class TestSchedule:
         first = data[0]
 
         # assert 4. 필수 필드가 존재하는지 확인
-        required_keys = ["id", "summary", "dt_start", "dt_end", "tags"]
+        required_keys = ["id", "uid", "summary", "dt_start", "dt_end", "tags"]
         missing_keys = [key for key in required_keys if key not in first]
         assert not missing_keys, (
             f"응답 항목에 필수 필드가 없습니다. "
             f"missing_keys={missing_keys}, keys={list(first.keys())}"
+        )
+
+        # assert 5. id가 UUID 형식인지 확인
+        assert UUID_RE.match(first["id"]), (
+            f"id가 UUID 형식이 아닙니다. id={first['id']}"
+        )
+
+        # assert 6. summary가 string 형식인지 확인
+        assert isinstance(first["summary"], str), (
+            f"summary가 string 형식이 아닙니다. type={type(first['summary']).__name__}"
+        )
+
+        # assert 7. tags.classroom_id가 요청한 classroom_id와 일치하는지 확인
+        assert "classroom_id" in first["tags"], (
+            f"tags에 classroom_id가 없습니다. tags={first['tags']}"
+        )
+        assert first["tags"]["classroom_id"] == common_data.student_classroom_id, (
+            f"tags.classroom_id가 요청값과 다릅니다. "
+            f"expected={common_data.student_classroom_id}, actual={first['tags']['classroom_id']}"
         )
 
         print("")
