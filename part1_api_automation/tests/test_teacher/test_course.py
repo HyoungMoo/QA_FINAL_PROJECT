@@ -4,6 +4,9 @@ from utils.test_data.student_material_data import (
     teacher_course_case,
 )
 
+
+### Positive Test
+
 def test_teacher_can_change_lecture_page_visibility(
     rest_teacher_client,
 ):
@@ -63,6 +66,30 @@ def test_teacher_can_change_lecture_page_visibility(
         f"수업자료 공개 상태 변경 실패: {body}"
     )
 
+    rollback_response = rest_teacher_client.request(
+        "POST",
+        f"/org/{common_data.org_teacher}/lecture_page/visibility/edit/bulk/",
+        data={
+            "lecture_page_ids": teacher_course_case[
+                "lecture_page_id"
+            ],
+            "is_opened": str(current_is_opened).lower(),
+        },
+    )
+
+    rollback_body = rollback_response.json()
+
+    # 원복 HTTP 응답 성공 여부 검증
+    assert rollback_response.status_code == 200, (
+        f"수업자료 공개 상태 원복 HTTP 응답 실패: "
+        f"status_code={rollback_response.status_code}, "
+        f"body={rollback_body}"
+    )
+
+    # 원복 API 비즈니스 로직 성공 여부 검증
+    assert rollback_body["_result"]["status"] == "ok", (
+        f"수업자료 공개 상태 원복 실패: {rollback_body}"
+    )
 
 def test_teacher_can_create_lecture(rest_teacher_client):
     # Given
@@ -98,19 +125,39 @@ def test_teacher_can_create_lecture(rest_teacher_client):
     assert body["_result"]["status"] == "ok", (
         f"수업 생성 실패: {body}"
     )
-
+    
     # 생성된 lecture_id 반환 여부 검증
     assert "lecture_id" in body, (
         f"수업 생성 응답에 lecture_id 없음: {body}"
     )
 
-from utils.test_data import common_data
-from utils.test_data.student_material_data import (
-    teacher_course_case,
-)
 
+    created_lecture_id = body["lecture_id"]
 
-def test_teacher_can_edit_lecture_title(rest_teacher_client):
+    # 생성된 수업 삭제(원복)
+    rollback_response = rest_teacher_client.request(
+        "POST",
+        f"/org/{common_data.org_teacher}/lecture/delete/",
+        data={
+            "lecture_id": created_lecture_id,
+        },
+    )
+
+    rollback_body = rollback_response.json()
+
+    # 원복 HTTP 응답 성공 여부 검증
+    assert rollback_response.status_code == 200, (
+        f"수업 삭제 HTTP 응답 실패: "
+        f"status_code={rollback_response.status_code}, "
+        f"body={rollback_body}"
+    )
+
+    # 원복 API 비즈니스 로직 성공 여부 검증
+    assert rollback_body["_result"]["status"] == "ok", (
+        f"수업 삭제 실패: {rollback_body}"
+    )
+
+def test_teacher_can_edit_lecture(rest_teacher_client):
     # Given
     # 기존 수업 정보 조회
     get_response = rest_teacher_client.get(
@@ -135,20 +182,20 @@ def test_teacher_can_edit_lecture_title(rest_teacher_client):
 
     lecture = get_body["lecture"]
 
-    # 기존 상태값 유지 + title만 변경
+    # 수업 수정 payload
     payload = {
         "lecture_id": teacher_course_case["lecture_id"],
         "course_id": teacher_course_case["course_id"],
-        "title": "API_SSS",
-        "description": lecture["description"],
-        "lecture_type": lecture["lecture_type"],
-        "teaching_datetime": lecture["teaching_datetime"],
-        "is_opened": str(lecture["is_opened"]).lower(),
-        "is_preview": str(lecture["is_preview"]).lower(),
+        "title": "API_EDIT_TEST",
+        "description": "API_EDIT_TEST",
+        "lecture_type": 0,
+        "teaching_datetime": 1779894000000,
+        "is_opened": "false",
+        "is_preview": "false",
     }
 
     # When
-    # 기존 상태 유지 후 title만 수정
+    # 임의 값으로 수업 정보 수정
     response = rest_teacher_client.request(
         "POST",
         f"/org/{common_data.org_teacher}/lecture/edit/",
@@ -160,13 +207,13 @@ def test_teacher_can_edit_lecture_title(rest_teacher_client):
     # Then
     # HTTP 응답 성공 여부 검증
     assert response.status_code == 200, (
-        f"수업 제목 수정 HTTP 응답 실패: "
+        f"수업 수정 HTTP 응답 실패: "
         f"status_code={response.status_code}, body={body}"
     )
 
     # 실제 API 비즈니스 로직 성공 여부 검증
     assert body["_result"]["status"] == "ok", (
-        f"수업 제목 수정 실패: {body}"
+        f"수업 수정 실패: {body}"
     )
 
     # 수정 대상 lecture_id 유지 여부 검증
@@ -174,6 +221,35 @@ def test_teacher_can_edit_lecture_title(rest_teacher_client):
         f"수정된 lecture_id 불일치: {body}"
     )
 
+    # 원복 API 호출
+    rollback_response = rest_teacher_client.request(
+        "POST",
+        f"/org/{common_data.org_teacher}/lecture/edit/",
+        data={
+            "lecture_id": teacher_course_case["lecture_id"],
+            "course_id": teacher_course_case["course_id"],
+            "title": lecture["title"],
+            "description": lecture["description"],
+            "lecture_type": lecture["lecture_type"],
+            "teaching_datetime": lecture["teaching_datetime"],
+            "is_opened": str(lecture["is_opened"]).lower(),
+            "is_preview": str(lecture["is_preview"]).lower(),
+        },
+    )
+
+    rollback_body = rollback_response.json()
+
+    # 원복 HTTP 응답 성공 여부 검증
+    assert rollback_response.status_code == 200, (
+        f"수업 정보 원복 HTTP 응답 실패: "
+        f"status_code={rollback_response.status_code}, "
+        f"body={rollback_body}"
+    )
+
+    # 원복 API 비즈니스 로직 성공 여부 검증
+    assert rollback_body["_result"]["status"] == "ok", (
+        f"수업 정보 원복 실패: {rollback_body}"
+    )
 
 
 
@@ -205,145 +281,339 @@ def test_teacher_can_move_lecture_page(rest_teacher_client):
 
     lecture_pages = list_body["lecture_pages"]
 
-    # 테스트 대상 수업자료의 현재 위치 확인
-    target_index = next(
-        index
-        for index, page in enumerate(lecture_pages)
-        if page["id"] == teacher_course_case[
-            "move_lecture_page_id"
-        ]
-    )
+    # 순서 변경은 최소 2개 이상의 수업자료가 있어야 가능
+    if len(lecture_pages) < 2:
+        pytest.skip("순서 변경 테스트를 위해 수업자료가 2개 이상 필요합니다.")
 
-    # 현재 첫 번째면 두 번째로, 아니면 첫 번째로 이동
-    new_order_no = 2 if target_index == 0 else 1
+    # 목록의 첫 번째 수업자료를 테스트 대상으로 선택
+    target_lecture_page_id = lecture_pages[0]["id"]
 
-    # 수업자료 순서 변경 payload
-    payload = {
-        "lecture_page_id": teacher_course_case[
-            "move_lecture_page_id"
-        ],
-        "locator_type": 0,
-        "new_order_no": new_order_no,
-    }
+    original_order_no = 1
+    new_order_no = 2
 
-    # When
-    # 수업자료 순서 변경 API 호출
-    response = rest_teacher_client.request(
-        "POST",
-        f"/org/{common_data.org_teacher}/lecture_page/move/",
-        data=payload,
-    )
+    try:
+        # When
+        # 첫 번째 수업자료를 두 번째로 이동
+        response = rest_teacher_client.request(
+            "POST",
+            f"/org/{common_data.org_teacher}/lecture_page/move/",
+            data={
+                "lecture_page_id": target_lecture_page_id,
+                "locator_type": 0,
+                "new_order_no": new_order_no,
+            },
+        )
 
-    body = response.json()
+        body = response.json()
 
-    # Then
-    # HTTP 응답 성공 여부 검증
-    assert response.status_code == 200, (
-        f"수업자료 순서 변경 HTTP 응답 실패: "
-        f"status_code={response.status_code}, body={body}"
-    )
+        # Then
+        # HTTP 응답 성공 여부 검증
+        assert response.status_code == 200, (
+            f"수업자료 순서 변경 HTTP 응답 실패: "
+            f"status_code={response.status_code}, body={body}"
+        )
 
-    # 실제 API 비즈니스 로직 성공 여부 검증
-    assert body["_result"]["status"] == "ok", (
-        f"수업자료 순서 변경 실패: {body}"
-    )
+        # 실제 API 비즈니스 로직 성공 여부 검증
+        assert body["_result"]["status"] == "ok", (
+            f"수업자료 순서 변경 실패: {body}"
+        )
+
+        # 순서 변경 결과 확인을 위한 수업자료 목록 재조회
+        moved_list_response = rest_teacher_client.get(
+            f"/org/{common_data.org_teacher}/lecture_page/list/",
+            params={
+                "lecture_id": teacher_course_case["lecture_id"],
+                "locator_type": 0,
+                "offset": 0,
+                "count": 50,
+            },
+        )
+
+        moved_list_body = moved_list_response.json()
+
+        assert moved_list_response.status_code == 200, (
+            f"수업자료 순서 변경 후 목록 조회 HTTP 응답 실패: "
+            f"status_code={moved_list_response.status_code}, "
+            f"body={moved_list_body}"
+        )
+
+        assert moved_list_body["_result"]["status"] == "ok", (
+            f"수업자료 순서 변경 후 목록 조회 실패: {moved_list_body}"
+        )
+
+        moved_lecture_pages = moved_list_body["lecture_pages"]
+
+        assert moved_lecture_pages[new_order_no - 1]["id"] == target_lecture_page_id, (
+            f"수업자료 순서 변경 결과가 반영되지 않았습니다: "
+            f"expected_order_no={new_order_no}, "
+            f"lecture_page_id={target_lecture_page_id}, "
+            f"lecture_pages={moved_lecture_pages}"
+        )
+
+    finally:
+        # 원래 순서인 첫 번째로 원복
+        rollback_response = rest_teacher_client.request(
+            "POST",
+            f"/org/{common_data.org_teacher}/lecture_page/move/",
+            data={
+                "lecture_page_id": target_lecture_page_id,
+                "locator_type": 0,
+                "new_order_no": original_order_no,
+            },
+        )
+
+        rollback_body = rollback_response.json()
+
+        assert rollback_response.status_code == 200, (
+            f"수업자료 순서 원복 HTTP 응답 실패: "
+            f"status_code={rollback_response.status_code}, "
+            f"body={rollback_body}"
+        )
+
+        assert rollback_body["_result"]["status"] == "ok", (
+            f"수업자료 순서 원복 실패: {rollback_body}"
+        )
 
 
 def test_teacher_can_delete_lecture_page(rest_teacher_client):
     # Given
-    # 삭제 대상 수업자료 목록 조회
-    list_response = rest_teacher_client.get(
-        f"/org/{common_data.org_teacher}/lecture_page/list/",
-        params={
-            "lecture_id": teacher_course_case["delete_lecture_id"],
-            "locator_type": 0,
-            "offset": 0,
-            "count": 50,
-        },
-    )
-
-    list_body = list_response.json()
-
-    # 수업자료 목록 조회 HTTP 응답 성공 여부 검증
-    assert list_response.status_code == 200, (
-        f"수업자료 목록 조회 HTTP 응답 실패: "
-        f"status_code={list_response.status_code}, body={list_body}"
-    )
-
-    # 수업자료 목록 조회 비즈니스 로직 성공 여부 검증
-    assert list_body["_result"]["status"] == "ok", (
-        f"수업자료 목록 조회 실패: {list_body}"
-    )
-
-    lecture_pages = list_body["lecture_pages"]
-
-    # 삭제 대상 없으면 테스트 제외
-    if not lecture_pages:
-        pytest.skip("삭제 가능한 수업자료 없음")
-
-    target_lecture_page_id = lecture_pages[-1]["id"]
-
-    payload = {
-        "lecture_page_ids": target_lecture_page_id,
+    # 삭제 검증용 퀴즈 수업자료 생성 payload
+    create_payload = {
+        "lecture_id": teacher_course_case["lecture_id"],
+        "lecture_page_id": "undefined",
+        "id": "undefined",
+        "title": "API_DELETE_TEST",
+        "description": "",
+        "is_opened": "false",
+        "is_for_stats": "true",
+        "difficulty_type": 10,
+        "question_title": "Untitled Quiz",
+        "question_description": "",
+        "option_type": 0,
+        "options_default": '[{"title":"","content":"Apple"},{"title":"","content":"Banana"}]',
+        "answer_info_default": "[0]",
+        "answer_info": "[0]",
+        "is_auto_grade": "true",
+        "explanation_info": '{"is_enabled":false,"value":""}',
+        "options_set_enabled": "false",
     }
 
-    # When
-    # 수업자료 삭제 API 호출
-    response = rest_teacher_client.request(
+    # 삭제할 테스트 수업자료 생성을 위한 퀴즈 생성 API 호출
+    create_response = rest_teacher_client.request(
         "POST",
-        f"/org/{common_data.org_teacher}/lecture_page/delete/bulk/",
-        data=payload,
+        f"/org/{common_data.org_teacher}/material_quiz/edit/",
+        data=create_payload,
     )
 
-    body = response.json()
+    create_body = create_response.json()
 
-    # Then
-    # HTTP 응답 성공 여부 검증
-    assert response.status_code == 200, (
-        f"수업자료 삭제 HTTP 응답 실패: "
-        f"status_code={response.status_code}, body={body}"
+    # 삭제 검증용 수업자료 생성 HTTP 응답 성공 여부 검증
+    assert create_response.status_code == 200, (
+        f"삭제 검증용 수업자료 생성 HTTP 응답 실패: "
+        f"status_code={create_response.status_code}, body={create_body}"
     )
 
-    # 실제 API 비즈니스 로직 성공 여부 검증
-    assert body["_result"]["status"] == "ok", (
-        f"수업자료 삭제 실패: {body}"
+    # 삭제 검증용 수업자료 생성 비즈니스 로직 성공 여부 검증
+    assert create_body["_result"]["status"] == "ok", (
+        f"삭제 검증용 수업자료 생성 실패: {create_body}"
     )
+
+    # 생성된 퀴즈 수업자료 ID 반환 여부 검증
+    assert create_body["material_quiz_id"], (
+        f"삭제 검증용 수업자료 ID 반환 실패: {create_body}"
+    )
+
+    # 생성 API 응답에서 반환된 퀴즈 자료 ID 저장
+    created_material_quiz_id = create_body["material_quiz_id"]
+
+    # 삭제 API에 사용할 수업자료 ID 초기화
+    target_lecture_page_id = None
+
+    try:
+        # 생성된 퀴즈 자료가 연결된 수업자료 ID 확인을 위한 목록 조회
+        list_response = rest_teacher_client.get(
+            f"/org/{common_data.org_teacher}/lecture_page/list/",
+            params={
+                "lecture_id": teacher_course_case["lecture_id"],
+                "locator_type": 0,
+                "offset": 0,
+                "count": 50,
+            },
+        )
+
+        list_body = list_response.json()
+
+        # 수업자료 목록 조회 HTTP 응답 성공 여부 검증
+        assert list_response.status_code == 200, (
+            f"수업자료 목록 조회 HTTP 응답 실패: "
+            f"status_code={list_response.status_code}, body={list_body}"
+        )
+
+        # 수업자료 목록 조회 비즈니스 로직 성공 여부 검증
+        assert list_body["_result"]["status"] == "ok", (
+            f"수업자료 목록 조회 실패: {list_body}"
+        )
+
+        lecture_pages = list_body["lecture_pages"]
+
+        # 생성한 퀴즈 자료와 연결된 수업자료를 목록에서 찾는다.
+        created_page = next(
+            (
+                page
+                for page in lecture_pages
+                if page["material_id"] == created_material_quiz_id
+            ),
+            None,
+        )
+
+        # 생성한 퀴즈 자료가 실제 수업자료 목록에 추가되었는지 검증
+        assert created_page is not None, (
+            f"생성된 삭제 검증용 수업자료를 목록에서 찾을 수 없습니다: "
+            f"material_quiz_id={created_material_quiz_id}, "
+            f"lecture_pages={lecture_pages}"
+        )
+
+        # 삭제 API 요청에 사용할 수업자료 ID 저장
+        target_lecture_page_id = created_page["id"]
+
+        # When
+        # 생성한 수업자료 삭제 API 호출
+        response = rest_teacher_client.request(
+            "POST",
+            f"/org/{common_data.org_teacher}/lecture_page/delete/bulk/",
+            data={
+                "lecture_page_ids": target_lecture_page_id,
+            },
+        )
+
+        body = response.json()
+
+        # Then
+        # 수업자료 삭제 HTTP 응답 성공 여부 검증
+        assert response.status_code == 200, (
+            f"수업자료 삭제 HTTP 응답 실패: "
+            f"status_code={response.status_code}, body={body}"
+        )
+
+        # 수업자료 삭제 비즈니스 로직 성공 여부 검증
+        assert body["_result"]["status"] == "ok", (
+            f"수업자료 삭제 실패: {body}"
+        )
+
+        # 삭제 결과 확인을 위한 수업자료 목록 재조회
+        deleted_check_response = rest_teacher_client.get(
+            f"/org/{common_data.org_teacher}/lecture_page/list/",
+            params={
+                "lecture_id": teacher_course_case["lecture_id"],
+                "locator_type": 0,
+                "offset": 0,
+                "count": 50,
+            },
+        )
+
+        deleted_check_body = deleted_check_response.json()
+
+        # 삭제 후 수업자료 목록 조회 HTTP 응답 성공 여부 검증
+        assert deleted_check_response.status_code == 200, (
+            f"수업자료 삭제 후 목록 조회 HTTP 응답 실패: "
+            f"status_code={deleted_check_response.status_code}, "
+            f"body={deleted_check_body}"
+        )
+
+        # 삭제 후 수업자료 목록 조회 비즈니스 로직 성공 여부 검증
+        assert deleted_check_body["_result"]["status"] == "ok", (
+            f"수업자료 삭제 후 목록 조회 실패: {deleted_check_body}"
+        )
+
+        deleted_check_pages = deleted_check_body["lecture_pages"]
+
+        # 삭제한 수업자료가 목록에서 사라졌는지 검증
+        assert all(
+            page["id"] != target_lecture_page_id
+            for page in deleted_check_pages
+        ), (
+            f"삭제한 수업자료가 목록에 남아 있습니다: "
+            f"lecture_page_id={target_lecture_page_id}, "
+            f"lecture_pages={deleted_check_pages}"
+        )
+
+    finally:
+        # 테스트 중간 실패로 수업자료가 남아 있을 경우를 대비한 정리 작업
+        if target_lecture_page_id is not None:
+            rest_teacher_client.request(
+                "POST",
+                f"/org/{common_data.org_teacher}/lecture_page/delete/bulk/",
+                data={
+                    "lecture_page_ids": target_lecture_page_id,
+                },
+            )
 
 
 def test_teacher_can_clone_lecture(rest_teacher_client):
     # Given
     # 수업 복제 payload
     payload = {
-        "lecture_id": teacher_course_case["copy_lecture_id"],
-        "target_course_id": teacher_course_case["copy_course_id"],
+        "lecture_id": teacher_course_case["lecture_id"],
+        "target_course_id": teacher_course_case["course_id"],
     }
 
-    # When
-    # 수업 복제 API 호출
-    response = rest_teacher_client.request(
-        "POST",
-        f"/org/{common_data.org_teacher}/lecture/clone/",
-        data=payload,
-    )
+    cloned_lecture_id = None
 
-    body = response.json()
+    try:
+        # When
+        # 수업 복제 API 호출
+        response = rest_teacher_client.request(
+            "POST",
+            f"/org/{common_data.org_teacher}/lecture/clone/",
+            data=payload,
+        )
 
-    # Then
-    # HTTP 응답 성공 여부 검증
-    assert response.status_code == 200, (
-        f"수업 복제 HTTP 응답 실패: "
-        f"status_code={response.status_code}, body={body}"
-    )
+        body = response.json()
 
-    # 실제 API 비즈니스 로직 성공 여부 검증
-    assert body["_result"]["status"] == "ok", (
-        f"수업 복제 실패: {body}"
-    )
+        # Then
+        # HTTP 응답 성공 여부 검증
+        assert response.status_code == 200, (
+            f"수업 복제 HTTP 응답 실패: "
+            f"status_code={response.status_code}, body={body}"
+        )
 
-    # 복제된 lecture_id 반환 여부 검증
-    assert body["lecture_id"], (
-        f"복제된 lecture_id 없음: {body}"
-    )
+        # 실제 API 비즈니스 로직 성공 여부 검증
+        assert body["_result"]["status"] == "ok", (
+            f"수업 복제 실패: {body}"
+        )
+
+        # 복제된 lecture_id 반환 여부 검증
+        assert body["lecture_id"], (
+            f"복제된 lecture_id 없음: {body}"
+        )
+
+        # 원복을 위해 복제된 수업 ID 저장
+        cloned_lecture_id = body["lecture_id"]
+
+    finally:
+        # 복제된 수업이 남아 있지 않도록 삭제 처리
+        if cloned_lecture_id is not None:
+            rollback_response = rest_teacher_client.request(
+                "POST",
+                f"/org/{common_data.org_teacher}/lecture/delete/",
+                data={
+                    "lecture_id": cloned_lecture_id,
+                },
+            )
+
+            rollback_body = rollback_response.json()
+
+            # 복제 수업 삭제 HTTP 응답 성공 여부 검증
+            assert rollback_response.status_code == 200, (
+                f"복제 수업 삭제 HTTP 응답 실패: "
+                f"status_code={rollback_response.status_code}, "
+                f"body={rollback_body}"
+            )
+
+            # 복제 수업 삭제 비즈니스 로직 성공 여부 검증
+            assert rollback_body["_result"]["status"] == "ok", (
+                f"복제 수업 삭제 실패: {rollback_body}"
+            )
 
 
 
@@ -351,7 +621,7 @@ def test_teacher_can_create_material_quiz(rest_teacher_client):
     # Given
     # 퀴즈 학습자료 생성 payload
     payload = {
-        "lecture_id": teacher_course_case["quiz_lecture_id"],
+        "lecture_id": teacher_course_case["lecture_id"],
         "lecture_page_id": "undefined",
         "id": "undefined",
         "title": "API_QUIZ_CREATE_TEST",
@@ -370,32 +640,110 @@ def test_teacher_can_create_material_quiz(rest_teacher_client):
         "options_set_enabled": "false",
     }
 
-    # When
-    # 퀴즈 학습자료 생성 API 호출
-    response = rest_teacher_client.request(
-        "POST",
-        f"/org/{common_data.org_teacher}/material_quiz/edit/",
-        data=payload,
-    )
+    created_material_quiz_id = None
+    target_lecture_page_id = None
 
-    body = response.json()
+    try:
+        # When
+        # 퀴즈 학습자료 생성 API 호출
+        response = rest_teacher_client.request(
+            "POST",
+            f"/org/{common_data.org_teacher}/material_quiz/edit/",
+            data=payload,
+        )
 
-    # Then
-    # HTTP 응답 성공 여부 검증
-    assert response.status_code == 200, (
-        f"퀴즈 학습자료 생성 HTTP 응답 실패: "
-        f"status_code={response.status_code}, body={body}"
-    )
+        body = response.json()
 
-    # 실제 API 비즈니스 로직 성공 여부 검증
-    assert body["_result"]["status"] == "ok", (
-        f"퀴즈 학습자료 생성 실패: {body}"
-    )
+        # Then
+        # HTTP 응답 성공 여부 검증
+        assert response.status_code == 200, (
+            f"퀴즈 학습자료 생성 HTTP 응답 실패: "
+            f"status_code={response.status_code}, body={body}"
+        )
 
-    # 생성된 퀴즈 ID 반환 여부 검증
-    assert body["material_quiz_id"], (
-        f"생성된 material_quiz_id 없음: {body}"
-    )
+        # 실제 API 비즈니스 로직 성공 여부 검증
+        assert body["_result"]["status"] == "ok", (
+            f"퀴즈 학습자료 생성 실패: {body}"
+        )
+
+        # 생성된 퀴즈 ID 반환 여부 검증
+        assert body["material_quiz_id"], (
+            f"생성된 material_quiz_id 없음: {body}"
+        )
+
+        # 생성된 퀴즈 ID 저장
+        created_material_quiz_id = body["material_quiz_id"]
+
+        # 원복에 필요한 lecture_page_id 확인을 위한 수업자료 목록 조회
+        list_response = rest_teacher_client.get(
+            f"/org/{common_data.org_teacher}/lecture_page/list/",
+            params={
+                "lecture_id": teacher_course_case["lecture_id"],
+                "locator_type": 0,
+                "offset": 0,
+                "count": 50,
+            },
+        )
+
+        list_body = list_response.json()
+
+        # 수업자료 목록 조회 HTTP 응답 성공 여부 검증
+        assert list_response.status_code == 200, (
+            f"퀴즈 생성 후 수업자료 목록 조회 HTTP 응답 실패: "
+            f"status_code={list_response.status_code}, body={list_body}"
+        )
+
+        # 수업자료 목록 조회 비즈니스 로직 성공 여부 검증
+        assert list_body["_result"]["status"] == "ok", (
+            f"퀴즈 생성 후 수업자료 목록 조회 실패: {list_body}"
+        )
+
+        lecture_pages = list_body["lecture_pages"]
+
+        # 생성한 퀴즈 자료와 연결된 수업자료를 목록에서 찾는다.
+        created_page = next(
+            (
+                page
+                for page in lecture_pages
+                if page["material_id"] == created_material_quiz_id
+            ),
+            None,
+        )
+
+        # 생성한 퀴즈 자료가 실제 수업자료 목록에 추가되었는지 검증
+        assert created_page is not None, (
+            f"생성된 퀴즈 수업자료를 목록에서 찾을 수 없습니다: "
+            f"material_quiz_id={created_material_quiz_id}, "
+            f"lecture_pages={lecture_pages}"
+        )
+
+        # 삭제 원복에 사용할 수업자료 ID 저장
+        target_lecture_page_id = created_page["id"]
+
+    finally:
+        # 생성된 퀴즈 수업자료가 남아 있지 않도록 삭제 처리
+        if target_lecture_page_id is not None:
+            rollback_response = rest_teacher_client.request(
+                "POST",
+                f"/org/{common_data.org_teacher}/lecture_page/delete/bulk/",
+                data={
+                    "lecture_page_ids": target_lecture_page_id,
+                },
+            )
+
+            rollback_body = rollback_response.json()
+
+            # 퀴즈 수업자료 삭제 HTTP 응답 성공 여부 검증
+            assert rollback_response.status_code == 200, (
+                f"퀴즈 수업자료 삭제 HTTP 응답 실패: "
+                f"status_code={rollback_response.status_code}, "
+                f"body={rollback_body}"
+            )
+
+            # 퀴즈 수업자료 삭제 비즈니스 로직 성공 여부 검증
+            assert rollback_body["_result"]["status"] == "ok", (
+                f"퀴즈 수업자료 삭제 실패: {rollback_body}"
+            )
 
 
 
@@ -460,7 +808,10 @@ def test_teacher_can_reset_material_quiz_response(rest_teacher_client):
     )
 
 
-def test_teacher_can_add_course_to_classroom(teacher_client):
+def test_teacher_can_add_course_to_classroom(
+    teacher_client,
+    rest_teacher_client,
+):
     # Given
     # 클래스룸 과목 추가 payload
     payload = {
@@ -469,27 +820,106 @@ def test_teacher_can_add_course_to_classroom(teacher_client):
         ],
     }
 
-    # When
-    # 클래스룸 과목 추가 API 호출
-    response = teacher_client.request(
-        "POST",
-        f"/v2/classroom/{common_data.teacher_classroom_id}/course/bulk",
-        json=payload,
-    )
+    created_course_id = None
 
-    body = response.json()
+    try:
+        # When
+        # 클래스룸 과목 추가 API 호출
+        response = teacher_client.request(
+            "POST",
+            f"/v2/classroom/{common_data.teacher_classroom_id}/course/bulk",
+            json=payload,
+        )
 
-    # Then
-    # HTTP 응답 성공 여부 검증
-    assert response.status_code == 200, (
-        f"클래스룸 과목 추가 HTTP 응답 실패: "
-        f"status_code={response.status_code}, body={body}"
-    )
+        body = response.json()
 
-    # 비동기 작업 task_id 반환 여부 검증
-    assert body["task_id"], (
-        f"클래스룸 과목 추가 task_id 반환 실패: {body}"
-    )
+        # Then
+        # HTTP 응답 성공 여부 검증
+        assert response.status_code == 200, (
+            f"클래스룸 과목 추가 HTTP 응답 실패: "
+            f"status_code={response.status_code}, body={body}"
+        )
+
+        # 비동기 작업 task_id 반환 여부 검증
+        assert body["task_id"], (
+            f"클래스룸 과목 추가 task_id 반환 실패: {body}"
+        )
+
+        task_id = body["task_id"]
+
+        # 비동기 작업 상태 확인
+        task_body = None
+
+        for _ in range(10):
+            task_response = rest_teacher_client.get(
+                "/global/task/get/",
+                params={
+                    "task_id": task_id,
+                },
+            )
+
+            task_body = task_response.json()
+
+            # 작업 상태 조회 HTTP 응답 성공 여부 검증
+            assert task_response.status_code == 200, (
+                f"과목 추가 작업 상태 조회 HTTP 응답 실패: "
+                f"status_code={task_response.status_code}, "
+                f"body={task_body}"
+            )
+
+            # 작업 상태 조회 비즈니스 로직 성공 여부 검증
+            assert task_body["_result"]["status"] == "ok", (
+                f"과목 추가 작업 상태 조회 실패: {task_body}"
+            )
+
+            # 작업이 완료되면 진행 상태 목록에서 생성된 과목 ID 확인
+            progress_response = teacher_client.get(
+                f"/v2/classroom/{common_data.teacher_classroom_id}/course/progress",
+                params={
+                    "skip": 0,
+                    "count": 40,
+                },
+            )
+
+            progress_body = progress_response.json()
+
+            assert progress_response.status_code == 200, (
+                f"과목 추가 진행 상태 목록 조회 HTTP 응답 실패: "
+                f"status_code={progress_response.status_code}, "
+                f"body={progress_body}"
+            )
+
+            if progress_body:
+                created_course_id = progress_body[0]["course_id"]
+                break
+
+        # 생성된 과목 ID 반환 여부 검증
+        assert created_course_id is not None, (
+            f"추가된 과목 course_id를 찾을 수 없습니다: "
+            f"task_id={task_id}, "
+            f"task_body={task_body}"
+        )
+
+    finally:
+        # 테스트로 추가된 과목이 남아 있지 않도록 삭제 처리
+        if created_course_id is not None:
+            rollback_response = teacher_client.request(
+                "DELETE",
+                f"/classroom/{common_data.teacher_classroom_id}/course/{created_course_id}",
+            )
+
+            rollback_body = (
+                rollback_response.json()
+                if rollback_response.text
+                else {}
+            )
+
+            # 추가된 과목 삭제 HTTP 응답 성공 여부 검증
+            assert rollback_response.status_code == 200, (
+                f"추가된 클래스룸 과목 삭제 HTTP 응답 실패: "
+                f"status_code={rollback_response.status_code}, "
+                f"body={rollback_body}"
+            )
 
 
 
@@ -513,40 +943,578 @@ def test_teacher_can_reorder_course(teacher_client):
         f"body={list_body}"
     )
 
+    # 순서 변경 테스트를 위해 과목이 4개 이상인지 검증
+    if len(list_body) < 4:
+        pytest.skip("과목 순서 변경 테스트를 위해 과목이 4개 이상 필요합니다.")
+
     # 현재 순서 기준 course_id 추출
-    course_ids = [
+    original_course_ids = [
         course["course_id"]
         for course in list_body
     ]
 
+    # 원본 순서를 복사하여 변경 대상 순서 생성
+    changed_course_ids = original_course_ids.copy()
+
     # 3번째, 4번째 과목 순서 변경
-    course_ids[2], course_ids[3] = (
-        course_ids[3],
-        course_ids[2],
+    changed_course_ids[2], changed_course_ids[3] = (
+        changed_course_ids[3],
+        changed_course_ids[2],
     )
 
+    try:
+        # When
+        # 과목 순서 변경 API 호출
+        response = teacher_client.request(
+            "POST",
+            f"/classroom/{common_data.teacher_classroom_id}/course/reorder",
+            json={
+                "course_ids": changed_course_ids,
+            },
+        )
+
+        body = response.json()
+
+        # Then
+        # HTTP 응답 성공 여부 검증
+        assert response.status_code == 200, (
+            f"과목 순서 변경 HTTP 응답 실패: "
+            f"status_code={response.status_code}, body={body}"
+        )
+
+        # 실제 응답 body 반환 여부 검증
+        assert body == {}, (
+            f"과목 순서 변경 응답 body가 예상 결과와 다름: {body}"
+        )
+
+        # 순서 변경 결과 확인을 위한 과목 목록 재조회
+        changed_list_response = teacher_client.get(
+            f"/classroom/{common_data.teacher_classroom_id}/course",
+            params={
+                "skip": 0,
+                "count": 100,
+            },
+        )
+
+        changed_list_body = changed_list_response.json()
+
+        # 순서 변경 후 과목 목록 조회 HTTP 응답 성공 여부 검증
+        assert changed_list_response.status_code == 200, (
+            f"과목 순서 변경 후 목록 조회 HTTP 응답 실패: "
+            f"status_code={changed_list_response.status_code}, "
+            f"body={changed_list_body}"
+        )
+
+        # 변경된 순서가 목록에 반영되었는지 검증
+        changed_result_course_ids = [
+            course["course_id"]
+            for course in changed_list_body
+        ]
+
+        assert changed_result_course_ids[:len(changed_course_ids)] == changed_course_ids, (
+            f"과목 순서 변경 결과가 반영되지 않았습니다: "
+            f"expected={changed_course_ids}, "
+            f"actual={changed_result_course_ids}"
+        )
+
+    finally:
+        # 원래 과목 순서로 원복
+        rollback_response = teacher_client.request(
+            "POST",
+            f"/classroom/{common_data.teacher_classroom_id}/course/reorder",
+            json={
+                "course_ids": original_course_ids,
+            },
+        )
+
+        rollback_body = rollback_response.json()
+
+        # 과목 순서 원복 HTTP 응답 성공 여부 검증
+        assert rollback_response.status_code == 200, (
+            f"과목 순서 원복 HTTP 응답 실패: "
+            f"status_code={rollback_response.status_code}, "
+            f"body={rollback_body}"
+        )
+
+        # 과목 순서 원복 응답 body 검증
+        assert rollback_body == {}, (
+            f"과목 순서 원복 응답 body가 예상 결과와 다름: {rollback_body}"
+        )
+
+
+
+
+
+def test_teacher_can_edit_material_pdf(rest_teacher_client):
+    # Given
+    # 기존 PDF 학습자료 정보 조회
+    get_response = rest_teacher_client.get(
+        f"/org/{common_data.org_teacher}/material_pdf/get/",
+        params={
+            "material_pdf_id": teacher_course_case["pdf_material_id"],
+        },
+    )
+
+    get_body = get_response.json()
+
+    # PDF 학습자료 조회 HTTP 응답 성공 여부 검증
+    assert get_response.status_code == 200, (
+        f"PDF 학습자료 조회 HTTP 응답 실패: "
+        f"status_code={get_response.status_code}, body={get_body}"
+    )
+
+    # PDF 학습자료 조회 비즈니스 로직 성공 여부 검증
+    assert get_body["_result"]["status"] == "ok", (
+        f"PDF 학습자료 조회 실패: {get_body}"
+    )
+
+    material_pdf = get_body["material_pdf"]
+
+    # 기존 PDF 학습자료 제목/설명 저장
+    original_title = material_pdf["title"]
+    original_description = material_pdf["description"]
+
+    # 기존 수업자료 공개/통계 상태 조회
+    lecture_page_response = rest_teacher_client.get(
+        f"/org/{common_data.org_teacher}/lecture_page/get/",
+        params={
+            "lecture_page_id": teacher_course_case[
+                "pdf_lecture_page_id"
+            ],
+        },
+    )
+
+    lecture_page_body = lecture_page_response.json()
+
+    # 수업자료 조회 HTTP 응답 성공 여부 검증
+    assert lecture_page_response.status_code == 200, (
+        f"PDF 수업자료 조회 HTTP 응답 실패: "
+        f"status_code={lecture_page_response.status_code}, "
+        f"body={lecture_page_body}"
+    )
+
+    # 수업자료 조회 비즈니스 로직 성공 여부 검증
+    assert lecture_page_body["_result"]["status"] == "ok", (
+        f"PDF 수업자료 조회 실패: {lecture_page_body}"
+    )
+
+    lecture_page = lecture_page_body["lecture_page"]
+
+    # PDF 수정 API 필수값이므로 기존 값을 그대로 사용
+    original_is_opened = lecture_page["is_opened"]
+    original_is_for_stats = lecture_page["is_for_stats"]
+
+    # 수정 검증용 PDF 학습자료 값
+    edited_title = "API_PDF_EDIT_TEST"
+    edited_description = "API_PDF_EDIT_TEST"
+
+    try:
+        # When
+        # PDF 학습자료 제목/설명 수정 API 호출
+        response = rest_teacher_client.request(
+            "POST",
+            f"/org/{common_data.org_teacher}/material_pdf/edit/",
+            data={
+                "lecture_page_id": teacher_course_case[
+                    "pdf_lecture_page_id"
+                ],
+                "lecture_id": teacher_course_case["pdf_lecture_id"],
+                "material_pdf_id": teacher_course_case[
+                    "pdf_material_id"
+                ],
+                "id": teacher_course_case["pdf_material_id"],
+                "title": edited_title,
+                "description": edited_description,
+                "is_opened": str(original_is_opened).lower(),
+                "is_for_stats": str(original_is_for_stats).lower(),
+                "locator_types": 0,
+            },
+        )
+
+        body = response.json()
+
+        # Then
+        # PDF 학습자료 수정 HTTP 응답 성공 여부 검증
+        assert response.status_code == 200, (
+            f"PDF 학습자료 수정 HTTP 응답 실패: "
+            f"status_code={response.status_code}, body={body}"
+        )
+
+        # PDF 학습자료 수정 비즈니스 로직 성공 여부 검증
+        assert body["_result"]["status"] == "ok", (
+            f"PDF 학습자료 수정 실패: {body}"
+        )
+
+        # 수정된 PDF 학습자료 ID 반환 여부 검증
+        assert body["material_pdf_id"], (
+            f"수정된 material_pdf_id 반환 실패: {body}"
+        )
+
+        # 수정 결과 확인을 위한 PDF 학습자료 재조회
+        edited_get_response = rest_teacher_client.get(
+            f"/org/{common_data.org_teacher}/material_pdf/get/",
+            params={
+                "material_pdf_id": teacher_course_case["pdf_material_id"],
+            },
+        )
+
+        edited_get_body = edited_get_response.json()
+
+        # PDF 학습자료 재조회 HTTP 응답 성공 여부 검증
+        assert edited_get_response.status_code == 200, (
+            f"PDF 학습자료 수정 후 조회 HTTP 응답 실패: "
+            f"status_code={edited_get_response.status_code}, "
+            f"body={edited_get_body}"
+        )
+
+        # PDF 학습자료 재조회 비즈니스 로직 성공 여부 검증
+        assert edited_get_body["_result"]["status"] == "ok", (
+            f"PDF 학습자료 수정 후 조회 실패: {edited_get_body}"
+        )
+
+        edited_material_pdf = edited_get_body["material_pdf"]
+
+        # PDF 학습자료 제목 수정 반영 여부 검증
+        assert edited_material_pdf["title"] == edited_title, (
+            f"PDF 학습자료 제목 수정 결과가 반영되지 않았습니다: "
+            f"expected={edited_title}, "
+            f"actual={edited_material_pdf['title']}"
+        )
+
+        # PDF 학습자료 설명 수정 반영 여부 검증
+        assert edited_material_pdf["description"] == edited_description, (
+            f"PDF 학습자료 설명 수정 결과가 반영되지 않았습니다: "
+            f"expected={edited_description}, "
+            f"actual={edited_material_pdf['description']}"
+        )
+
+    finally:
+        # 기존 PDF 학습자료 제목/설명으로 원복
+        rollback_response = rest_teacher_client.request(
+            "POST",
+            f"/org/{common_data.org_teacher}/material_pdf/edit/",
+            data={
+                "lecture_page_id": teacher_course_case[
+                    "pdf_lecture_page_id"
+                ],
+                "lecture_id": teacher_course_case["pdf_lecture_id"],
+                "material_pdf_id": teacher_course_case[
+                    "pdf_material_id"
+                ],
+                "id": teacher_course_case["pdf_material_id"],
+                "title": original_title,
+                "description": original_description,
+                "is_opened": str(original_is_opened).lower(),
+                "is_for_stats": str(original_is_for_stats).lower(),
+                "locator_types": 0,
+            },
+        )
+
+        rollback_body = rollback_response.json()
+
+        # PDF 학습자료 원복 HTTP 응답 성공 여부 검증
+        assert rollback_response.status_code == 200, (
+            f"PDF 학습자료 원복 HTTP 응답 실패: "
+            f"status_code={rollback_response.status_code}, "
+            f"body={rollback_body}"
+        )
+
+        # PDF 학습자료 원복 비즈니스 로직 성공 여부 검증
+        assert rollback_body["_result"]["status"] == "ok", (
+            f"PDF 학습자료 원복 실패: {rollback_body}"
+        )
+
+### Negative Test
+
+def test_teacher_cannot_create_lecture_without_course_id(rest_teacher_client):
+    # Given
+    # course_id 누락 상태의 수업 생성 payload
     payload = {
-        "course_ids": course_ids,
+        "title": "API_CREATE_TEST",
+        "description": "API_CREATE_TEST",
+        "lecture_type": 0,
+        "teaching_datetime": 1779894000000,
+        "is_opened": "false",
+        "is_preview": "false",
     }
 
     # When
-    # 과목 순서 변경 API 호출
-    response = teacher_client.request(
+    # course_id 없이 수업 생성 API 호출
+    response = rest_teacher_client.request(
         "POST",
-        f"/classroom/{common_data.teacher_classroom_id}/course/reorder",
-        json=payload,
+        f"/org/{common_data.org_teacher}/lecture/edit/",
+        data=payload,
     )
 
     body = response.json()
 
     # Then
-    # HTTP 응답 성공 여부 검증
+    # HTTP 응답 여부 검증
     assert response.status_code == 200, (
-        f"과목 순서 변경 HTTP 응답 실패: "
+        f"course_id 누락 수업 생성 HTTP 응답 실패: "
         f"status_code={response.status_code}, body={body}"
     )
 
-    # 실제 응답 body 반환 여부 검증
-    assert body == {}, (
-        f"과목 순서 변경 응답 body가 예상 결과와 다름: {body}"
+    # 실제 API 비즈니스 로직 실패 여부 검증
+    assert body["_result"]["status"] == "fail", (
+        f"course_id 누락 요청이 실패하지 않음: {body}"
     )
+
+
+def test_teacher_cannot_create_lecture_with_invalid_course_id(rest_teacher_client):
+    # Given
+    # 존재하지 않는 course_id 수업 생성 payload
+    payload = {
+        "course_id": 999999999,
+        "title": "API_CREATE_TEST",
+        "description": "API_CREATE_TEST",
+        "lecture_type": 0,
+        "teaching_datetime": 1779894000000,
+        "is_opened": "false",
+        "is_preview": "false",
+    }
+
+    # When
+    # 잘못된 course_id로 수업 생성 API 호출
+    response = rest_teacher_client.request(
+        "POST",
+        f"/org/{common_data.org_teacher}/lecture/edit/",
+        data=payload,
+    )
+
+    body = response.json()
+
+    # Then
+    # HTTP 응답 여부 검증
+    assert response.status_code == 200, (
+        f"잘못된 course_id 수업 생성 HTTP 응답 실패: "
+        f"status_code={response.status_code}, body={body}"
+    )
+
+    # 실제 API 비즈니스 로직 실패 여부 검증
+    assert body["_result"]["status"] == "fail", (
+        f"잘못된 course_id 요청이 실패하지 않음: {body}"
+    )
+
+def test_teacher_cannot_change_lecture_page_visibility_without_lecture_page_ids(
+    rest_teacher_client,
+):
+    # Given
+    # lecture_page_ids 누락 공개 상태 변경 payload
+    payload = {
+        "is_opened": "true",
+    }
+
+    # When
+    # lecture_page_ids 없이 공개 상태 변경 API 호출
+    response = rest_teacher_client.request(
+        "POST",
+        f"/org/{common_data.org_teacher}/lecture_page/visibility/edit/bulk/",
+        data=payload,
+    )
+
+    body = response.json()
+
+    # Then
+    # HTTP 응답 여부 검증
+    assert response.status_code == 200, (
+        f"lecture_page_ids 누락 공개 상태 변경 HTTP 응답 실패: "
+        f"status_code={response.status_code}, body={body}"
+    )
+
+    # 실제 API 비즈니스 로직 실패 여부 검증
+    assert body["_result"]["status"] == "fail", (
+        f"lecture_page_ids 누락 요청이 실패하지 않음: {body}"
+    )
+
+
+
+
+def test_teacher_cannot_move_lecture_page_without_new_order_no(rest_teacher_client):
+    # Given
+    # new_order_no 누락 수업자료 순서 변경 payload
+    payload = {
+        "lecture_page_id": teacher_course_case[
+            "lecture_page_id"
+        ],
+        "locator_type": 0,
+    }
+
+    # When
+    # new_order_no 없이 수업자료 순서 변경 API 호출
+    response = rest_teacher_client.request(
+        "POST",
+        f"/org/{common_data.org_teacher}/lecture_page/move/",
+        data=payload,
+    )
+
+    body = response.json()
+
+    # Then
+    # HTTP 응답 여부 검증
+    assert response.status_code == 200, (
+        f"new_order_no 누락 수업자료 순서 변경 HTTP 응답 실패: "
+        f"status_code={response.status_code}, body={body}"
+    )
+
+    # 실제 API 비즈니스 로직 실패 여부 검증
+    assert body["_result"]["status"] == "fail", (
+        f"new_order_no 누락 요청이 실패하지 않음: {body}"
+    )
+
+
+def test_teacher_cannot_create_material_quiz_without_options_default(rest_teacher_client):
+    # Given
+    # options_default 누락 퀴즈 학습자료 생성 payload
+    payload = {
+        "lecture_id": teacher_course_case["lecture_id"],
+        "lecture_page_id": "undefined",
+        "id": "undefined",
+        "title": "API_QUIZ_CREATE_TEST",
+        "description": "",
+        "is_opened": "false",
+        "is_for_stats": "true",
+        "difficulty_type": 10,
+        "question_title": "Untitled Quiz",
+        "question_description": "",
+        "option_type": 0,
+        "answer_info_default": "[0]",
+        "answer_info": "[0]",
+        "is_auto_grade": "true",
+        "explanation_info": '{"is_enabled":false,"value":""}',
+        "options_set_enabled": "false",
+    }
+
+    # When
+    # options_default 없이 퀴즈 생성 API 호출
+    response = rest_teacher_client.request(
+        "POST",
+        f"/org/{common_data.org_teacher}/material_quiz/edit/",
+        data=payload,
+    )
+
+    body = response.json()
+
+    # Then
+    # HTTP 응답 여부 검증
+    assert response.status_code == 200, (
+        f"options_default 누락 퀴즈 생성 HTTP 응답 실패: "
+        f"status_code={response.status_code}, body={body}"
+    )
+
+    # 실제 API 비즈니스 로직 실패 여부 검증
+    assert body["_result"]["status"] == "fail", (
+        f"options_default 누락 요청이 실패하지 않음: {body}"
+    )
+
+
+
+def test_teacher_cannot_add_invalid_course_to_classroom(teacher_client):
+    # Given
+    # 현재 클래스룸 과목 목록 조회
+    before_response = teacher_client.get(
+        f"/classroom/{common_data.teacher_classroom_id}/course",
+        params={
+            "skip": 0,
+            "count": 100,
+        },
+    )
+
+    before_body = before_response.json()
+
+    # 과목 목록 조회 HTTP 응답 성공 여부 검증
+    assert before_response.status_code == 200, (
+        f"과목 목록 조회 HTTP 응답 실패: "
+        f"status_code={before_response.status_code}, body={before_body}"
+    )
+
+    before_course_ids = [
+        course["course_id"]
+        for course in before_body
+    ]
+
+    payload = {
+        "original_course_ids": [
+            999999999,
+        ],
+    }
+
+    # When
+    # 존재하지 않는 course_id로 클래스룸 과목 추가 API 호출
+    response = teacher_client.request(
+        "POST",
+        f"/v2/classroom/{common_data.teacher_classroom_id}/course/bulk",
+        json=payload,
+    )
+
+    body = response.json()
+
+    # 과목 추가 요청 HTTP 응답 여부 검증
+    assert response.status_code == 200, (
+        f"잘못된 course_id 과목 추가 HTTP 응답 실패: "
+        f"status_code={response.status_code}, body={body}"
+    )
+
+    # Then
+    # 클래스룸 과목 목록 재조회
+    after_response = teacher_client.get(
+        f"/classroom/{common_data.teacher_classroom_id}/course",
+        params={
+            "skip": 0,
+            "count": 100,
+        },
+    )
+
+    after_body = after_response.json()
+
+    # 과목 목록 재조회 HTTP 응답 성공 여부 검증
+    assert after_response.status_code == 200, (
+        f"과목 목록 재조회 HTTP 응답 실패: "
+        f"status_code={after_response.status_code}, body={after_body}"
+    )
+
+    after_course_ids = [
+        course["course_id"]
+        for course in after_body
+    ]
+
+    # 잘못된 course_id 요청 후 과목 목록 변경 없음 검증
+    assert after_course_ids == before_course_ids, (
+        f"잘못된 course_id 요청 후 과목 목록이 변경됨: "
+        f"before={before_course_ids}, after={after_course_ids}"
+    )
+
+
+def test_teacher_cannot_clone_lecture_with_invalid_lecture_id(rest_teacher_client):
+    # Given
+    # 존재하지 않는 lecture_id 수업 복제 payload
+    payload = {
+        "lecture_id": 999999999,
+        "target_course_id": teacher_course_case[
+            "course_id"
+        ],
+    }
+
+    # When
+    # 잘못된 lecture_id로 수업 복제 API 호출
+    response = rest_teacher_client.request(
+        "POST",
+        f"/org/{common_data.org_teacher}/lecture/clone/",
+        data=payload,
+    )
+
+    body = response.json()
+
+    # Then
+    # HTTP 응답 여부 검증
+    assert response.status_code == 200, (
+        f"잘못된 lecture_id 수업 복제 HTTP 응답 실패: "
+        f"status_code={response.status_code}, body={body}"
+    )
+
+    # 실제 API 비즈니스 로직 실패 여부 검증
+    assert body["_result"]["status"] == "fail", (
+        f"잘못된 lecture_id 요청이 실패하지 않음: {body}"
+    )
+
+
