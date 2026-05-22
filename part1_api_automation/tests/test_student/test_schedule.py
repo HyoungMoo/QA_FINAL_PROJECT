@@ -191,7 +191,7 @@ class TestSchedule:
         # Then: 응답 결과 확인
 
         # assert 1. 오류 상태 코드 반환 확인
-        assert response.status_code in (409, 422), (
+        assert response.status_code == 409, (
             f"잘못된 classroom_id 요청 시 오류 응답이 아닙니다. "
             f"classroom_id={classroom_id}, "
             f"status_code={response.status_code}, response={response.text}"
@@ -247,7 +247,7 @@ class TestSchedule:
         # Then: 응답 결과 확인
 
         # assert 1. 오류 상태 코드 반환 확인
-        assert response.status_code in (400, 409, 422), (
+        assert response.status_code == 409, (
             f"날짜 역전 요청 시 오류 응답이 아닙니다. "
             f"status_code={response.status_code}, response={response.text}"
         )
@@ -275,7 +275,7 @@ class TestSchedule:
         # Then: 응답 결과 확인
 
         # assert 1. 200 또는 오류 응답 확인
-        assert response.status_code in (200, 409), (
+        assert response.status_code == 409, (
             f"동일 날짜 요청 시 예상치 못한 응답이 반환되었습니다. "
             f"status_code={response.status_code}, response={response.text}"
         )
@@ -331,7 +331,7 @@ class TestSchedule:
         # Then: 응답 결과 확인
 
         # assert 1. 200 또는 오류 응답 확인
-        assert response.status_code in (200, 409, 422), (
+        assert response.status_code == 409, (
             f"count=0 요청 시 예상치 못한 응답이 반환되었습니다. "
             f"status_code={response.status_code}, response={response.text}"
         )
@@ -359,7 +359,7 @@ class TestSchedule:
         # Then: 응답 결과 확인
 
         # assert 1. 200 또는 오류 응답 확인
-        assert response.status_code in (200, 400, 409), (
+        assert response.status_code == 409, (
             f"count=99999 요청 시 예상치 못한 응답이 반환되었습니다. "
             f"status_code={response.status_code}, response={response.text}"
         )
@@ -517,19 +517,23 @@ class TestScheduleIcs:
         # Then: 응답 결과 확인
 
         # assert 1. 오류 상태 코드 반환 확인
-        assert response.status_code in (409, 422), (
+        assert response.status_code == 409, (
             f"유효하지 않은 timezone 요청 시 오류 응답이 아닙니다. "
             f"status_code={response.status_code}, response={response.text}"
         )
 
     @pytest.mark.p2
+    @pytest.mark.xfail(
+        reason="서버 버그: 일정 없는 기간 ICS 요청 시 NoneType 오류 발생 (500)",
+        strict=False,
+    )
     def test_schedule_ics_no_schedules_in_range(self, student_client):
         # 우선순위: P2
         # TC ID: TC-SCH-015
         # Given-When-Then
         #   Given: 일정이 없는 날짜 범위
         #   When: GET /schedule/ics 호출
-        #   Then: 200(빈 캘린더) 또는 오류 응답
+        #   Then: 200(빈 캘린더) 반환
 
         # When: 일정이 없는 기간으로 ICS API 호출
         response = student_client.get(
@@ -546,9 +550,9 @@ class TestScheduleIcs:
 
         # Then: 응답 결과 확인
 
-        # assert 1. 200 또는 오류 응답 확인
-        assert response.status_code in (200, 409), (
-            f"일정 없는 기간 ICS 요청 시 예상치 못한 응답이 반환되었습니다. "
+        # assert 1. 200 응답 확인 (빈 캘린더)
+        assert response.status_code == 200, (
+            f"일정 없는 기간 ICS 요청 시 200이 아닌 응답이 반환되었습니다. "
             f"status_code={response.status_code}, response={response.text}"
         )
 
