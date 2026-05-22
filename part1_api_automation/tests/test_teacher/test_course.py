@@ -1300,9 +1300,7 @@ def test_teacher_cannot_add_invalid_course_to_classroom(teacher_client):
     )
 
 
-def test_teacher_cannot_clone_lecture_with_invalid_lecture_id(
-    rest_teacher_client,
-):
+def test_teacher_cannot_clone_lecture_with_invalid_lecture_id(rest_teacher_client):
     # Given
     # 존재하지 않는 lecture_id 수업 복제 payload
     payload = {
