@@ -29,4 +29,7 @@ teacher_course_case = {
     "lecture_id": 6729529,
     "add_course_id": 769163,
     "material_quiz_id": 55222814,
+    "pdf_lecture_page_id": 55218507,
+    "pdf_lecture_id": 6729536,
+    "pdf_material_id": 55218507,
 }
