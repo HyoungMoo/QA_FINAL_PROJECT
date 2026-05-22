@@ -285,8 +285,8 @@ class TestTeacherSchedule:
             json={
                 "classroom_id": common_data.teacher_classroom_id,
                 "summary": "날짜 형식 오류 테스트",
-                "dt_start": "2026-05-21",
-                "dt_end": FIXTURE_DT_END,
+                "dt_start": "2026/05/21",
+                "dt_end": "2026/05/21",
                 "classroom_time_zone": "KST",
             },
         )
