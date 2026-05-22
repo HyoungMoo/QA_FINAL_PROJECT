@@ -27,11 +27,6 @@ teacher_course_case = {
     "lecture_page_id": 55220388,
     "course_id": 776162,
     "lecture_id": 6729529,
-    "move_lecture_page_id": 55218465,
-    "delete_lecture_id": 6729590,
-    "copy_lecture_id": 6729590,
-    "copy_course_id": 776162,
     "add_course_id": 769163,
-    "quiz_lecture_id": 6729590,
     "material_quiz_id": 55222814,
 }
