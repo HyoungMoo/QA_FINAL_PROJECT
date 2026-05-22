@@ -80,7 +80,7 @@ elice_lxp_test_team3/
 ## 실행 준비
 
 ```bash
-cd part1_api_automation
+# Run from the repository root.
 pip install -r requirements.txt
 ```
 

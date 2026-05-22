@@ -1,24 +1,55 @@
-# 로컬 환경 변수 파일에는 토큰, 쿠키, 비밀번호, ID 등 민감 정보가 들어갈 수 있으므로 제외
+# Local environment variables and secrets
 .env
+.env.*
+!.env.example
 
-# Python 캐시 파일 : 로컬에서 자동 생성되므로 제외
-__pycache__/
-*.py[cod]
-.pytest_cache/
-
-# 가상환경 폴더 제외
+# Python virtual environments
 .venv/
 venv/
+env/
 
-# 테스트/리포트 결과물은 실행 시 생성되는 산출물이므로 제외
-# 폴더 구조 유지를 위해 .gitkeep만 유지
+# Python cache and test cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local editor / OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Runtime reports generated locally
+reports/*
+!reports/.gitkeep
 **/reports/*
 !**/reports/.gitkeep
 
-# 제공받은 부하 테스트 원본 로그는 초기 push 대상에서 제외
-# 폴더 구조 유지를 위해 .gitkeep만 유지
-part2_load_analysis/data/team2_results/*
-!part2_load_analysis/data/team2_results/.gitkeep
+# Part 2 raw load-test data
+# Keep folder structure with .gitkeep, but do not upload raw logs.
+part2_load_analysis/data/00_raw_data/**
+!part2_load_analysis/data/00_raw_data/
+!part2_load_analysis/data/00_raw_data/**/
+!part2_load_analysis/data/00_raw_data/**/.gitkeep
 
-part2_load_analysis/data/team3_results/*
-!part2_load_analysis/data/team3_results/.gitkeep
+# Part 2 generated preprocessing outputs
+# These files are recreated by part2_load_analysis/analysis/load_test_analysis.py.
+part2_load_analysis/data/01_sanitized_data/**
+!part2_load_analysis/data/01_sanitized_data/
+!part2_load_analysis/data/01_sanitized_data/**/
+!part2_load_analysis/data/01_sanitized_data/**/.gitkeep
+
+part2_load_analysis/data/02_common_schema_data/**
+!part2_load_analysis/data/02_common_schema_data/
+!part2_load_analysis/data/02_common_schema_data/**/
+!part2_load_analysis/data/02_common_schema_data/**/.gitkeep
+
+part2_load_analysis/data/03_analysis_ready_data/**
+!part2_load_analysis/data/03_analysis_ready_data/
+!part2_load_analysis/data/03_analysis_ready_data/**/
+!part2_load_analysis/data/03_analysis_ready_data/**/.gitkeep
