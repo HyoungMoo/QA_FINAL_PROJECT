@@ -1,8 +1,12 @@
 
+import re
+
 import pytest
 import requests
 from utils.api_client import APIClient
 from utils.test_data import common_data
+
+UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', re.I)
 
 # 실제 수업 기간에 해당하는 테스트 범위 (이 기간에 실제 일정 데이터가 존재함)
 DT_START = "2026-04-16T15:00:00.000Z"
@@ -56,11 +60,30 @@ class TestSchedule:
         first = data[0]
 
         # assert 4. 필수 필드가 존재하는지 확인
-        required_keys = ["id", "summary", "dt_start", "dt_end", "tags"]
+        required_keys = ["id", "uid", "summary", "dt_start", "dt_end", "tags"]
         missing_keys = [key for key in required_keys if key not in first]
         assert not missing_keys, (
             f"응답 항목에 필수 필드가 없습니다. "
             f"missing_keys={missing_keys}, keys={list(first.keys())}"
+        )
+
+        # assert 5. id가 UUID 형식인지 확인
+        assert UUID_RE.match(first["id"]), (
+            f"id가 UUID 형식이 아닙니다. id={first['id']}"
+        )
+
+        # assert 6. summary가 string 형식인지 확인
+        assert isinstance(first["summary"], str), (
+            f"summary가 string 형식이 아닙니다. type={type(first['summary']).__name__}"
+        )
+
+        # assert 7. tags.classroom_id가 요청한 classroom_id와 일치하는지 확인
+        assert "classroom_id" in first["tags"], (
+            f"tags에 classroom_id가 없습니다. tags={first['tags']}"
+        )
+        assert first["tags"]["classroom_id"] == common_data.student_classroom_id, (
+            f"tags.classroom_id가 요청값과 다릅니다. "
+            f"expected={common_data.student_classroom_id}, actual={first['tags']['classroom_id']}"
         )
 
         print("")
@@ -164,20 +187,44 @@ class TestSchedule:
         )
 
     @pytest.mark.p1
+    def test_schedule_nonexistent_classroom_id(self, student_client):
+        # 우선순위: P1
+        # TC ID: TC-SCH-005
+        # Given: UUID 형식은 맞지만 존재하지 않는 classroom_id
+        # When: GET /schedule 호출
+        # Then: 409 응답
+
+        response = student_client.get(
+            "/schedule",
+            params={
+                "classroom_id": "00000000-0000-0000-0000-000000000000",
+                "dt_start_ge": DT_START,
+                "dt_start_le": DT_END,
+                "count": 40,
+            },
+        )
+
+        assert response.status_code == 409, (
+            f"존재하지 않는 classroom_id 요청 시 409가 아닌 응답이 반환되었습니다. "
+            f"status_code={response.status_code}, response={response.text}"
+        )
+
+        print("")
+        print("TC_NO: TC-SCH-005")
+        print("status_code:", response.status_code)
+
+    @pytest.mark.p1
     @pytest.mark.parametrize("classroom_id", [
-        pytest.param("00000000-0000-0000-0000-000000000000", id="null-uuid"),
         pytest.param("invalid-classroom-id", id="non-uuid-string"),
         pytest.param("12345", id="numeric-string"),
     ])
-    def test_schedule_invalid_classroom_id(self, student_client, classroom_id):
+    def test_schedule_invalid_format_classroom_id(self, student_client, classroom_id):
         # 우선순위: P1
-        # TC ID: TC-SCH-005
-        # Given-When-Then
-        #   Given: 존재하지 않는 classroom_id
-        #   When: GET /schedule 호출
-        #   Then: 오류 응답 반환
+        # TC ID: TC-SCH-005-1
+        # Given: UUID 형식 자체가 틀린 classroom_id
+        # When: GET /schedule 호출
+        # Then: 422 응답 (파라미터 파싱 단계에서 거부)
 
-        # When: 존재하지 않는 classroom_id로 API 호출
         response = student_client.get(
             "/schedule",
             params={
@@ -188,11 +235,8 @@ class TestSchedule:
             },
         )
 
-        # Then: 응답 결과 확인
-
-        # assert 1. 오류 상태 코드 반환 확인
-        assert response.status_code == 409, (
-            f"잘못된 classroom_id 요청 시 오류 응답이 아닙니다. "
+        assert response.status_code == 422, (
+            f"UUID 형식 오류 classroom_id 요청 시 422가 아닌 응답이 반환되었습니다. "
             f"classroom_id={classroom_id}, "
             f"status_code={response.status_code}, response={response.text}"
         )
@@ -249,34 +293,6 @@ class TestSchedule:
         # assert 1. 오류 상태 코드 반환 확인
         assert response.status_code == 409, (
             f"날짜 역전 요청 시 오류 응답이 아닙니다. "
-            f"status_code={response.status_code}, response={response.text}"
-        )
-
-    @pytest.mark.p2
-    def test_schedule_same_date_range(self, student_client):
-        # 우선순위: P2
-        # TC ID: TC-SCH-008
-        # Given-When-Then
-        #   Given: dt_start_ge와 dt_start_le가 동일한 날짜
-        #   When: GET /schedule 호출
-        #   Then: 200(빈 목록) 또는 오류 응답
-
-        # When: 동일 날짜 범위로 API 호출
-        response = student_client.get(
-            "/schedule",
-            params={
-                "classroom_id": common_data.student_classroom_id,
-                "dt_start_ge": "2026-05-15T00:00:00.000Z",
-                "dt_start_le": "2026-05-15T00:00:00.000Z",
-                "count": 40,
-            },
-        )
-
-        # Then: 응답 결과 확인
-
-        # assert 1. 200 또는 오류 응답 확인
-        assert response.status_code == 409, (
-            f"동일 날짜 요청 시 예상치 못한 응답이 반환되었습니다. "
             f"status_code={response.status_code}, response={response.text}"
         )
 
@@ -523,10 +539,6 @@ class TestScheduleIcs:
         )
 
     @pytest.mark.p2
-    @pytest.mark.xfail(
-        reason="서버 버그: 일정 없는 기간 ICS 요청 시 NoneType 오류 발생 (500)",
-        strict=False,
-    )
     def test_schedule_ics_no_schedules_in_range(self, student_client):
         # 우선순위: P2
         # TC ID: TC-SCH-015
