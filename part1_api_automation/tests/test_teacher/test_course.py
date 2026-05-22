@@ -4,6 +4,9 @@ from utils.test_data.student_material_data import (
     teacher_course_case,
 )
 
+
+### Positive Test
+
 def test_teacher_can_change_lecture_page_visibility(
     rest_teacher_client,
 ):
@@ -1039,6 +1042,188 @@ def test_teacher_can_reorder_course(teacher_client):
         )
 
 
+
+
+
+def test_teacher_can_edit_material_pdf(rest_teacher_client):
+    # Given
+    # 기존 PDF 학습자료 정보 조회
+    get_response = rest_teacher_client.get(
+        f"/org/{common_data.org_teacher}/material_pdf/get/",
+        params={
+            "material_pdf_id": teacher_course_case["pdf_material_id"],
+        },
+    )
+
+    get_body = get_response.json()
+
+    # PDF 학습자료 조회 HTTP 응답 성공 여부 검증
+    assert get_response.status_code == 200, (
+        f"PDF 학습자료 조회 HTTP 응답 실패: "
+        f"status_code={get_response.status_code}, body={get_body}"
+    )
+
+    # PDF 학습자료 조회 비즈니스 로직 성공 여부 검증
+    assert get_body["_result"]["status"] == "ok", (
+        f"PDF 학습자료 조회 실패: {get_body}"
+    )
+
+    material_pdf = get_body["material_pdf"]
+
+    # 기존 PDF 학습자료 제목/설명 저장
+    original_title = material_pdf["title"]
+    original_description = material_pdf["description"]
+
+    # 기존 수업자료 공개/통계 상태 조회
+    lecture_page_response = rest_teacher_client.get(
+        f"/org/{common_data.org_teacher}/lecture_page/get/",
+        params={
+            "lecture_page_id": teacher_course_case[
+                "pdf_lecture_page_id"
+            ],
+        },
+    )
+
+    lecture_page_body = lecture_page_response.json()
+
+    # 수업자료 조회 HTTP 응답 성공 여부 검증
+    assert lecture_page_response.status_code == 200, (
+        f"PDF 수업자료 조회 HTTP 응답 실패: "
+        f"status_code={lecture_page_response.status_code}, "
+        f"body={lecture_page_body}"
+    )
+
+    # 수업자료 조회 비즈니스 로직 성공 여부 검증
+    assert lecture_page_body["_result"]["status"] == "ok", (
+        f"PDF 수업자료 조회 실패: {lecture_page_body}"
+    )
+
+    lecture_page = lecture_page_body["lecture_page"]
+
+    # PDF 수정 API 필수값이므로 기존 값을 그대로 사용
+    original_is_opened = lecture_page["is_opened"]
+    original_is_for_stats = lecture_page["is_for_stats"]
+
+    # 수정 검증용 PDF 학습자료 값
+    edited_title = "API_PDF_EDIT_TEST"
+    edited_description = "API_PDF_EDIT_TEST"
+
+    try:
+        # When
+        # PDF 학습자료 제목/설명 수정 API 호출
+        response = rest_teacher_client.request(
+            "POST",
+            f"/org/{common_data.org_teacher}/material_pdf/edit/",
+            data={
+                "lecture_page_id": teacher_course_case[
+                    "pdf_lecture_page_id"
+                ],
+                "lecture_id": teacher_course_case["pdf_lecture_id"],
+                "material_pdf_id": teacher_course_case[
+                    "pdf_material_id"
+                ],
+                "id": teacher_course_case["pdf_material_id"],
+                "title": edited_title,
+                "description": edited_description,
+                "is_opened": str(original_is_opened).lower(),
+                "is_for_stats": str(original_is_for_stats).lower(),
+                "locator_types": 0,
+            },
+        )
+
+        body = response.json()
+
+        # Then
+        # PDF 학습자료 수정 HTTP 응답 성공 여부 검증
+        assert response.status_code == 200, (
+            f"PDF 학습자료 수정 HTTP 응답 실패: "
+            f"status_code={response.status_code}, body={body}"
+        )
+
+        # PDF 학습자료 수정 비즈니스 로직 성공 여부 검증
+        assert body["_result"]["status"] == "ok", (
+            f"PDF 학습자료 수정 실패: {body}"
+        )
+
+        # 수정된 PDF 학습자료 ID 반환 여부 검증
+        assert body["material_pdf_id"], (
+            f"수정된 material_pdf_id 반환 실패: {body}"
+        )
+
+        # 수정 결과 확인을 위한 PDF 학습자료 재조회
+        edited_get_response = rest_teacher_client.get(
+            f"/org/{common_data.org_teacher}/material_pdf/get/",
+            params={
+                "material_pdf_id": teacher_course_case["pdf_material_id"],
+            },
+        )
+
+        edited_get_body = edited_get_response.json()
+
+        # PDF 학습자료 재조회 HTTP 응답 성공 여부 검증
+        assert edited_get_response.status_code == 200, (
+            f"PDF 학습자료 수정 후 조회 HTTP 응답 실패: "
+            f"status_code={edited_get_response.status_code}, "
+            f"body={edited_get_body}"
+        )
+
+        # PDF 학습자료 재조회 비즈니스 로직 성공 여부 검증
+        assert edited_get_body["_result"]["status"] == "ok", (
+            f"PDF 학습자료 수정 후 조회 실패: {edited_get_body}"
+        )
+
+        edited_material_pdf = edited_get_body["material_pdf"]
+
+        # PDF 학습자료 제목 수정 반영 여부 검증
+        assert edited_material_pdf["title"] == edited_title, (
+            f"PDF 학습자료 제목 수정 결과가 반영되지 않았습니다: "
+            f"expected={edited_title}, "
+            f"actual={edited_material_pdf['title']}"
+        )
+
+        # PDF 학습자료 설명 수정 반영 여부 검증
+        assert edited_material_pdf["description"] == edited_description, (
+            f"PDF 학습자료 설명 수정 결과가 반영되지 않았습니다: "
+            f"expected={edited_description}, "
+            f"actual={edited_material_pdf['description']}"
+        )
+
+    finally:
+        # 기존 PDF 학습자료 제목/설명으로 원복
+        rollback_response = rest_teacher_client.request(
+            "POST",
+            f"/org/{common_data.org_teacher}/material_pdf/edit/",
+            data={
+                "lecture_page_id": teacher_course_case[
+                    "pdf_lecture_page_id"
+                ],
+                "lecture_id": teacher_course_case["pdf_lecture_id"],
+                "material_pdf_id": teacher_course_case[
+                    "pdf_material_id"
+                ],
+                "id": teacher_course_case["pdf_material_id"],
+                "title": original_title,
+                "description": original_description,
+                "is_opened": str(original_is_opened).lower(),
+                "is_for_stats": str(original_is_for_stats).lower(),
+                "locator_types": 0,
+            },
+        )
+
+        rollback_body = rollback_response.json()
+
+        # PDF 학습자료 원복 HTTP 응답 성공 여부 검증
+        assert rollback_response.status_code == 200, (
+            f"PDF 학습자료 원복 HTTP 응답 실패: "
+            f"status_code={rollback_response.status_code}, "
+            f"body={rollback_body}"
+        )
+
+        # PDF 학습자료 원복 비즈니스 로직 성공 여부 검증
+        assert rollback_body["_result"]["status"] == "ok", (
+            f"PDF 학습자료 원복 실패: {rollback_body}"
+        )
+
 ### Negative Test
 
 def test_teacher_cannot_create_lecture_without_course_id(rest_teacher_client):
@@ -1331,3 +1516,5 @@ def test_teacher_cannot_clone_lecture_with_invalid_lecture_id(rest_teacher_clien
     assert body["_result"]["status"] == "fail", (
         f"잘못된 lecture_id 요청이 실패하지 않음: {body}"
     )
+
+
