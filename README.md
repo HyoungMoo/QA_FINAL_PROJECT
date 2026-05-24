@@ -30,6 +30,9 @@ API 테스트는 아래 기능을 중심으로 진행합니다.
 | Test Framework | pytest |
 | HTTP Client | requests |
 | Environment | python-dotenv |
+| Data Analysis | pandas |
+| Excel Reader | openpyxl |
+| Visualization | matplotlib, seaborn |
 | API Manual Test | Postman |
 
 ## 디렉토리 구조
@@ -38,49 +41,63 @@ API 테스트는 아래 기능을 중심으로 진행합니다.
 elice_lxp_test_team3/
 ├── .gitignore
 ├── README.md
+├── requirements.txt                        # Python 의존성 목록
 ├── part1_api_automation/
 │   ├── tests/
 │   │   ├── test_student/
-│   │   │   ├── __init__.py             # 학습자 테스트 패키지 인식 파일
-│   │   │   ├── test_board.py           # 학습자 게시판 API 테스트
-│   │   │   ├── test_class_home.py      # 학습자 클래스 홈 API 테스트
-│   │   │   ├── test_course.py          # 학습자 학습 과목 API 테스트
-│   │   │   └── test_schedule.py        # 학습자 수업 일정 API 테스트
+│   │   │   ├── __init__.py                 # 학습자 테스트 패키지 인식 파일
+│   │   │   ├── test_board.py               # 학습자 게시판 API 테스트
+│   │   │   ├── test_class_home.py          # 학습자 클래스 홈 API 테스트
+│   │   │   ├── test_course.py              # 학습자 학습 과목 API 테스트
+│   │   │   └── test_schedule.py            # 학습자 수업 일정 API 테스트
 │   │   ├── test_teacher/
-│   │   │   ├── __init__.py             # 교육자 테스트 패키지 인식 파일
-│   │   │   ├── test_board.py           # 교육자 권한 게시판 API 테스트
-│   │   │   ├── test_class_home.py      # 교육자 권한 클래스 홈 API 테스트
-│   │   │   ├── test_course.py          # 교육자 권한 학습 과목 API 테스트
-│   │   │   └── test_schedule.py        # 교육자 권한 수업 일정 API 테스트
-│   │   ├── __init__.py                 # pytest 모듈 충돌 방지를 위한 패키지 인식 파일
-│   │   ├── conftest.py                 # pytest 공통 fixture 및 API client 설정
-│   │   └── test_auth.py                # 인증/권한 관련 테스트
+│   │   │   ├── __init__.py                 # 교육자 테스트 패키지 인식 파일
+│   │   │   ├── test_board.py               # 교육자 권한 게시판 API 테스트
+│   │   │   ├── test_class_home.py          # 교육자 권한 클래스 홈 API 테스트
+│   │   │   ├── test_course.py              # 교육자 권한 학습 과목 API 테스트
+│   │   │   └── test_schedule.py            # 교육자 권한 수업 일정 API 테스트
+│   │   ├── __init__.py                     # pytest 모듈 충돌 방지를 위한 패키지 인식 파일
+│   │   ├── conftest.py                     # pytest 공통 fixture 및 API client 설정
+│   │   └── test_auth.py                    # 인증/권한 관련 테스트
 │   ├── utils/
 │   │   ├── test_data/
-│   │   │   ├── common_data.py          # 공통 테스트 데이터
-│   │   │   └── student_material_data.py # 학습 자료 테스트 데이터
-│   │   ├── config.py                   # .env 기반 환경 설정 로더
-│   │   ├── api_client.py               # API 요청 client wrapper
-│   │   └── request_helper.py           # API 요청 helper
-│   ├── reports/                        # 테스트 리포트 출력 경로
-│   ├── .env.example                    # 로컬 환경 변수 샘플
-│   ├── pytest.ini                      # pytest 실행 설정
-│   └── requirements.txt                # Python 의존성 목록
+│   │   │   ├── common_data.py              # 공통 테스트 데이터
+│   │   │   └── student_material_data.py    # 학습 자료 테스트 데이터
+│   │   ├── config.py                       # .env 기반 환경 설정 로더
+│   │   ├── api_client.py                   # API 요청 client wrapper
+│   │   └── request_helper.py               # API 요청 helper
+│   ├── reports/                            # 테스트 리포트 출력 경로
+│   ├── .env.example                        # 로컬 환경 변수 샘플
+│   └── pytest.ini                          # pytest 실행 설정
 └── part2_load_analysis/
     ├── analysis/
-    │   └── load_test_analysis.ipynb    # 부하 테스트 결과 분석 노트북
+    │   ├── 00_preprocess_load_test_data.py # 원본 로그를 01 → 02 → 03 분석 데이터로 가공
+    │   ├── 01_data_validation.py           # 데이터 신뢰도와 품질 검증
+    │   ├── 02_metric_summary.py            # 성능 지표 집계
+    │   ├── 03_bottleneck_candidates.py     # 1차 병목 후보 정리
+    │   ├── 04_cross_validation.py          # Team2 / Team3 결과 교차 검증
+    │   ├── 05_visualization.py             # 성능 지표 시각화
+    │   ├── 06_bottleneck_threshold.py      # 병목 API와 임계점 도출
+    │   ├── 07_analysis_basis.py            # 분석 근거 정리
+    │   ├── 08_spike_plan.py                # Spike Traffic 계획 정리
+    │   └── 09_go_nogo_improvement.py       # Go/No-Go 기준 및 개선안 정리
     ├── data/
-    │   ├── team2_results/              # 2팀 부하 테스트 결과 데이터
-    │   └── team3_results/              # 3팀 부하 테스트 결과 데이터
+    │   ├── 00_raw_data/                    # 원본 부하 테스트 파일 보관
+    │   │   ├── team2_results/              # Team2 원본 로그
+    │   │   └── team3_results/              # Team3 원본 로그
+    │   ├── 01_sanitized_data/              # 민감정보 제거 후 1차 가공 결과
+    │   ├── 02_common_schema_data/          # Team2 / Team3 공통 컬럼 변환 결과
+    │   └── 03_analysis_ready_data/         # 실제 분석에 사용할 최종 전처리 데이터
     ├── jmeter_draft/
-    │   └── load_test_scenario_v2.jmx   # JMeter 테스트 플랜 초안
-    └── reports/                        # 부하 테스트 분석 리포트 출력 경로
+    │   └── load_test_scenario_v2.jmx       # JMeter 테스트 플랜 초안
+    └── reports/                            # 부하 테스트 분석 리포트 출력 경로
 ```
 
 ## 실행 준비
 
+프로젝트 루트에서 의존성을 설치합니다.
+
 ```bash
-# Run from the repository root.
 pip install -r requirements.txt
 ```
 
@@ -127,6 +144,7 @@ pytest --html=reports/report.html --self-contained-html
 ```
 
 ### 테스트 마커
+
 - `smoke`: 빠른 핵심 검증용 마커, 현재 테스트 적용 범위는 확장 예정
 
 우선순위별 테스트 실행:
@@ -181,6 +199,44 @@ def test_example():
 - `POST`, `PATCH`, `DELETE` API는 데이터 변경 가능성을 먼저 확인
 - 500 에러, 접속 지연, 비정상 응답이 반복되면 즉시 중단하고 기록
 
+## Part 2 Raw Data Preprocessing
+
+Part 2 부하 테스트 분석은 로컬에 배치한 원본 JMeter 결과 파일을 입력으로 사용합니다.
+원본 로그와 생성 CSV는 Git에 업로드하지 않습니다.
+
+원본 파일은 아래 경로에 배치합니다.
+
+```text
+part2_load_analysis/
+└── data/
+    └── 00_raw_data/
+        ├── team2_results/    # Team2 XML/CSV raw files
+        └── team3_results/    # Team3 XLSX/CSV raw files
+```
+
+프로젝트 루트에서 아래 명령어를 실행합니다.
+
+```bash
+python .\part2_load_analysis\analysis\00_preprocess_load_test_data.py
+```
+
+전처리 스크립트는 아래 순서로 결과를 재생성합니다.
+
+```text
+00_raw_data
+→ 01_sanitized_data
+→ 02_common_schema_data
+→ 03_analysis_ready_data
+```
+
+최종 분석 기준 파일은 아래 위치에 생성됩니다.
+
+```text
+part2_load_analysis/data/03_analysis_ready_data/
+├── loadtest_analysis_ready_requests.csv        # 요청 단위 상세 분석 데이터
+└── loadtest_analysis_ready_metrics_by_api.csv  # 팀/부하/API별 성능 지표 요약 데이터
+```
+
 ## Git Workflow
 
 기본 브랜치 전략:
@@ -228,3 +284,4 @@ GitLab에서 Merge Request를 생성하고, 코드 리뷰 후 `develop` 브랜�
 - 로컬 가상환경
 - 테스트 실행 결과 리포트
 - 제공받은 부하 테스트 원본 로그
+- Part 2 전처리 과정에서 생성되는 CSV 결과
