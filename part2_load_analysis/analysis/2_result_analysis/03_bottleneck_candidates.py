@@ -1,7 +1,7 @@
 # 분석표 구조 정리
 # 목적:
 # - 성능 지표를 기준으로 1차 병목 후보 API를 정리한다.
-# - 병목 판단에 필요한 분석표 구조를 만
+# - 병목 판단에 필요한 분석표 구조를 만든다.
 
 from __future__ import annotations
 from pathlib import Path
