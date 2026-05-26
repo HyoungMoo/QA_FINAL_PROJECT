@@ -25,13 +25,14 @@ import pandas as pd
 # 1. 경로 설정
 # ---------------------------------------------------------------------------
 
-BASE_DIR = Path(__file__).resolve().parents[1]
+BASE_DIR = Path(__file__).resolve().parents[2]
 DATA_DIR = BASE_DIR / "data"
+PREPARATION_DATA_DIR = DATA_DIR / "0_preparation_data"
 
-RAW_DATA_DIR = DATA_DIR / "00_raw_data"
-SANITIZED_DATA_DIR = DATA_DIR / "01_sanitized_data"
-COMMON_SCHEMA_DATA_DIR = DATA_DIR / "02_common_schema_data"
-ANALYSIS_READY_DATA_DIR = DATA_DIR / "03_analysis_ready_data"
+RAW_DATA_DIR = PREPARATION_DATA_DIR / "00_raw_data"
+SANITIZED_DATA_DIR = PREPARATION_DATA_DIR / "01_sanitized_data"
+COMMON_SCHEMA_DATA_DIR = PREPARATION_DATA_DIR / "02_common_schema_data"
+ANALYSIS_READY_DATA_DIR = PREPARATION_DATA_DIR / "03_analysis_ready_data"
 
 TEAM2_RAW_DIR = RAW_DATA_DIR / "team2_results"
 TEAM3_RAW_DIR = RAW_DATA_DIR / "team3_results"

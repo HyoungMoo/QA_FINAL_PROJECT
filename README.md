@@ -71,26 +71,30 @@ elice_lxp_test_team3/
 │   └── pytest.ini                          # pytest 실행 설정
 └── part2_load_analysis/
     ├── analysis/
-    │   ├── 00_preprocess_load_test_data.py # 원본 로그를 01 → 02 → 03 분석 데이터로 가공
-    │   ├── 01_data_validation.py           # 데이터 신뢰도와 품질 검증
-    │   ├── 02_metric_summary.py            # 성능 지표 집계
-    │   ├── 03_bottleneck_candidates.py     # 1차 병목 후보 정리
-    │   ├── 04_cross_validation.py          # Team2 / Team3 결과 교차 검증
-    │   ├── 05_visualization.py             # 성능 지표 시각화
-    │   ├── 06_bottleneck_threshold.py      # 병목 API와 임계점 도출
-    │   ├── 07_analysis_basis.py            # 분석 근거 정리
-    │   ├── 08_spike_plan.py                # Spike Traffic 계획 정리
-    │   └── 09_go_nogo_improvement.py       # Go/No-Go 기준 및 개선안 정리
+    │   ├── 0_preparation/
+    │   │   └── 00_preprocess_load_test_data.py # 원본 로그를 분석 가능 데이터로 가공
+    │   ├── 1_metric_analysis/
+    │   │   ├── 01_data_validation.py           # 데이터 신뢰도와 품질 검증
+    │   │   ├── 02_metric_summary.py            # 성능 지표 집계
+    │   │   ├── 04_cross_validation.py          # Team2 / Team3 결과 교차 검증
+    │   │   └── 05_visualization.py             # 성능 지표 시각화
+    │   └── 2_result_analysis/
+    │       ├── 03_bottleneck_candidates.py     # 1차 병목 후보 정리
+    │       ├── 06_bottleneck_threshold.py      # 병목 API와 임계점 도출
+    │       └── 09_go_nogo_improvement.py       # Go/No-Go 기준 및 개선안 정리
     ├── data/
-    │   ├── 00_raw_data/                    # 원본 부하 테스트 파일 보관
-    │   │   ├── team2_results/              # Team2 원본 로그
-    │   │   └── team3_results/              # Team3 원본 로그
-    │   ├── 01_sanitized_data/              # 민감정보 제거 후 1차 가공 결과
-    │   ├── 02_common_schema_data/          # Team2 / Team3 공통 컬럼 변환 결과
-    │   └── 03_analysis_ready_data/         # 실제 분석에 사용할 최종 전처리 데이터
+    │   ├── 0_preparation_data/
+    │   │   ├── 00_raw_data/                # 원본 부하 테스트 파일 보관
+    │   │   ├── 01_sanitized_data/          # 민감정보 제거 후 1차 가공 결과
+    │   │   ├── 02_common_schema_data/      # Team2 / Team3 공통 컬럼 변환 결과
+    │   │   └── 03_analysis_ready_data/     # 실제 분석에 사용할 최종 전처리 데이터
+    │   └── 1_analysis_result_data/         # 분석 단계별 결과 데이터
     ├── jmeter_draft/
     │   └── load_test_scenario_v2.jmx       # JMeter 테스트 플랜 초안
-    └── reports/                            # 부하 테스트 분석 리포트 출력 경로
+    └── reports/
+        ├── 1_metric_analysis/              # 지표 분석 리포트
+        ├── 2_result_analysis/              # 병목/임계점 분석 리포트
+        └── 3_final/                        # 최종 보고 산출물
 ```
 
 ## 실행 준비
@@ -209,30 +213,31 @@ Part 2 부하 테스트 분석은 로컬에 배치한 원본 JMeter 결과 파�
 ```text
 part2_load_analysis/
 └── data/
-    └── 00_raw_data/
-        ├── team2_results/    # Team2 XML/CSV raw files
-        └── team3_results/    # Team3 XLSX/CSV raw files
+    └── 0_preparation_data/
+        └── 00_raw_data/
+            ├── team2_results/    # Team2 XML/CSV raw files
+            └── team3_results/    # Team3 XLSX/CSV raw files
 ```
 
 프로젝트 루트에서 아래 명령어를 실행합니다.
 
 ```bash
-python .\part2_load_analysis\analysis\00_preprocess_load_test_data.py
+python .\part2_load_analysis\analysis\0_preparation\00_preprocess_load_test_data.py
 ```
 
 전처리 스크립트는 아래 순서로 결과를 재생성합니다.
 
 ```text
-00_raw_data
-→ 01_sanitized_data
-→ 02_common_schema_data
-→ 03_analysis_ready_data
+data/0_preparation_data/00_raw_data
+→ data/0_preparation_data/01_sanitized_data
+→ data/0_preparation_data/02_common_schema_data
+→ data/0_preparation_data/03_analysis_ready_data
 ```
 
 최종 분석 기준 파일은 아래 위치에 생성됩니다.
 
 ```text
-part2_load_analysis/data/03_analysis_ready_data/
+part2_load_analysis/data/0_preparation_data/03_analysis_ready_data/
 ├── loadtest_analysis_ready_requests.csv        # 요청 단위 상세 분석 데이터
 └── loadtest_analysis_ready_metrics_by_api.csv  # 팀/부하/API별 성능 지표 요약 데이터
 ```
