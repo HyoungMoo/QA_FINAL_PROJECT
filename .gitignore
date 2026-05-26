@@ -27,18 +27,22 @@ Thumbs.db
 # Runtime reports generated locally
 reports/*
 !reports/.gitkeep
+!reports/**/
+!reports/**/.gitkeep
 **/reports/*
 !**/reports/.gitkeep
+!**/reports/**/
+!**/reports/**/.gitkeep
 
-# Part 2 raw load-test data
+# Part 2 raw load-test data (legacy flat layout)
 # Keep folder structure with .gitkeep, but do not upload raw logs.
 part2_load_analysis/data/00_raw_data/**
 !part2_load_analysis/data/00_raw_data/
 !part2_load_analysis/data/00_raw_data/**/
 !part2_load_analysis/data/00_raw_data/**/.gitkeep
 
-# Part 2 generated preprocessing outputs
-# These files are recreated by part2_load_analysis/analysis/load_test_analysis.py.
+# Part 2 generated preprocessing outputs (legacy flat layout)
+# These files are recreated by preprocessing scripts.
 part2_load_analysis/data/01_sanitized_data/**
 !part2_load_analysis/data/01_sanitized_data/
 !part2_load_analysis/data/01_sanitized_data/**/
@@ -53,3 +57,30 @@ part2_load_analysis/data/03_analysis_ready_data/**
 !part2_load_analysis/data/03_analysis_ready_data/
 !part2_load_analysis/data/03_analysis_ready_data/**/
 !part2_load_analysis/data/03_analysis_ready_data/**/.gitkeep
+
+# Part 2 raw load-test data and generated outputs (current grouped layout)
+# Keep folder structure with .gitkeep, but do not upload raw/generated data files.
+part2_load_analysis/data/0_preparation_data/00_raw_data/**
+!part2_load_analysis/data/0_preparation_data/00_raw_data/
+!part2_load_analysis/data/0_preparation_data/00_raw_data/**/
+!part2_load_analysis/data/0_preparation_data/00_raw_data/**/.gitkeep
+
+part2_load_analysis/data/0_preparation_data/01_sanitized_data/**
+!part2_load_analysis/data/0_preparation_data/01_sanitized_data/
+!part2_load_analysis/data/0_preparation_data/01_sanitized_data/**/
+!part2_load_analysis/data/0_preparation_data/01_sanitized_data/**/.gitkeep
+
+part2_load_analysis/data/0_preparation_data/02_common_schema_data/**
+!part2_load_analysis/data/0_preparation_data/02_common_schema_data/
+!part2_load_analysis/data/0_preparation_data/02_common_schema_data/**/
+!part2_load_analysis/data/0_preparation_data/02_common_schema_data/**/.gitkeep
+
+part2_load_analysis/data/0_preparation_data/03_analysis_ready_data/**
+!part2_load_analysis/data/0_preparation_data/03_analysis_ready_data/
+!part2_load_analysis/data/0_preparation_data/03_analysis_ready_data/**/
+!part2_load_analysis/data/0_preparation_data/03_analysis_ready_data/**/.gitkeep
+
+part2_load_analysis/data/1_analysis_result_data/**
+!part2_load_analysis/data/1_analysis_result_data/
+!part2_load_analysis/data/1_analysis_result_data/**/
+!part2_load_analysis/data/1_analysis_result_data/**/.gitkeep
