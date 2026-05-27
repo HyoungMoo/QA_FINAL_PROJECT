@@ -3,8 +3,9 @@ Part 2 부하 테스트 로그 분석 작업 파일.
 
 현재 단계의 목표:
 1. 00_raw_data 원본 파일을 읽는다.
-2. request/response 전문, header, queryString 등 민감정보 가능성이 있는 컬럼을 제외한다.
-3. 01_sanitized_data에 1차 가공 결과를 CSV로 저장한다.
+2. Team3 원본 XLSX에서 Response Assertion 행을 제외한다.
+3. request/response 전문, header, queryString 등 민감정보 가능성이 있는 컬럼을 제외한다.
+4. 01_sanitized_data에 1차 가공 결과를 CSV로 저장한다.
 
 다음 단계:
 - 02_common_schema_data: Team2 / Team3가 동일한 컬럼 구조를 갖도록 정규화
@@ -16,6 +17,7 @@ from __future__ import annotations
 import re
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from time import time_ns
 from urllib.parse import urlparse
 
 import pandas as pd
@@ -48,7 +50,18 @@ ANALYSIS_READY_METRICS_PATH = ANALYSIS_READY_DATA_DIR / "loadtest_analysis_ready
 
 
 # ---------------------------------------------------------------------------
-# 2. 민감정보 제외 기준
+# 2. Team3 Response Assertion 제외 기준
+# ---------------------------------------------------------------------------
+
+# Team3 XLSX에는 실제 API 응답 결과 행과 Response Assertion 결과 행이 함께 저장되어 있다.
+# Response Assertion은 API 요청 자체가 아니라 JMeter의 검증 결과 행이므로,
+# 성능 지표 계산에서는 제외한다.
+ASSERTION_RESULT_COLUMN = "name"
+ASSERTION_RESULT_VALUE = "Response Assertion"
+
+
+# ---------------------------------------------------------------------------
+# 3. 민감정보 제외 기준
 # ---------------------------------------------------------------------------
 
 # 요청/응답 전문, header, queryString에는 토큰, 계정, 비밀번호, 응답 전문이
@@ -75,7 +88,7 @@ DROP_COLUMNS = SENSITIVE_COLUMNS | LOW_VALUE_COLUMNS
 
 
 # ---------------------------------------------------------------------------
-# 3. 공통 유틸
+# 4. 공통 유틸
 # ---------------------------------------------------------------------------
 
 def extract_load_level(file_name: str) -> int | None:
@@ -110,7 +123,7 @@ def save_csv_safely(df: pd.DataFrame, path: Path) -> Path:
         df.to_csv(path, index=False, encoding="utf-8-sig")
         return path
     except PermissionError:
-        pending_path = path.with_name(f"{path.stem}_pending{path.suffix}")
+        pending_path = path.with_name(f"{path.stem}_pending_{time_ns()}{path.suffix}")
         df.to_csv(pending_path, index=False, encoding="utf-8-sig")
         print(f"[WARN] Locked file skipped: {path}")
         print(f"[WARN] Wrote pending file instead: {pending_path}")
@@ -118,7 +131,7 @@ def save_csv_safely(df: pd.DataFrame, path: Path) -> Path:
 
 
 # ---------------------------------------------------------------------------
-# 4. Team2 XML 1차 가공
+# 5. Team2 XML 1차 가공
 # ---------------------------------------------------------------------------
 
 def sanitize_team2_xml(xml_path: Path) -> pd.DataFrame:
@@ -166,12 +179,37 @@ def sanitize_team2_xml(xml_path: Path) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
-# 5. Team3 XLSX 1차 가공
+# 6. Team3 XLSX 사전 가공 및 1차 가공
 # ---------------------------------------------------------------------------
+
+def remove_team3_response_assertion_rows(df: pd.DataFrame, source_name: str) -> pd.DataFrame:
+    """
+    Team3 XLSX에서 Response Assertion 행을 제외한다.
+
+    Team3 원본에는 동일 요청에 대해 실제 API 응답 행과 Assertion 결과 행이
+    함께 기록되어 있다. Assertion 행까지 요청으로 집계하면 sample_count,
+    throughput, error_rate가 왜곡될 수 있으므로 전처리 초반에 제외한다.
+    """
+    if ASSERTION_RESULT_COLUMN not in df.columns:
+        return df
+
+    assertion_mask = (
+        df[ASSERTION_RESULT_COLUMN]
+        .astype(str)
+        .str.strip()
+        .eq(ASSERTION_RESULT_VALUE)
+    )
+    removed_count = int(assertion_mask.sum())
+
+    if removed_count:
+        print(f"[INFO] Removed Team3 Response Assertion rows: {source_name} ({removed_count})")
+
+    return df.loc[~assertion_mask].copy()
+
 
 def sanitize_team3_xlsx(xlsx_path: Path) -> pd.DataFrame:
     """
-    Team3 Excel 파일에서 민감정보 가능 컬럼을 제외한다.
+    Team3 Excel 파일에서 Assertion 결과 행과 민감정보 가능 컬럼을 제외한다.
 
     Team3 XLSX에는 requestHeader, responseHeader, responseData, queryString이
     컬럼으로 존재할 수 있으므로 해당 컬럼을 제거한 뒤 CSV로 저장한다.
@@ -179,6 +217,7 @@ def sanitize_team3_xlsx(xlsx_path: Path) -> pd.DataFrame:
     df = pd.read_excel(xlsx_path)
     load_level = extract_load_level(xlsx_path.name)
 
+    df = remove_team3_response_assertion_rows(df, xlsx_path.name)
     df = df.drop(columns=[col for col in DROP_COLUMNS if col in df.columns])
     df.insert(0, "source_file", xlsx_path.name)
     df.insert(0, "load_level", load_level)
@@ -191,7 +230,7 @@ def sanitize_team3_xlsx(xlsx_path: Path) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
-# 6. 요약 CSV 1차 가공
+# 7. 요약 CSV 1차 가공
 # ---------------------------------------------------------------------------
 
 def sanitize_summary_csv(csv_path: Path, team: str) -> pd.DataFrame:
@@ -210,7 +249,7 @@ def sanitize_summary_csv(csv_path: Path, team: str) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
-# 7. 01_sanitized_data 생성
+# 8. 01_sanitized_data 생성
 # ---------------------------------------------------------------------------
 
 def create_sanitized_outputs() -> None:
@@ -228,7 +267,8 @@ def create_sanitized_outputs() -> None:
         save_csv_safely(df, output_path_for(csv_path, TEAM2_SANITIZED_DIR))
 
     # Team3 XLSX: 요청 단위 원본 로그
-    for xlsx_path in sorted(TEAM3_RAW_DIR.glob("*.xlsx")):
+    # summary*.xlsx는 요청 단위 분석 대상이 아니므로 test*.xlsx만 처리한다.
+    for xlsx_path in sorted(TEAM3_RAW_DIR.glob("test*.xlsx")):
         df = sanitize_team3_xlsx(xlsx_path)
         save_csv_safely(df, output_path_for(xlsx_path, TEAM3_SANITIZED_DIR))
 
@@ -264,7 +304,7 @@ def sanitized_outputs_exist() -> bool:
 
 
 # ---------------------------------------------------------------------------
-# 8. 02_common_schema_data 생성
+# 9. 02_common_schema_data 생성
 # ---------------------------------------------------------------------------
 
 API_LABEL_MAP = {
