@@ -166,9 +166,10 @@ JMeter Spike Traffic Test Scenario Draft
 
               <!-- Authorization -->
               <!-- Bearer Token 기반 인증 -->
+              <!-- Bearer Token: 개인별 토큰 추가 (실제 구동 환경이 아니므로 값 x) -->
               <elementProp name="" elementType="Header">
                 <stringProp name="Header.name">Authorization</stringProp>
-                <stringProp name="Header.value">Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOjg5MDc4OTMsIm5vbmNlIjoieXpkZFZPOVBzWEs5SXg5RCIsImlhdCI6MTc3OTE2NTU0OSwiaXNzIjoiZWxpY2UtYWNjb3VudC1hcGkiLCJzdWIiOiI0OTM0NzQzMy1mYzc4LTc0NDMtYTEwZS1hMWNhNDJlM2FjYTYifQ.AfoHM-eChaJ6xDukmP2pyoeNYx2K7EJBxAYaVkAdCEg</stringProp>
+                <stringProp name="Header.value">Bearer [Token]</stringProp>
               </elementProp>
 
             </collectionProp>
