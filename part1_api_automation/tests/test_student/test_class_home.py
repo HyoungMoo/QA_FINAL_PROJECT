@@ -850,7 +850,7 @@ def test_get_ai_model_list(community_student_client):
 
 
 @pytest.mark.p2
-def test_get_token_grant_list(community_student_client):
+def test_get_token_grant_list_allows_empty_result(community_student_client):
     # 우선순위 : P2
     # TC ID: TC_CLASSHOME_007
     # Postman에서 성공 확인한 토큰 부여 정보 조회 API.
@@ -858,6 +858,7 @@ def test_get_token_grant_list(community_student_client):
         # Given : 로그인 상태(유효한 학습자 토큰 보유), 조회 시작일 필터 보유
         # When : 토큰 부여 정보 조회 API를 호출 : GET https://api-community.elice.io/token_grant
         # Then : response 결과 확인 : status_code가 200인지, body에 토큰 부여 정보가 있는지 확인
+        #        토큰 부여 정보가 있는 경우 필수 key가 있는지 확인
     # 입력값 : filter_period_start_at_le, offset, count 준비 : 2026-05-19, 0, 1
 
     # Given : 로그인 상태(유효한 학습자 토큰 보유), 조회 시작일 필터 보유
