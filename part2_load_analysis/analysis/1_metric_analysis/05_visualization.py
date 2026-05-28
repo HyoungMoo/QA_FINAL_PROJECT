@@ -4,7 +4,6 @@
 # - 병목 후보와 성능 저하 구간을 눈으로 확인할 수 있게 만든다.
 
 from pathlib import Path
-
 import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -66,37 +65,7 @@ def save_chart(file_name: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# 4. 로그인 API p95 응답시간 비교
-# ---------------------------------------------------------------------------
-
-def plot_login_p95(df: pd.DataFrame) -> None:
-    login_df = df[df["api_label"] == "로그인"].sort_values(["team", "load_level"])
-
-    plt.figure(figsize=(8, 5))
-
-    for team in sorted(login_df["team"].unique()):
-        team_df = login_df[login_df["team"] == team]
-
-        plt.plot(
-            team_df["load_level"],
-            team_df["p95_response_time_ms"],
-            marker="o",
-            label=team,
-        )
-
-    plt.title("로그인 API P95 응답시간")
-    plt.xlabel("부하 단계")
-    plt.ylabel("P95 응답시간(ms)")
-    plt.xticks([10, 30, 50, 70, 100])
-    plt.legend()
-    plt.grid(True)
-
-    save_chart("01_login_api_p95_response_time.png")
-    plt.show()
-    plt.close()
-
-# ---------------------------------------------------------------------------
-# 5. API별 평균 응답시간 비교
+# 4. API별 평균 응답시간 비교
 # ---------------------------------------------------------------------------
 
 def plot_avg_response_by_api(df: pd.DataFrame) -> None:
@@ -143,12 +112,12 @@ def plot_avg_response_by_api(df: pd.DataFrame) -> None:
     plt.legend()
     plt.grid(axis="y")
 
-    save_chart("02_avg_response_time_by_api_comparison.png")
+    save_chart("01_avg_response_time_by_api_comparison.png")
     plt.show()
     plt.close()
 
 # ---------------------------------------------------------------------------
-# 6. API별 p95 응답시간 비교
+# 5. API별 P95 응답시간 비교
 # ---------------------------------------------------------------------------
 
 def plot_p95_by_api(df: pd.DataFrame) -> None:
@@ -195,10 +164,39 @@ def plot_p95_by_api(df: pd.DataFrame) -> None:
     plt.legend()
     plt.grid(axis="y")
 
-    save_chart("03_p95_response_time_by_api_comparison.png")
+    save_chart("02_p95_response_time_by_api_comparison.png")
     plt.show()
     plt.close()
 
+# ---------------------------------------------------------------------------
+# 6. 로그인 API P95 응답시간 비교
+# ---------------------------------------------------------------------------
+
+def plot_login_p95(df: pd.DataFrame) -> None:
+    login_df = df[df["api_label"] == "로그인"].sort_values(["team", "load_level"])
+
+    plt.figure(figsize=(8, 5))
+
+    for team in sorted(login_df["team"].unique()):
+        team_df = login_df[login_df["team"] == team]
+
+        plt.plot(
+            team_df["load_level"],
+            team_df["p95_response_time_ms"],
+            marker="o",
+            label=team,
+        )
+
+    plt.title("로그인 API P95 응답시간")
+    plt.xlabel("부하 단계")
+    plt.ylabel("P95 응답시간(ms)")
+    plt.xticks([10, 30, 50, 70, 100])
+    plt.legend()
+    plt.grid(True)
+
+    save_chart("03_login_api_p95_response_time.png")
+    plt.show()
+    plt.close()
 
 # ---------------------------------------------------------------------------
 # 7. 오류율 비교
@@ -324,7 +322,95 @@ def plot_avg_response_by_load(df: pd.DataFrame) -> None:
     plt.close()
 
 # ---------------------------------------------------------------------------
-# 10. 메인 실행
+# 10. API별 평균 Latency 비교
+# ---------------------------------------------------------------------------
+
+def plot_avg_latency_by_api(df: pd.DataFrame) -> None:
+    chart_df = (
+        df.groupby(["api_label", "team"], as_index=False)
+        .agg(avg_latency_ms=("avg_latency_ms", "mean"))
+    )
+
+    pivot_df = chart_df.pivot(
+        index="api_label",
+        columns="team",
+        values="avg_latency_ms",
+    ).fillna(0)
+
+    pivot_df.plot(kind="bar", figsize=(10, 6))
+
+    plt.title("API별 평균 지연 시간(Latency) 비교")
+    plt.xlabel("API")
+    plt.ylabel("평균 지연 시간(Latency)(ms)")
+    plt.xticks(rotation=0)
+    plt.grid(axis="y")
+    plt.tight_layout()
+
+    save_chart("07_avg_latency_by_api_comparison.png")
+    plt.show()
+    plt.close()
+
+# ---------------------------------------------------------------------------
+# 11. API별 최대 응답시간 비교
+# ---------------------------------------------------------------------------
+
+def plot_max_response_by_api(df: pd.DataFrame) -> None:
+    chart_df = (
+        df.groupby(["api_label", "team"], as_index=False)
+        .agg(max_response_time_ms=("max_response_time_ms", "max"))
+    )
+
+    pivot_df = chart_df.pivot(
+        index="api_label",
+        columns="team",
+        values="max_response_time_ms",
+    ).fillna(0)
+
+    pivot_df.plot(kind="bar", figsize=(10, 6))
+
+    plt.title("API별 최대 응답시간 비교")
+    plt.xlabel("API")
+    plt.ylabel("최대 응답시간(ms)")
+    plt.xticks(rotation=0)
+    plt.grid(axis="y")
+    plt.tight_layout()
+
+    save_chart("08_max_response_time_by_api_comparison.png")
+    plt.show()
+    plt.close()
+
+# ---------------------------------------------------------------------------
+# 12. API별 응답시간 표준편차 비교
+# ---------------------------------------------------------------------------
+
+def plot_std_response_by_api(df: pd.DataFrame) -> None:
+    chart_df = (
+        df.groupby(["api_label", "team"], as_index=False)
+        .agg(std_response_time_ms=("std_response_time_ms", "mean"))
+    )
+
+    pivot_df = chart_df.pivot(
+        index="api_label",
+        columns="team",
+        values="std_response_time_ms",
+    ).fillna(0)
+
+    pivot_df.plot(kind="bar", figsize=(10, 6))
+
+    plt.title("API별 응답시간 표준편차 비교")
+    plt.xlabel("API")
+    plt.ylabel("표준편차(ms)")
+    plt.xticks(rotation=0)
+    plt.grid(axis="y")
+    plt.tight_layout()
+
+    save_chart("09_std_response_time_by_api_comparison.png")
+    plt.show()
+    plt.close()
+
+
+# ---------------------------------------------------------------------------
+# 13. 메인 실행
 # ---------------------------------------------------------------------------
 
 def main() -> None:
@@ -332,12 +418,16 @@ def main() -> None:
 
     df = pd.read_csv(METRICS_PATH, encoding="utf-8-sig")
 
-    plot_login_p95(df)
     plot_avg_response_by_api(df)
     plot_p95_by_api(df)
+    plot_login_p95(df)
     plot_error_rate(df)
     plot_throughput_by_load(df)
     plot_avg_response_by_load(df)
+
+    plot_avg_latency_by_api(df)
+    plot_max_response_by_api(df)
+    plot_std_response_by_api(df)
 
     print("[DONE] 시각화 그래프 생성 완료")
 
