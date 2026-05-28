@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+============================================================================
+JMeter Spike Traffic Test Scenario Draft
+============================================================================
+
+목적:
+- 순간적인 트래픽 급증 상황에서 시스템의 응답시간(avg/P95),
+  오류율(error_rate), 처리량(TPS) 변화를 확인하기 위한 Spike Test 초안
+
+주의:
+- 현재는 실행 전 구성 단계
+- 실제 부하 테스트는 수행하지 않음
+- 안전한 smoke test(10 users) 기준 설정 상태
+
+============================================================================
+-->
+
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+  <hashTree>
+
+    <!-- ============================================================= -->
+    <!-- Test Plan                                                     -->
+    <!-- ============================================================= -->
+    <!--
+    역할:
+    - 전체 JMeter 테스트 시나리오 최상위 영역
+    - Thread Group / HTTP Request / Listener 등을 포함
+    -->
+
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Test Plan">
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+        <collectionProp name="Arguments.arguments"/>
+      </elementProp>
+    </TestPlan>
+
+    <hashTree>
+
+      <!-- ============================================================= -->
+      <!-- Thread Group                                                  -->
+      <!-- ============================================================= -->
+      <!--
+      역할:
+      - 가상 사용자(Thread) 수 설정
+      - Ramp-up 시간 설정
+      - Loop 반복 횟수 설정
+
+      현재 설정:
+      - Threads: 100
+      - Ramp-up: 10초
+      - Loop Count: 1
+
+      목적:
+      - 실제 Spike Test 전 smoke test용 안전 설정
+      -->
+
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Thread Group">
+
+        <!-- 가상 사용자 수 -->
+        <intProp name="ThreadGroup.num_threads">100</intProp>
+
+        <!-- Ramp-up 시간(초) -->
+        <intProp name="ThreadGroup.ramp_time">10</intProp>
+
+        <!-- 동일 사용자 유지 여부 -->
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+
+        <!-- 요청 실패 시 continue -->
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+
+        <!-- Loop Controller -->
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
+
+          <!-- Loop 반복 횟수 -->
+          <stringProp name="LoopController.loops">1</stringProp>
+
+          <!-- 무한 반복 여부 -->
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+
+        </elementProp>
+
+      </ThreadGroup>
+
+      <hashTree>
+
+        <!-- ============================================================= -->
+        <!-- HTTP Request                                                  -->
+        <!-- ============================================================= -->
+        <!--
+        역할:
+        - 실제 API 요청 정의
+
+        현재 설정:
+        - HTTPS 기반 GET 요청
+        - /account/me endpoint 사용
+
+        주의:
+        - 실제 실행 전 endpoint/domain 재검증 필요
+        -->
+
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="HTTP Request">
+
+          <!-- API 서버 도메인 -->
+          <stringProp name="HTTPSampler.domain">qaproject.elice.io</stringProp>
+
+          <!-- 프로토콜 -->
+          <stringProp name="HTTPSampler.protocol">https</stringProp>
+
+          <!-- API Path -->
+          <stringProp name="HTTPSampler.path">/account/me</stringProp>
+
+          <!-- Redirect 허용 -->
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+
+          <!-- HTTP Method -->
+          <stringProp name="HTTPSampler.method">GET</stringProp>
+
+          <!-- Keep Alive 사용 -->
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+
+          <!-- Raw Body 사용 여부 -->
+          <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
+
+          <!-- 요청 파라미터 영역 -->
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+            <collectionProp name="Arguments.arguments"/>
+          </elementProp>
+
+        </HTTPSamplerProxy>
+
+        <hashTree>
+
+          <!-- ============================================================= -->
+          <!-- HTTP Header Manager                                           -->
+          <!-- ============================================================= -->
+          <!--
+          역할:
+          - 인증 및 요청 헤더 설정
+
+          포함 헤더:
+          - Content-Type
+          - Accept
+          - Authorization
+
+          실제 실행 전:
+          - Bearer Token 만료 여부 확인 필요
+          - 추가 인증 헤더 필요 여부 확인 필요
+          -->
+
+          <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager">
+
+            <collectionProp name="HeaderManager.headers">
+
+              <!-- Content-Type -->
+              <elementProp name="" elementType="Header">
+                <stringProp name="Header.name">Content-Type</stringProp>
+                <stringProp name="Header.value">application/json</stringProp>
+              </elementProp>
+
+              <!-- Accept -->
+              <elementProp name="" elementType="Header">
+                <stringProp name="Header.name">Accept</stringProp>
+                <stringProp name="Header.value">application/json</stringProp>
+              </elementProp>
+
+              <!-- Authorization -->
+              <!-- Bearer Token 기반 인증 -->
+              <elementProp name="" elementType="Header">
+                <stringProp name="Header.name">Authorization</stringProp>
+                <stringProp name="Header.value">Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOjg5MDc4OTMsIm5vbmNlIjoieXpkZFZPOVBzWEs5SXg5RCIsImlhdCI6MTc3OTE2NTU0OSwiaXNzIjoiZWxpY2UtYWNjb3VudC1hcGkiLCJzdWIiOiI0OTM0NzQzMy1mYzc4LTc0NDMtYTEwZS1hMWNhNDJlM2FjYTYifQ.AfoHM-eChaJ6xDukmP2pyoeNYx2K7EJBxAYaVkAdCEg</stringProp>
+              </elementProp>
+
+            </collectionProp>
+
+          </HeaderManager>
+
+          <hashTree/>
+
+        </hashTree>
+
+        <!-- ============================================================= -->
+        <!-- View Results Tree                                             -->
+        <!-- ============================================================= -->
+        <!--
+        역할:
+        - 요청/응답 상세 확인
+        - Response Code 확인
+        - Response Body 확인
+        - 인증 오류 확인
+
+        주의:
+        - 실제 대규모 부하 환경에서는 메모리 사용량 증가 가능
+        -->
+
+        <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree">
+
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+
+          <objProp>
+            <name>saveConfig</name>
+
+            <!-- 결과 저장 설정 -->
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>false</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>false</responseData>
+              <samplerData>false</samplerData>
+              <xml>false</xml>
+              <fieldNames>true</fieldNames>
+              <responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+              <sentBytes>true</sentBytes>
+              <url>true</url>
+              <threadCounts>true</threadCounts>
+              <idleTime>true</idleTime>
+              <connectTime>true</connectTime>
+            </value>
+
+          </objProp>
+
+          <stringProp name="filename"></stringProp>
+
+        </ResultCollector>
+
+        <hashTree/>
+
+        <!-- ============================================================= -->
+        <!-- Summary Report                                                -->
+        <!-- ============================================================= -->
+        <!--
+        역할:
+        - 성능 지표 요약 확인
+
+        주요 지표:
+        - Average Response Time
+        - P95
+        - TPS
+        - Error Rate
+        -->
+
+        <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report">
+
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+
+          <objProp>
+            <name>saveConfig</name>
+
+            <!-- 결과 저장 설정 -->
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>false</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>false</responseData>
+              <samplerData>false</samplerData>
+              <xml>false</xml>
+              <fieldNames>true</fieldNames>
+              <responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+              <sentBytes>true</sentBytes>
+              <url>true</url>
+              <threadCounts>true</threadCounts>
+              <idleTime>true</idleTime>
+              <connectTime>true</connectTime>
+            </value>
+
+          </objProp>
+
+          <stringProp name="filename"></stringProp>
+
+        </ResultCollector>
+
+        <hashTree/>
+
+        <!-- ============================================================= -->
+        <!-- Simple Data Writer                                            -->
+        <!-- ============================================================= -->
+        <!--
+        역할:
+        - 실행 결과(.jtl) 저장
+        - 후속 metric 분석용 로그 저장
+
+        결과 파일:
+        - spike_test_result.jtl
+        -->
+
+        <ResultCollector guiclass="SimpleDataWriter" testclass="ResultCollector" testname="Simple Data Writer">
+
+          <boolProp name="ResultCollector.error_logging">false</boolProp>
+
+          <objProp>
+            <name>saveConfig</name>
+
+            <!-- 결과 저장 설정 -->
+            <value class="SampleSaveConfiguration">
+              <time>true</time>
+              <latency>true</latency>
+              <timestamp>true</timestamp>
+              <success>true</success>
+              <label>true</label>
+              <code>true</code>
+              <message>true</message>
+              <threadName>true</threadName>
+              <dataType>true</dataType>
+              <encoding>false</encoding>
+              <assertions>true</assertions>
+              <subresults>true</subresults>
+              <responseData>false</responseData>
+              <samplerData>false</samplerData>
+              <xml>false</xml>
+              <fieldNames>true</fieldNames>
+              <responseHeaders>false</responseHeaders>
+              <requestHeaders>false</requestHeaders>
+              <responseDataOnError>false</responseDataOnError>
+              <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+              <assertionsResultsToSave>0</assertionsResultsToSave>
+              <bytes>true</bytes>
+              <sentBytes>true</sentBytes>
+              <url>true</url>
+              <threadCounts>true</threadCounts>
+              <idleTime>true</idleTime>
+              <connectTime>true</connectTime>
+            </value>
+
+          </objProp>
+
+          <!-- .jtl 결과 저장 경로 -->
+          <stringProp name="filename">C:\Users\고현우\OneDrive\Desktop\QA Final Project\elice_lxp_test_team3\part2_load_analysis\jmeter_draft\spike_test_result.jtl</stringProp>
+
+        </ResultCollector>
+
+        <hashTree/>
+
+      </hashTree>
+
+    </hashTree>
+
+  </hashTree>
+
+</jmeterTestPlan>
