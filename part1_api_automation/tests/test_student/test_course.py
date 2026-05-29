@@ -3,7 +3,14 @@ from utils.test_data import common_data
 from utils.test_data.student_material_data import lecture_case
 
 
+### Positive Test
+
+
 def test_get_week1_2lecture_material_pdf(rest_student_client):
+    # 우선순위 : P0
+    # TC ID: TC-STUDENT-COURSE-001
+    # 1주차 2번 강의자료 PDF 조회 API 테스트.
+
     # Given
     # 1주차 2번 강의자료 PDF 조회에 필요한 설정값 세팅
     params = {
@@ -54,6 +61,10 @@ def test_get_week1_2lecture_material_pdf(rest_student_client):
 
 
 def test_get_week1_2lecture_quiz_material(rest_student_client):
+    # 우선순위 : P0
+    # TC ID: TC-STUDENT-COURSE-002
+    # 1주차 2번 강의 퀴즈 자료 진입 API 테스트.
+
     # Given
     # 1주차 2번 강의 퀴즈 자료 조회에 필요한 설정값 세팅
     params = {
@@ -88,88 +99,11 @@ def test_get_week1_2lecture_quiz_material(rest_student_client):
     )
 
 
-def test_get_week1_2lecture_exercise_material(rest_student_client):
-    # Given
-    # 1주차 2번 강의 코딩 실습 자료 조회에 필요한 설정값 세팅
-    params = {
-        "material_id":
-            lecture_case["week1_2lecture_1exercise_material_id"],
-        "material_type":
-            lecture_case["lecture_exercise_material_type"],
-    }
-
-    # When
-    # 코딩 실습 자료 조회 API 요청
-    response = rest_student_client.get(
-        f"/org/{common_data.org_student}/lecture_page/resolve/",
-        params=params,
-    )
-
-    # Then
-    # 코딩 실습 자료 조회 성공 여부 확인
-    assert response.status_code == 200, (
-        f"코딩 실습 자료 조회 실패 "
-        f"(status_code={response.status_code})"
-    )
-
-    data = response.json()
-
-    assert data["_result"]["status"] == "ok", (
-        f"코딩 실습 자료 응답 실패: {data}"
-    )
-
-    assert "lecture_page_id" in data, (
-        "응답 데이터에 lecture_page_id 정보가 없습니다."
-    )
-
-
-def test_get_material_pdf_without_token(settings):
-    # Given
-    # Authorization Token 없이 강의자료 PDF 조회에 필요한 설정값 세팅
-    no_auth_client = APIClient(
-        base_url=common_data.base_rest_url,
-        token=None,
-        org_name=common_data.org_student,
-        timeout=settings.request_timeout_seconds,
-        min_interval=common_data.min_request_interval_seconds,
-    )
-
-    params = {
-        "material_pdf_id":
-            lecture_case["week1_2lecture_material_id"],
-    }
-
-    # When
-    # Authorization Token 없이 강의자료 PDF 조회 API 요청
-    response = no_auth_client.get(
-        f"/org/{common_data.org_student}/material_pdf/get/",
-        params=params,
-    )
-
-    # Then
-    # 인증 오류 응답 여부 확인
-    assert response.status_code == 200, (
-        f"강의자료 PDF 조회 응답 실패 "
-        f"(status_code={response.status_code})"
-    )
-
-    data = response.json()
-
-    assert data["_result"]["status"] == "fail", (
-        f"token 없이 인증 성공: {data}"
-    )
-
-    assert (
-        "auth" in str(data).lower()
-        or "token" in str(data).lower()
-        or "session" in str(data).lower()
-        or "permission" in str(data).lower()
-    ), (
-        "응답 데이터에 인증 실패 관련 정보가 없습니다."
-    )
-
-
 def test_submit_week1_2lecture_quiz_correct_answer(rest_student_client):
+    # 우선순위 : P0
+    # TC ID: TC-STUDENT-COURSE-003
+    # 퀴즈 정답 제출 및 채점 결과 조회 API 테스트.
+
     # Given
     # 1주차 2번 강의 퀴즈 정답 제출에 필요한 설정값 세팅
     submit_files = {
@@ -246,6 +180,10 @@ def test_submit_week1_2lecture_quiz_correct_answer(rest_student_client):
 
 
 def test_submit_week1_2lecture_quiz_wrong_answer(rest_student_client):
+    # 우선순위 : P1
+    # TC ID: TC-STUDENT-COURSE-004
+    # 퀴즈 오답 제출 및 채점 결과 조회 API 테스트.
+
     # Given
     # 1주차 2번 강의 퀴즈 오답 제출에 필요한 설정값 세팅
     submit_files = {
@@ -321,7 +259,50 @@ def test_submit_week1_2lecture_quiz_wrong_answer(rest_student_client):
     )
 
 
+def test_get_week1_2lecture_exercise_material(rest_student_client):
+    # 우선순위 : P0
+    # TC ID: TC-STUDENT-COURSE-005
+    # 1주차 2번 강의 코딩 실습 자료 조회 API 테스트.
+
+    # Given
+    # 1주차 2번 강의 코딩 실습 자료 조회에 필요한 설정값 세팅
+    params = {
+        "material_id":
+            lecture_case["week1_2lecture_1exercise_material_id"],
+        "material_type":
+            lecture_case["lecture_exercise_material_type"],
+    }
+
+    # When
+    # 코딩 실습 자료 조회 API 요청
+    response = rest_student_client.get(
+        f"/org/{common_data.org_student}/lecture_page/resolve/",
+        params=params,
+    )
+
+    # Then
+    # 코딩 실습 자료 조회 성공 여부 확인
+    assert response.status_code == 200, (
+        f"코딩 실습 자료 조회 실패 "
+        f"(status_code={response.status_code})"
+    )
+
+    data = response.json()
+
+    assert data["_result"]["status"] == "ok", (
+        f"코딩 실습 자료 응답 실패: {data}"
+    )
+
+    assert "lecture_page_id" in data, (
+        "응답 데이터에 lecture_page_id 정보가 없습니다."
+    )
+
+
 def test_run_week1_2lecture_exercise(rest_student_client):
+    # 우선순위 : P0
+    # TC ID: TC-STUDENT-COURSE-006
+    # 코딩 실습 실행 화면 진입 API 테스트.
+
     # Given
     # 기본 실습방 조회
     room_response = rest_student_client.get(
@@ -388,198 +369,11 @@ def test_run_week1_2lecture_exercise(rest_student_client):
     )
 
 
-def test_move_next_lesson_from_material_pdf(rest_student_client):
-    # Given
-    # 강의자료에서 다음 수업 이동에 필요한 설정값 세팅
-    params = {
-        "material_id":
-            lecture_case["week1_2lecture_1quiz_material_id"],
-        "material_type":
-            lecture_case["lecture_quiz_material_type"],
-    }
-
-    # When
-    # 강의자료에서 다음 수업 이동 API 요청
-    response = rest_student_client.get(
-        f"/org/{common_data.org_student}/lecture_page/resolve/",
-        params=params,
-    )
-
-    # Then
-    # 다음 학습 항목 이동 성공 여부 확인
-    assert response.status_code == 200, (
-        f"다음 수업 이동 실패 "
-        f"(status_code={response.status_code})"
-    )
-
-    data = response.json()
-
-    assert data["_result"]["status"] == "ok", (
-        f"다음 수업 이동 응답 실패: {data}"
-    )
-
-    assert "lecture_page_id" in data, (
-        "다음 학습 항목 정보가 응답 데이터에 없습니다."
-    )
-
-
-def test_move_previous_lesson_from_quiz(rest_student_client):
-    # Given
-    # 퀴즈 화면에서 이전 수업 이동에 필요한 설정값 세팅
-    params = {
-        "material_id":
-            lecture_case["week1_2lecture_material_id"],
-        "material_type":
-            lecture_case["lecture_material_type"],
-    }
-
-    # When
-    # 퀴즈 화면에서 이전 수업 이동 API 요청
-    response = rest_student_client.get(
-        f"/org/{common_data.org_student}/lecture_page/resolve/",
-        params=params,
-    )
-
-    # Then
-    # 이전 학습 항목 이동 성공 여부 확인
-    assert response.status_code == 200, (
-        f"이전 수업 이동 실패 "
-        f"(status_code={response.status_code})"
-    )
-
-    data = response.json()
-
-    assert data["_result"]["status"] == "ok", (
-        f"이전 수업 이동 응답 실패: {data}"
-    )
-
-    assert "lecture_page_id" in data, (
-        "이전 학습 항목 정보가 응답 데이터에 없습니다."
-    )
-
-
-def test_get_material_pdf_without_material_pdf_id(rest_student_client):
-    # Given
-    # material_pdf_id 없이 강의자료 PDF 조회에 필요한 설정값 세팅
-    params = {}
-
-    # When
-    # material_pdf_id 없이 강의자료 PDF 조회 API 요청
-    response = rest_student_client.get(
-        f"/org/{common_data.org_student}/material_pdf/get/",
-        params=params,
-    )
-
-    # Then
-    # 필수 파라미터 누락 오류 응답 여부 확인
-    assert response.status_code == 200, (
-        f"강의자료 PDF 조회 응답 실패 "
-        f"(status_code={response.status_code})"
-    )
-
-    data = response.json()
-
-    assert data["_result"]["status"] == "fail", (
-        f"필수 파라미터 누락 실패 응답 아님: {data}"
-    )
-
-    assert (
-        "material_pdf_id" in str(data)
-    ), (
-        "응답 데이터에 material_pdf_id 관련 오류 정보가 없습니다."
-    )
-
-    assert "material_pdf" not in data, (
-        "강의자료 PDF 데이터가 반환되었습니다."
-    )
-
-
-def test_get_quiz_with_invalid_material_id(rest_student_client):
-    # Given
-    # 존재하지 않는 퀴즈 material_id 조회에 필요한 설정값 세팅
-    params = {
-        "material_type":
-            lecture_case["lecture_quiz_material_type"],
-        "page_id":
-            lecture_case["week1_2lecture_1quiz_page_id"],
-        "material_id":
-            "999999999",
-    }
-
-    # When
-    # 존재하지 않는 퀴즈 material_id 조회 API 요청
-    response = rest_student_client.get(
-        f"/org/{common_data.org_student}/lecture_page/resolve/",
-        params=params,
-    )
-
-    # Then
-    # 존재하지 않는 퀴즈 material_id 오류 응답 여부 확인
-    assert response.status_code == 200, (
-        f"퀴즈 조회 응답 실패 "
-        f"(status_code={response.status_code})"
-    )
-
-    data = response.json()
-
-    assert data["_result"]["status"] == "fail", (
-        f"존재하지 않는 퀴즈 material_id 오류 응답 아님: {data}"
-    )
-
-    assert (
-        "not_found" in str(data).lower()
-        or "not exist" in str(data).lower()
-        or "invalid" in str(data).lower()
-    ), (
-        "응답 데이터에 존재하지 않는 퀴즈 관련 오류 정보가 없습니다."
-    )
-
-    assert "lecture_page_id" not in data, (
-        "존재하지 않는 퀴즈 데이터가 반환되었습니다."
-    )
-
-
-def test_get_exercise_with_invalid_room_id(rest_student_client):
-    # Given
-    # 존재하지 않는 실습 room_id 조회에 필요한 설정값 세팅
-    files = {
-        "exercise_room_id": (
-            None,
-            "999999999",
-        ),
-    }
-
-    # When
-    # 존재하지 않는 실습 room_id 조회 API 요청
-    response = rest_student_client.request(
-        "POST",
-        f"/org/{common_data.org_student}/runner_room/exercise_room/join/",
-        files=files,
-    )
-
-    # Then
-    # 존재하지 않는 실습 room_id 오류 응답 여부 확인
-    assert response.status_code == 200, (
-        f"코딩 실습 조회 응답 실패 "
-        f"(status_code={response.status_code})"
-    )
-
-    data = response.json()
-
-    assert data["_result"]["status"] == "fail", (
-        f"존재하지 않는 실습 room_id 오류 응답 아님: {data}"
-    )
-
-    assert data["fail_code"] == "not_found_exercise_room", (
-        "존재하지 않는 실습 room_id 오류가 정상적으로 반환되지 않았습니다."
-    )
-
-    assert "room_token" not in data, (
-        "존재하지 않는 실습 room 정보가 반환되었습니다."
-    )
-
-
 def test_submit_available_exercise(rest_student_client):
+    # 우선순위 : P0
+    # TC ID: TC-STUDENT-COURSE-007
+    # 제출 가능한 코딩 실습 화면 진입 API 테스트.
+
     # Given
     # 기본 실습방 조회
     room_response = rest_student_client.get(
@@ -643,4 +437,270 @@ def test_submit_available_exercise(rest_student_client):
 
     assert "exercise_image_id" in join_data, (
         "코딩 실습 제출 환경 정보가 정상적으로 반환되지 않았습니다."
+    )
+
+
+def test_move_next_lesson_from_material_pdf(rest_student_client):
+    # 우선순위 : P1
+    # TC ID: TC-STUDENT-COURSE-008
+    # 강의자료 화면에서 다음 수업 이동 API 테스트.
+
+    # Given
+    # 강의자료에서 다음 수업 이동에 필요한 설정값 세팅
+    params = {
+        "material_id":
+            lecture_case["week1_2lecture_1quiz_material_id"],
+        "material_type":
+            lecture_case["lecture_quiz_material_type"],
+    }
+
+    # When
+    # 강의자료에서 다음 수업 이동 API 요청
+    response = rest_student_client.get(
+        f"/org/{common_data.org_student}/lecture_page/resolve/",
+        params=params,
+    )
+
+    # Then
+    # 다음 학습 항목 이동 성공 여부 확인
+    assert response.status_code == 200, (
+        f"다음 수업 이동 실패 "
+        f"(status_code={response.status_code})"
+    )
+
+    data = response.json()
+
+    assert data["_result"]["status"] == "ok", (
+        f"다음 수업 이동 응답 실패: {data}"
+    )
+
+    assert "lecture_page_id" in data, (
+        "다음 학습 항목 정보가 응답 데이터에 없습니다."
+    )
+
+
+def test_move_previous_lesson_from_quiz(rest_student_client):
+    # 우선순위 : P1
+    # TC ID: TC-STUDENT-COURSE-009
+    # 강의자료 화면에서 이전 수업 이동 API 테스트.
+
+    # Given
+    # 퀴즈 화면에서 이전 수업 이동에 필요한 설정값 세팅
+    params = {
+        "material_id":
+            lecture_case["week1_2lecture_material_id"],
+        "material_type":
+            lecture_case["lecture_material_type"],
+    }
+
+    # When
+    # 퀴즈 화면에서 이전 수업 이동 API 요청
+    response = rest_student_client.get(
+        f"/org/{common_data.org_student}/lecture_page/resolve/",
+        params=params,
+    )
+
+    # Then
+    # 이전 학습 항목 이동 성공 여부 확인
+    assert response.status_code == 200, (
+        f"이전 수업 이동 실패 "
+        f"(status_code={response.status_code})"
+    )
+
+    data = response.json()
+
+    assert data["_result"]["status"] == "ok", (
+        f"이전 수업 이동 응답 실패: {data}"
+    )
+
+    assert "lecture_page_id" in data, (
+        "이전 학습 항목 정보가 응답 데이터에 없습니다."
+    )
+
+
+
+
+### Negative Test
+
+
+def test_get_material_pdf_without_token(settings):
+    # 우선순위 : P0
+    # TC ID: TC-STUDENT-COURSE-011
+    # Authorization Token 없이 강의자료 PDF 조회 시 인증 실패 응답 확인 API 테스트.
+
+    # Given
+    # Authorization Token 없이 강의자료 PDF 조회에 필요한 설정값 세팅
+    no_auth_client = APIClient(
+        base_url=common_data.base_rest_url,
+        token=None,
+        org_name=common_data.org_student,
+        timeout=settings.request_timeout_seconds,
+        min_interval=common_data.min_request_interval_seconds,
+    )
+
+    params = {
+        "material_pdf_id":
+            lecture_case["week1_2lecture_material_id"],
+    }
+
+    # When
+    # Authorization Token 없이 강의자료 PDF 조회 API 요청
+    response = no_auth_client.get(
+        f"/org/{common_data.org_student}/material_pdf/get/",
+        params=params,
+    )
+
+    # Then
+    # 인증 오류 응답 여부 확인
+    assert response.status_code == 200, (
+        f"강의자료 PDF 조회 응답 실패 "
+        f"(status_code={response.status_code})"
+    )
+
+    data = response.json()
+
+    assert data["_result"]["status"] == "fail", (
+        f"token 없이 인증 성공: {data}"
+    )
+
+    assert (
+        "auth" in str(data).lower()
+        or "token" in str(data).lower()
+        or "session" in str(data).lower()
+        or "permission" in str(data).lower()
+    ), (
+        "응답 데이터에 인증 실패 관련 정보가 없습니다."
+    )
+
+
+def test_get_material_pdf_without_material_pdf_id(rest_student_client):
+    # 우선순위 : P2
+    # TC ID: TC-STUDENT-COURSE-010
+    # material_pdf_id 누락 시 강의자료 PDF 조회 실패 응답 확인 API 테스트.
+
+    # Given
+    # material_pdf_id 없이 강의자료 PDF 조회에 필요한 설정값 세팅
+    params = {}
+
+    # When
+    # material_pdf_id 없이 강의자료 PDF 조회 API 요청
+    response = rest_student_client.get(
+        f"/org/{common_data.org_student}/material_pdf/get/",
+        params=params,
+    )
+
+    # Then
+    # 필수 파라미터 누락 오류 응답 여부 확인
+    assert response.status_code == 200, (
+        f"강의자료 PDF 조회 응답 실패 "
+        f"(status_code={response.status_code})"
+    )
+
+    data = response.json()
+
+    assert data["_result"]["status"] == "fail", (
+        f"필수 파라미터 누락 실패 응답 아님: {data}"
+    )
+
+    assert (
+        "material_pdf_id" in str(data)
+    ), (
+        "응답 데이터에 material_pdf_id 관련 오류 정보가 없습니다."
+    )
+
+    assert "material_pdf" not in data, (
+        "강의자료 PDF 데이터가 반환되었습니다."
+    )
+
+
+def test_get_quiz_with_invalid_material_id(rest_student_client):
+    # 우선순위 : P2
+    # TC ID: TC-STUDENT-COURSE-012
+    # 존재하지 않는 퀴즈 material_id 조회 실패 응답 확인 API 테스트.
+
+    # Given
+    # 존재하지 않는 퀴즈 material_id 조회에 필요한 설정값 세팅
+    params = {
+        "material_type":
+            lecture_case["lecture_quiz_material_type"],
+        "page_id":
+            lecture_case["week1_2lecture_1quiz_page_id"],
+        "material_id":
+            "999999999",
+    }
+
+    # When
+    # 존재하지 않는 퀴즈 material_id 조회 API 요청
+    response = rest_student_client.get(
+        f"/org/{common_data.org_student}/lecture_page/resolve/",
+        params=params,
+    )
+
+    # Then
+    # 존재하지 않는 퀴즈 material_id 오류 응답 여부 확인
+    assert response.status_code == 200, (
+        f"퀴즈 조회 응답 실패 "
+        f"(status_code={response.status_code})"
+    )
+
+    data = response.json()
+
+    assert data["_result"]["status"] == "fail", (
+        f"존재하지 않는 퀴즈 material_id 오류 응답 아님: {data}"
+    )
+
+    assert (
+        "not_found" in str(data).lower()
+        or "not exist" in str(data).lower()
+        or "invalid" in str(data).lower()
+    ), (
+        "응답 데이터에 존재하지 않는 퀴즈 관련 오류 정보가 없습니다."
+    )
+
+    assert "lecture_page_id" not in data, (
+        "존재하지 않는 퀴즈 데이터가 반환되었습니다."
+    )
+
+
+def test_get_exercise_with_invalid_room_id(rest_student_client):
+    # 우선순위 : P2
+    # TC ID: TC-STUDENT-COURSE-013
+    # 존재하지 않는 실습 room_id로 실습방 진입 실패 응답 확인 API 테스트.
+
+    # Given
+    # 존재하지 않는 실습 room_id 조회에 필요한 설정값 세팅
+    files = {
+        "exercise_room_id": (
+            None,
+            "999999999",
+        ),
+    }
+
+    # When
+    # 존재하지 않는 실습 room_id 조회 API 요청
+    response = rest_student_client.request(
+        "POST",
+        f"/org/{common_data.org_student}/runner_room/exercise_room/join/",
+        files=files,
+    )
+
+    # Then
+    # 존재하지 않는 실습 room_id 오류 응답 여부 확인
+    assert response.status_code == 200, (
+        f"코딩 실습 조회 응답 실패 "
+        f"(status_code={response.status_code})"
+    )
+
+    data = response.json()
+
+    assert data["_result"]["status"] == "fail", (
+        f"존재하지 않는 실습 room_id 오류 응답 아님: {data}"
+    )
+
+    assert data["fail_code"] == "not_found_exercise_room", (
+        "존재하지 않는 실습 room_id 오류가 정상적으로 반환되지 않았습니다."
+    )
+
+    assert "room_token" not in data, (
+        "존재하지 않는 실습 room 정보가 반환되었습니다."
     )
