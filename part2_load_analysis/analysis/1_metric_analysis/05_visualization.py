@@ -198,8 +198,151 @@ def plot_login_p95(df: pd.DataFrame) -> None:
     plt.show()
     plt.close()
 
+
 # ---------------------------------------------------------------------------
-# 7. 오류율 비교
+# 7. 로그인 API 활성 사용자 구간별 P95 응답시간 비교
+# ---------------------------------------------------------------------------
+
+def plot_login_p95_by_active_thread_bucket() -> None:
+    """
+    로그인 API의 active thread bucket별 P95 응답시간을 시각화한다.
+
+    목적:
+    - 로그인 API가 활성 사용자 수 증가에 따라 느려지는지 확인
+    - 특정 active thread 구간부터 P95가 증가하는지 확인
+    - 병목이 시작되는 구간이 있는지 탐색
+    """
+
+    bucket_path = (
+        BASE_DIR
+        / "data"
+        / "1_analysis_result_data"
+        / "01_metric_summary"
+        / "05_active_thread_bucket_summary.csv"
+    )
+
+    bucket_df = pd.read_csv(
+        bucket_path,
+        encoding="utf-8-sig",
+    )
+
+    login_df = bucket_df[bucket_df["api_label"] == "로그인"].copy()
+
+    if login_df.empty:
+        print("[WARN] 로그인 API active thread bucket 데이터가 없습니다.")
+        return
+
+    login_df["bucket_start"] = (
+        login_df["active_thread_bucket"]
+        .astype(str)
+        .str.extract(r"(\d+)")
+        .astype(float)
+    )
+
+    login_df = login_df.sort_values(
+        [
+            "team",
+            "load_level",
+            "bucket_start",
+        ]
+    )
+
+    plt.figure(figsize=(12, 6))
+
+    for (team, load_level), group_df in login_df.groupby(["team", "load_level"]):
+        plt.plot(
+            group_df["active_thread_bucket"],
+            group_df["p95_response_time_ms"],
+            marker="o",
+            label=f"{team} load{load_level}",
+        )
+
+    plt.title("로그인 API 활성 사용자 구간별 P95 응답시간")
+    plt.xlabel("활성 사용자 구간")
+    plt.ylabel("P95 응답시간(ms)")
+    plt.xticks(rotation=45)
+    plt.legend()
+    plt.grid(True)
+
+    save_chart("04-1_login_p95_by_active_thread_bucket.png")
+    plt.show()
+    plt.close()
+
+
+# ---------------------------------------------------------------------------
+# 8. 로그인 API 활성 사용자 구간별 P95 응답시간 비교(load100)
+# ---------------------------------------------------------------------------
+def plot_login_p95_by_active_thread_bucket_load100() -> None:
+    """
+    로그인 API의 load100 active thread bucket별 P95 응답시간을 시각화한다.
+
+    목적:
+    - 최대 부하 구간에서 로그인 API의 P95 변화 확인
+    - Team2 / Team3의 load100 구간 응답시간 차이 비교
+    - 활성 사용자 수 증가에 따른 병목 시작 구간 탐색
+    """
+
+    bucket_path = (
+        BASE_DIR
+        / "data"
+        / "1_analysis_result_data"
+        / "01_metric_summary"
+        / "05_active_thread_bucket_summary.csv"
+    )
+
+    bucket_df = pd.read_csv(
+        bucket_path,
+        encoding="utf-8-sig",
+    )
+
+    login_df = bucket_df[
+        (bucket_df["api_label"] == "로그인")
+        & (bucket_df["load_level"] == 100)
+    ].copy()
+
+    if login_df.empty:
+        print("[WARN] 로그인 API load100 active thread bucket 데이터가 없습니다.")
+        return
+
+    login_df["bucket_start"] = (
+        login_df["active_thread_bucket"]
+        .astype(str)
+        .str.extract(r"(\d+)")
+        .astype(float)
+    )
+
+    login_df = login_df.sort_values(
+        [
+            "team",
+            "bucket_start",
+        ]
+    )
+
+    plt.figure(figsize=(10, 5))
+
+    for team, group_df in login_df.groupby("team"):
+        plt.plot(
+            group_df["active_thread_bucket"],
+            group_df["p95_response_time_ms"],
+            marker="o",
+            label=team,
+        )
+
+    plt.title("로그인 API load100 활성 사용자 구간별 P95 응답시간")
+    plt.xlabel("활성 사용자 구간")
+    plt.ylabel("P95 응답시간(ms)")
+    plt.xticks(rotation=45)
+    plt.legend()
+    plt.grid(True)
+
+    save_chart("04-2_login_p95_by_active_thread_bucket_load100.png")
+    plt.show()
+    plt.close()
+
+
+
+# ---------------------------------------------------------------------------
+# 9. 오류율 비교
 # ---------------------------------------------------------------------------
 
 def plot_error_rate(df: pd.DataFrame) -> None:
@@ -249,12 +392,12 @@ def plot_error_rate(df: pd.DataFrame) -> None:
     plt.legend()
     plt.grid(axis="y")
 
-    save_chart("04_error_rate_by_api.png")
+    save_chart("05_error_rate_by_api.png")
     plt.show()
     plt.close()
 
 # ---------------------------------------------------------------------------
-# 8. 부하 단계별 처리량 비교
+# 10. 부하 단계별 처리량 비교
 # ---------------------------------------------------------------------------
 
 def plot_throughput_by_load(df: pd.DataFrame) -> None:
@@ -283,12 +426,12 @@ def plot_throughput_by_load(df: pd.DataFrame) -> None:
     plt.legend()
     plt.grid(True)
 
-    save_chart("05_throughput_by_load_level.png")
+    save_chart("06_throughput_by_load_level.png")
     plt.show()
     plt.close()
 
 # ---------------------------------------------------------------------------
-# 9. 부하 단계별 평균 응답시간 비교
+# 11. 부하 단계별 평균 응답시간 비교
 # ---------------------------------------------------------------------------
 
 def plot_avg_response_by_load(df: pd.DataFrame) -> None:
@@ -317,12 +460,12 @@ def plot_avg_response_by_load(df: pd.DataFrame) -> None:
     plt.legend()
     plt.grid(True)
 
-    save_chart("06_avg_response_time_by_load_level.png")
+    save_chart("07_avg_response_time_by_load_level.png")
     plt.show()
     plt.close()
 
 # ---------------------------------------------------------------------------
-# 10. API별 평균 Latency 비교
+# 12. API별 평균 Latency 비교
 # ---------------------------------------------------------------------------
 
 def plot_avg_latency_by_api(df: pd.DataFrame) -> None:
@@ -346,12 +489,12 @@ def plot_avg_latency_by_api(df: pd.DataFrame) -> None:
     plt.grid(axis="y")
     plt.tight_layout()
 
-    save_chart("07_avg_latency_by_api_comparison.png")
+    save_chart("08_avg_latency_by_api_comparison.png")
     plt.show()
     plt.close()
 
 # ---------------------------------------------------------------------------
-# 11. API별 최대 응답시간 비교
+# 13. API별 최대 응답시간 비교
 # ---------------------------------------------------------------------------
 
 def plot_max_response_by_api(df: pd.DataFrame) -> None:
@@ -375,12 +518,12 @@ def plot_max_response_by_api(df: pd.DataFrame) -> None:
     plt.grid(axis="y")
     plt.tight_layout()
 
-    save_chart("08_max_response_time_by_api_comparison.png")
+    save_chart("09_max_response_time_by_api_comparison.png")
     plt.show()
     plt.close()
 
 # ---------------------------------------------------------------------------
-# 12. API별 응답시간 표준편차 비교
+# 14. API별 응답시간 표준편차 비교
 # ---------------------------------------------------------------------------
 
 def plot_std_response_by_api(df: pd.DataFrame) -> None:
@@ -404,13 +547,13 @@ def plot_std_response_by_api(df: pd.DataFrame) -> None:
     plt.grid(axis="y")
     plt.tight_layout()
 
-    save_chart("09_std_response_time_by_api_comparison.png")
+    save_chart("10_std_response_time_by_api_comparison.png")
     plt.show()
     plt.close()
 
 
 # ---------------------------------------------------------------------------
-# 13. 메인 실행
+# 15. 메인 실행
 # ---------------------------------------------------------------------------
 
 def main() -> None:
@@ -421,6 +564,8 @@ def main() -> None:
     plot_avg_response_by_api(df)
     plot_p95_by_api(df)
     plot_login_p95(df)
+    plot_login_p95_by_active_thread_bucket()
+    plot_login_p95_by_active_thread_bucket_load100()
     plot_error_rate(df)
     plot_throughput_by_load(df)
     plot_avg_response_by_load(df)
