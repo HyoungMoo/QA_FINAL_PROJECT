@@ -7,31 +7,68 @@ from utils.test_data import common_data
 
 
 def _assert_permission_denied_response(response, expected_status_code=403):
-    """권한 부족 응답인지 확인한다."""
-    body = response.json()
-
+    """Assert that the response is a permission-denied JSON error."""
     assert response.status_code == expected_status_code, (
-        f"권한 경계 API 응답 상태 코드가 기대값과 다릅니다. "
+        f"Permission boundary status code mismatch. "
         f"expected={expected_status_code}, "
-        f"actual={response.status_code}, body={body}"
+        f"actual={response.status_code}, response={response.text}"
     )
 
+    content_type = response.headers.get("Content-Type", "")
+    assert "application/json" in content_type, (
+        f"Response Content-Type is not JSON. "
+        f"content_type={content_type}, response={response.text}"
+    )
+
+    body = response.json()
+
     assert isinstance(body, dict), (
-        f"권한 부족 응답 body가 dict 형식이 아닙니다. "
+        f"Permission-denied response body is not dict. "
         f"type={type(body).__name__}, body={body}"
     )
 
-    assert "code" in body, (
-        f"권한 부족 응답 body에 'code' 항목이 없습니다. "
+    required_error_keys = [
+        "code",
+        "message",
+        "detail",
+    ]
+    missing_error_keys = [
+        key for key in required_error_keys
+        if key not in body
+    ]
+
+    assert not missing_error_keys, (
+        f"Permission-denied response is missing required error keys. "
+        f"missing_keys={missing_error_keys}, "
         f"body_keys={list(body.keys())}"
     )
 
+    assert isinstance(body["code"], str), (
+        f"code is not str. "
+        f"type={type(body['code']).__name__}, value={body['code']}"
+    )
+
     assert body["code"] == "has_no_permission", (
-        f"권한 부족 에러 코드가 기대값과 다릅니다. "
+        f"Permission-denied error code mismatch. "
         f"actual={body.get('code')}, expected=has_no_permission, body={body}"
     )
 
+    assert isinstance(body["message"], str), (
+        f"message is not str. "
+        f"type={type(body['message']).__name__}, value={body['message']}"
+    )
+
+    assert body["message"].strip() != "", (
+        f"message is empty. message={body['message']!r}"
+    )
+
+    assert body["detail"] is None or isinstance(body["detail"], (str, dict, list)), (
+        f"detail is not None, str, dict, or list. "
+        f"type={type(body['detail']).__name__}, value={body['detail']}"
+    )
+
     return body
+
 
 
 @pytest.mark.p1

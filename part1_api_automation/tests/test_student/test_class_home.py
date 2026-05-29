@@ -574,113 +574,10 @@ def test_get_classroom_detail(student_client):
     print("(사용자 역할)member_role:", body["member_role"])
 
 
-@pytest.mark.p1
-def test_student_cannot_get_classroom_ticket_info(student_client):
-    # 우선순위 : P1
-    # TC ID: TC_CLASSHOME_005
-    # Postman에서 성공 확인한 학습자 권한의 클래스룸 티켓 정보 조회 권한 경계 API.
-    # Given-When-Then
-        # Given : 로그인 상태(유효한 학습자 토큰 보유), 클래스룸 ID 보유, 학습자 권한 계정
-        # When : 클래스룸 티켓 정보 조회 API를 호출 : GET https://api-classroom.elice.io/classroom/{classroom_id}/classroom_ticket/info
-        # Then : response 결과 확인 : status_code가 403인지, body에 권한 없음 정보가 있는지 확인
-    # 입력값 : 클래스룸 ID 준비 : classroom_id
-
-    # Given : 로그인 상태(유효한 학습자 토큰 보유), 클래스룸 ID 보유, 학습자 권한 계정
-    classroom_id = common_data.student_classroom_id
-
-    # When : 클래스룸 티켓 정보 조회 API를 호출
-    response = student_client.get(
-        f"/classroom/{classroom_id}/classroom_ticket/info"
-    )
-
-    # Then : response 결과 확인
-
-    # assert 1. response의 status code가 403인지 확인
-    assert response.status_code == 403, (
-        f"응답 상태 코드가 403이 아닙니다. "
-        f"status_code={response.status_code}, response={response.text}"
-    )
-
-    # assert 2. 응답 Content-Type이 JSON 형식인지 확인
-    content_type = response.headers.get("Content-Type", "")
-    assert "application/json" in content_type, (
-        f"응답 Content-Type이 JSON 형식이 아닙니다. "
-        f"content_type={content_type}, response={response.text}"
-    )
-
-    body = response.json()
-
-    # assert 3. 응답 body가 dict 형식인지 확인
-    assert isinstance(body, dict), (
-        f"응답 body가 dict 형식이 아닙니다. "
-        f"type={type(body).__name__}, body={body}"
-    )
-
-    # assert 4. 응답 body에 필수 key가 모두 있는지 확인
-    required_error_keys = [
-        "code",
-        "message",
-        "detail",
-    ]
-
-    missing_error_keys = [
-        key for key in required_error_keys
-        if key not in body
-    ]
-
-    assert not missing_error_keys, (
-        f"응답 body에 필수 에러 항목이 없습니다. "
-        f"missing_keys={missing_error_keys}, "
-        f"body_keys={list(body.keys())}"
-    )
-
-    # assert 5. code가 str 형식인지 확인
-    assert isinstance(body["code"], str), (
-        f"code가 str 형식이 아닙니다. "
-        f"type={type(body['code']).__name__}, "
-        f"value={body['code']}"
-    )
-
-    # assert 6. code가 권한 없음 에러 코드인지 확인
-    assert body["code"] == "has_no_permission", (
-        f"권한 없음 에러 코드가 기대값과 다릅니다. "
-        f"actual={body.get('code')}, expected=has_no_permission"
-    )
-
-    # assert 7. message가 str 형식이고 빈 문자열이 아닌지 확인
-    assert isinstance(body["message"], str), (
-        f"message가 str 형식이 아닙니다. "
-        f"type={type(body['message']).__name__}, "
-        f"value={body['message']}"
-    )
-
-    assert body["message"].strip() != "", (
-        f"message 값이 비어 있습니다. "
-        f"message={body['message']!r}"
-    )
-
-    # assert 8. detail이 None, str, dict 또는 list 형식인지 확인
-    # API에 따라 detail은 문자열, 객체, 배열, null로 내려올 수 있으므로 허용 범위를 넓게 둠
-    assert body["detail"] is None or isinstance(body["detail"], (str, dict, list)), (
-        f"detail이 None, str, dict 또는 list 형식이 아닙니다. "
-        f"type={type(body['detail']).__name__}, "
-        f"value={body['detail']}"
-    )
-
-    print("")
-    print("")
-    print("TC_NO:TC_CLASSHOME_005")
-    print("status_code", response.status_code)
-    print("(클래스룸 ID)classroom_id:", classroom_id)
-    print("(에러 코드)code:", body["code"])
-    print("(에러 메시지)message:", body["message"])
-    print("(에러 상세)detail:", body["detail"])
-
-
 @pytest.mark.p2
 def test_get_ai_model_list(community_student_client):
     # 우선순위 : P2
-    # TC ID: TC_CLASSHOME_006
+    # TC ID: TC_CLASSHOME_005
     # Postman에서 성공 확인한 AI 모델 목록 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유), 활성화 필터 보유
@@ -838,7 +735,7 @@ def test_get_ai_model_list(community_student_client):
 
     print("")
     print("")
-    print("TC_NO:TC_CLASSHOME_006")
+    print("TC_NO:TC_CLASSHOME_005")
     print("status_code", response.status_code)
     print("(AI 모델 목록 수)model_count:", len(body))
 
@@ -852,7 +749,7 @@ def test_get_ai_model_list(community_student_client):
 @pytest.mark.p2
 def test_get_token_grant_list_allows_empty_result(community_student_client):
     # 우선순위 : P2
-    # TC ID: TC_CLASSHOME_007
+    # TC ID: TC_CLASSHOME_006
     # Postman에서 성공 확인한 토큰 부여 정보 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유), 조회 시작일 필터 보유
@@ -1050,7 +947,7 @@ def test_get_token_grant_list_allows_empty_result(community_student_client):
 
     print("")
     print("")
-    print("TC_NO:TC_CLASSHOME_007")
+    print("TC_NO:TC_CLASSHOME_006")
     print("status_code", response.status_code)
     print("(토큰 부여 정보 수)token_grant_count:", len(body))
 
@@ -1065,7 +962,7 @@ def test_get_token_grant_list_allows_empty_result(community_student_client):
 @pytest.mark.p2
 def test_get_token_quota_by_account(community_student_client, settings):
     # 우선순위 : P2
-    # TC ID: TC_CLASSHOME_008
+    # TC ID: TC_CLASSHOME_007
     # Postman에서 성공 확인한 토큰 쿼터 정보 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유), 학습자 ID 보유
@@ -1161,7 +1058,7 @@ def test_get_token_quota_by_account(community_student_client, settings):
 
     print("")
     print("")
-    print("TC_NO:TC_CLASSHOME_008")
+    print("TC_NO:TC_CLASSHOME_007")
     print("status_code", response.status_code)
     print("(학습자 ID)account_id:", params["account_id"])
     print("(쿼터 사용 여부)is_quota_enabled:", body["is_quota_enabled"])
@@ -1175,7 +1072,7 @@ def test_get_token_quota_by_account(community_student_client, settings):
 @pytest.mark.p0
 def test_get_classroom_next_lecture_page(dashboard_student_client):
     # 우선순위 : P0
-    # TC ID: TC_CLASSHOME_009
+    # TC ID: TC_CLASSHOME_008
     # Postman에서 성공 확인한 클래스룸 다음 학습 강의 페이지 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유), 클래스룸 ID 보유
@@ -1304,7 +1201,7 @@ def test_get_classroom_next_lecture_page(dashboard_student_client):
 
     print("")
     print("")
-    print("TC_NO:TC_CLASSHOME_009")
+    print("TC_NO:TC_CLASSHOME_008")
     print("status_code", response.status_code)
     print("(과목 ID)course_id:", body["course_id"])
     print("(강의 ID)lecture_id:", body["lecture_id"])
@@ -1317,7 +1214,7 @@ def test_get_classroom_next_lecture_page(dashboard_student_client):
 @pytest.mark.p0
 def test_get_student_dashboard(dashboard_student_client, settings):
     # 우선순위 : P0
-    # TC ID: TC_CLASSHOME_010
+    # TC ID: TC_CLASSHOME_009
     # Postman에서 성공 확인한 수강생 학습 현황 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(토큰 발급 계정과 학습자 계정이 동일해야 함)
@@ -1492,7 +1389,7 @@ def test_get_student_dashboard(dashboard_student_client, settings):
 
     print("")
     print("")
-    print("TC_NO:TC_CLASSHOME_010")
+    print("TC_NO:TC_CLASSHOME_009")
     print("status_code", response.status_code)
     print("(계정 ID)account.id:", body["account"]["id"])
     print("(학습 진행률)learning_progress:", body["learning_progress"])
@@ -1506,7 +1403,7 @@ def test_get_student_dashboard(dashboard_student_client, settings):
 @pytest.mark.p2
 def test_get_notification_stat(notification_student_client):
     # 우선순위 : P2
-    # TC ID: TC_CLASSHOME_011
+    # TC ID: TC_CLASSHOME_010
     # Postman에서 성공 확인한 알림 상태 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유)
@@ -1563,7 +1460,7 @@ def test_get_notification_stat(notification_student_client):
 
     print("")
     print("")
-    print("TC_NO:TC_CLASSHOME_011")
+    print("TC_NO:TC_CLASSHOME_010")
     print("status_code", response.status_code)
     print("(미확인 알림 개수)unchecked_count:", body["unchecked_count"])
 
@@ -1571,7 +1468,7 @@ def test_get_notification_stat(notification_student_client):
 @pytest.mark.p0
 def test_get_session_count(org_student_client):
     # 우선순위 : P2
-    # TC ID: TC_CLASSHOME_012
+    # TC ID: TC_CLASSHOME_011
     # Postman에서 성공 확인한 세션 개수 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유)
@@ -1615,7 +1512,7 @@ def test_get_session_count(org_student_client):
 
     print("")
     print("")
-    print("TC_NO:TC_CLASSHOME_012")
+    print("TC_NO:TC_CLASSHOME_011")
     print("status_code", response.status_code)
     print("(세션 개수)session_count:", body)
 
@@ -1623,7 +1520,7 @@ def test_get_session_count(org_student_client):
 @pytest.mark.p2
 def test_get_account_cert_list(rest_student_client, settings):
     # 우선순위 : P2
-    # TC ID: TC_CLASSHOME_013
+    # TC ID: TC_CLASSHOME_012
     # Postman에서 성공 확인한 본인인증 정보 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유), 학습자 ID 보유
@@ -1747,7 +1644,7 @@ def test_get_account_cert_list(rest_student_client, settings):
 
     print("")
     print("")
-    print("TC_NO:TC_CLASSHOME_013")
+    print("TC_NO:TC_CLASSHOME_012")
     print("status_code", response.status_code)
     print("(본인인증 정보 개수)account_cert_info_count:", body["account_cert_info_count"])
     print("(본인인증 정보 목록 수)account_cert_info_list_count:", len(body["account_cert_info_list"]))
@@ -1762,7 +1659,7 @@ def test_get_account_cert_list(rest_student_client, settings):
 @pytest.mark.p1
 def test_get_global_account_detail(rest_student_client):
     # 우선순위 : P0
-    # TC ID: TC_CLASSHOME_014
+    # TC ID: TC_CLASSHOME_013
     # Postman에서 성공 확인한 현재 로그인 사용자 계정 상세 정보 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유)
@@ -1926,7 +1823,7 @@ def test_get_global_account_detail(rest_student_client):
 
     print("")
     print("")
-    print("TC_NO:TC_CLASSHOME_014")
+    print("TC_NO:TC_CLASSHOME_013")
     print("status_code", response.status_code)
     print("(계정 ID)account.id:", account["id"])
     print("(이름)account.fullname:", account["fullname"])
@@ -1944,7 +1841,7 @@ def test_get_global_account_detail(rest_student_client):
 @pytest.mark.p2
 def test_get_global_organization_detail(rest_student_client):
     # 우선순위 : P1
-    # TC ID: TC_CLASSHOME_015
+    # TC ID: TC_CLASSHOME_014
     # Postman에서 성공 확인한 조직 상세 정보 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유), 조직 도메인 보유
@@ -2093,7 +1990,7 @@ def test_get_global_organization_detail(rest_student_client):
 
     print("")
     print("")
-    print("TC_NO:TC_CLASSHOME_015")
+    print("TC_NO:TC_CLASSHOME_014")
     print("status_code", response.status_code)
     print("(조직 ID)organization.id:", organization["id"])
     print("(조직명)organization.name:", organization["name"])
@@ -2104,7 +2001,7 @@ def test_get_global_organization_detail(rest_student_client):
 @pytest.mark.p2
 def test_get_global_organization_unread_message_count(rest_student_client):
     # 우선순위 : P2
-    # TC ID: TC_CLASSHOME_016
+    # TC ID: TC_CLASSHOME_015
     # Postman에서 성공 확인한 조직 미확인 메시지 개수 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유), 조직 ID 보유
@@ -2177,7 +2074,7 @@ def test_get_global_organization_unread_message_count(rest_student_client):
 
     print("")
     print("")
-    print("TC_NO:TC_CLASSHOME_016")
+    print("TC_NO:TC_CLASSHOME_015")
     print("status_code", response.status_code)
     print("(조직 ID)organization_id:", org_no_1)
     print("(미확인 메시지 개수)unread_message_count:", body["unread_message_count"])
@@ -2186,7 +2083,7 @@ def test_get_global_organization_unread_message_count(rest_student_client):
 @pytest.mark.p1
 def test_get_org_user(rest_student_client):
     # 우선순위 : P1
-    # TC ID: TC_CLASSHOME_017
+    # TC ID: TC_CLASSHOME_016
     # Postman에서 성공 확인한 현재 로그인 사용자의 조직 내 사용자 정보 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유), 조직 정보 보유
@@ -2356,7 +2253,7 @@ def test_get_org_user(rest_student_client):
 
     print("")
     print("")
-    print("TC_NO:TC_CLASSHOME_017")
+    print("TC_NO:TC_CLASSHOME_016")
     print("status_code", response.status_code)
     print("(조직 사용자 ID)user.id:", user["id"])
     print("(이름)user.fullname:", user["fullname"])
@@ -2368,7 +2265,7 @@ def test_get_org_user(rest_student_client):
 @pytest.mark.p2
 def test_get_chat_room_list(rest_student_client):
     # 우선순위 : P2
-    # TC ID: TC_CLASSHOME_018
+    # TC ID: TC_CLASSHOME_017
     # Postman에서 성공 확인한 채팅방 목록 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유), 조직 정보 보유
@@ -2576,7 +2473,7 @@ def test_get_chat_room_list(rest_student_client):
 
     print("")
     print("")
-    print("TC_NO:TC_CLASSHOME_018")
+    print("TC_NO:TC_CLASSHOME_017")
     print("status_code", response.status_code)
     print("(채팅방 개수)room_count:", body["room_count"])
     print("(채팅방 목록 수)rooms_count:", len(body["rooms"]))
