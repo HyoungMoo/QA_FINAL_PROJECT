@@ -6,8 +6,11 @@ from utils.test_data.student_material_data import (
     teacher_course_case, lecture_case
 )
 
-
 def test_student_cannot_change_lecture_page_visibility(rest_student_client):
+    # 우선순위 : P0
+    # TC ID: TC-TEACHER_COURSE-022
+    # 학생 권한으로 수업자료 공개 상태 변경 API 호출 시 권한 오류가 반환되는지 검증
+
     # Given
     # 학생 권한으로 수업자료 공개 상태 변경 payload
     payload = {
@@ -49,8 +52,11 @@ def test_student_cannot_change_lecture_page_visibility(rest_student_client):
         f"권한 부족 에러 메시지 불일치: {body}"
     )
 
-
 def test_student_cannot_edit_lecture(rest_student_client):
+    # 우선순위 : P0
+    # TC ID: TC-TEACHER_COURSE-023
+    # 학생 권한으로 수업 수정 API 호출 시 권한 오류가 반환되는지 검증
+
     # Given
     # 학생 권한으로 수업 수정 payload
     payload = {
@@ -95,8 +101,11 @@ def test_student_cannot_edit_lecture(rest_student_client):
         f"권한 부족 에러 메시지 불일치: {body}"
     )
 
-
 def test_student_cannot_delete_lecture_page(rest_student_client):
+    # 우선순위 : P0
+    # TC ID: TC-TEACHER_COURSE-024
+    # 학생 권한으로 수업자료 삭제 API 호출 시 권한 오류가 반환되는지 검증
+
     # Given
     # 학생 권한으로 수업자료 삭제 payload
     payload = {
@@ -137,9 +146,55 @@ def test_student_cannot_delete_lecture_page(rest_student_client):
         f"권한 부족 에러 메시지 불일치: {body}"
     )
 
+def test_student_cannot_clone_lecture(rest_student_client):
+    # 우선순위 : P0
+    # TC ID: TC-TEACHER_COURSE-026
+    # 학생 권한으로 수업 복제 API 호출 시 권한 오류가 반환되는지 검증
 
+    # Given
+    # 학생 권한으로 수업 복제 payload
+    payload = {
+        "lecture_id": lecture_case["week1_2lecture_id"],
+        "target_course_id": lecture_case["week1_course_id"],
+    }
+
+    # When
+    # 학생 권한으로 교육자 전용 수업 복제 API 호출
+    response = rest_student_client.request(
+        "POST",
+        f"/org/{common_data.org_student}/lecture/clone/",
+        data=payload,
+    )
+
+    body = response.json()
+
+    # Then
+    # HTTP 응답 여부 검증
+    assert response.status_code == 200, (
+        f"학생 권한 수업 복제 HTTP 응답 실패: "
+        f"status_code={response.status_code}, body={body}"
+    )
+
+    # 권한 부족 실패 여부 검증
+    assert body["_result"]["status"] == "fail", (
+        f"학생 권한 수업 복제 요청이 실패하지 않음: {body}"
+    )
+
+    # 권한 부족 에러 코드 검증
+    assert body["fail_code"] == "insufficient_permission", (
+        f"권한 부족 에러 코드 불일치: {body}"
+    )
+
+    # 권한 부족 에러 메시지 검증
+    assert body["fail_message"] == "you should be HeadTA or above", (
+        f"권한 부족 에러 메시지 불일치: {body}"
+    )
 
 def test_student_cannot_move_lecture_page(rest_student_client):
+    # 우선순위 : P1
+    # TC ID: TC-TEACHER_COURSE-025
+    # 학생 권한으로 수업자료 순서 변경 API 호출 시 권한 오류가 반환되는지 검증
+
     # Given
     # 학생 권한으로 수업자료 순서 변경 payload
     payload = {
@@ -170,48 +225,6 @@ def test_student_cannot_move_lecture_page(rest_student_client):
     # 권한 부족 실패 여부 검증
     assert body["_result"]["status"] == "fail", (
         f"학생 권한 수업자료 순서 변경 요청이 실패하지 않음: {body}"
-    )
-
-    # 권한 부족 에러 코드 검증
-    assert body["fail_code"] == "insufficient_permission", (
-        f"권한 부족 에러 코드 불일치: {body}"
-    )
-
-    # 권한 부족 에러 메시지 검증
-    assert body["fail_message"] == "you should be HeadTA or above", (
-        f"권한 부족 에러 메시지 불일치: {body}"
-    )
-
-
-
-def test_student_cannot_clone_lecture(rest_student_client):
-    # Given
-    # 학생 권한으로 수업 복제 payload
-    payload = {
-        "lecture_id": lecture_case["week1_2lecture_id"],
-        "target_course_id": lecture_case["week1_course_id"],
-    }
-
-    # When
-    # 학생 권한으로 교육자 전용 수업 복제 API 호출
-    response = rest_student_client.request(
-        "POST",
-        f"/org/{common_data.org_student}/lecture/clone/",
-        data=payload,
-    )
-
-    body = response.json()
-
-    # Then
-    # HTTP 응답 여부 검증
-    assert response.status_code == 200, (
-        f"학생 권한 수업 복제 HTTP 응답 실패: "
-        f"status_code={response.status_code}, body={body}"
-    )
-
-    # 권한 부족 실패 여부 검증
-    assert body["_result"]["status"] == "fail", (
-        f"학생 권한 수업 복제 요청이 실패하지 않음: {body}"
     )
 
     # 권한 부족 에러 코드 검증
