@@ -1,207 +1,294 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<!--
-============================================================================
-JMeter Spike Traffic Test Scenario Draft
-============================================================================
-
-목적:
-- 순간적인 트래픽 급증 상황에서 시스템의 응답시간(avg/P95),
-  오류율(error_rate), 처리량(TPS) 변화를 확인하기 위한 Spike Test 초안
-
-주의:
-- 현재는 실행 전 구성 단계
-- 실제 부하 테스트는 수행하지 않음
-- 안전한 smoke test(10 users) 기준 설정 상태
-
-============================================================================
--->
-
 <jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
   <hashTree>
-
-    <!-- ============================================================= -->
-    <!-- Test Plan                                                     -->
-    <!-- ============================================================= -->
-    <!--
-    역할:
-    - 전체 JMeter 테스트 시나리오 최상위 영역
-    - Thread Group / HTTP Request / Listener 등을 포함
-    -->
-
-    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Test Plan">
-      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
-        <collectionProp name="Arguments.arguments"/>
-      </elementProp>
-    </TestPlan>
-
-    <hashTree>
-
-      <!-- ============================================================= -->
-      <!-- Thread Group                                                  -->
-      <!-- ============================================================= -->
-      <!--
-      역할:
-      - 가상 사용자(Thread) 수 설정
-      - Ramp-up 시간 설정
-      - Loop 반복 횟수 설정
-
-      현재 설정:
-      - Threads: 100
-      - Ramp-up: 10초
-      - Loop Count: 1
-
-      목적:
-      - 실제 Spike Test 전 smoke test용 안전 설정
-      -->
-
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Thread Group">
-
-        <!-- 가상 사용자 수 -->
-        <intProp name="ThreadGroup.num_threads">100</intProp>
-
-        <!-- Ramp-up 시간(초) -->
-        <intProp name="ThreadGroup.ramp_time">10</intProp>
-
-        <!-- 동일 사용자 유지 여부 -->
-        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
-
-        <!-- 요청 실패 시 continue -->
-        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
-
-        <!-- Loop Controller -->
-        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
-
-          <!-- Loop 반복 횟수 -->
-          <stringProp name="LoopController.loops">1</stringProp>
-
-          <!-- 무한 반복 여부 -->
-          <boolProp name="LoopController.continue_forever">false</boolProp>
-
-        </elementProp>
-
-      </ThreadGroup>
-
-      <hashTree>
-
-        <!-- ============================================================= -->
-        <!-- HTTP Request                                                  -->
-        <!-- ============================================================= -->
-        <!--
-        역할:
-        - 실제 API 요청 정의
-
-        현재 설정:
-        - HTTPS 기반 GET 요청
-        - /account/me endpoint 사용
-
-        주의:
-        - 실제 실행 전 endpoint/domain 재검증 필요
-        -->
-
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="HTTP Request">
-
-          <!-- API 서버 도메인 -->
-          <stringProp name="HTTPSampler.domain">qaproject.elice.io</stringProp>
-
-          <!-- 프로토콜 -->
-          <stringProp name="HTTPSampler.protocol">https</stringProp>
-
-          <!-- API Path -->
-          <stringProp name="HTTPSampler.path">/account/me</stringProp>
-
-          <!-- Redirect 허용 -->
-          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
-
-          <!-- HTTP Method -->
-          <stringProp name="HTTPSampler.method">GET</stringProp>
-
-          <!-- Keep Alive 사용 -->
-          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
-
-          <!-- Raw Body 사용 여부 -->
-          <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
-
-          <!-- 요청 파라미터 영역 -->
-          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
-            <collectionProp name="Arguments.arguments"/>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Test Plan - Spike Draft API Spec Referenced">
+      <stringProp name="TestPlan.comments">기존 부하테스트 흐름과 LXP API 명세서를 참고한 Spike Traffic 초안. 실제 실행하지 않음.</stringProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables - Placeholders Only">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="org" elementType="Argument">
+            <stringProp name="Argument.name">org</stringProp>
+            <stringProp name="Argument.value">qatrack</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
           </elementProp>
-
-        </HTTPSamplerProxy>
-
-        <hashTree>
-
-          <!-- ============================================================= -->
-          <!-- HTTP Header Manager                                           -->
-          <!-- ============================================================= -->
-          <!--
-          역할:
-          - 인증 및 요청 헤더 설정
-
-          포함 헤더:
-          - Content-Type
-          - Accept
-          - Authorization
-
-          실제 실행 전:
-          - Bearer Token 만료 여부 확인 필요
-          - 추가 인증 헤더 필요 여부 확인 필요
-          -->
-
-          <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager">
-
-            <collectionProp name="HeaderManager.headers">
-
-              <!-- Content-Type -->
-              <elementProp name="" elementType="Header">
-                <stringProp name="Header.name">Content-Type</stringProp>
-                <stringProp name="Header.value">application/json</stringProp>
+          <elementProp name="access_token" elementType="Argument">
+            <stringProp name="Argument.name">access_token</stringProp>
+            <stringProp name="Argument.value">ACCESS_TOKEN_PLACEHOLDER_DO_NOT_COMMIT_REAL_TOKEN</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="login_id" elementType="Argument">
+            <stringProp name="Argument.name">login_id</stringProp>
+            <stringProp name="Argument.value">LOGIN_ID_PLACEHOLDER</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="password" elementType="Argument">
+            <stringProp name="Argument.name">password</stringProp>
+            <stringProp name="Argument.value">PASSWORD_PLACEHOLDER</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="course_id" elementType="Argument">
+            <stringProp name="Argument.name">course_id</stringProp>
+            <stringProp name="Argument.value">COURSE_ID_PLACEHOLDER</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="lecture_id" elementType="Argument">
+            <stringProp name="Argument.name">lecture_id</stringProp>
+            <stringProp name="Argument.value">LECTURE_ID_PLACEHOLDER</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="user_id" elementType="Argument">
+            <stringProp name="Argument.name">user_id</stringProp>
+            <stringProp name="Argument.value">USER_ID_PLACEHOLDER</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="lecture_test_id" elementType="Argument">
+            <stringProp name="Argument.name">lecture_test_id</stringProp>
+            <stringProp name="Argument.value">LECTURE_TEST_ID_PLACEHOLDER</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+          <elementProp name="test_answer_payload" elementType="Argument">
+            <stringProp name="Argument.name">test_answer_payload</stringProp>
+            <stringProp name="Argument.value">TEST_ANSWER_PAYLOAD_PLACEHOLDER</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+          </elementProp>
+        </collectionProp>
+      </elementProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+    </TestPlan>
+    <hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Thread Group - User Flow Spike Draft">
+        <stringProp name="TestPlan.comments">현재는 실행 X 초안. 100 users / ramp-up 10초 / loop 1회. 실제 계획은 100 → 300 → 500 → 1000 users 단계적 증가 전략.</stringProp>
+        <intProp name="ThreadGroup.num_threads">100</intProp>
+        <intProp name="ThreadGroup.ramp_time">10</intProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
+          <stringProp name="LoopController.loops">1</stringProp>
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+        </elementProp>
+      </ThreadGroup>
+      <hashTree>
+        <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager - Common Placeholder">
+          <collectionProp name="HeaderManager.headers">
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">Content-Type</stringProp>
+              <stringProp name="Header.value">application/json</stringProp>
+            </elementProp>
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">Accept</stringProp>
+              <stringProp name="Header.value">application/json</stringProp>
+            </elementProp>
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">x-elice-org-name-short</stringProp>
+              <stringProp name="Header.value">${org}</stringProp>
+            </elementProp>
+            <elementProp name="" elementType="Header">
+              <stringProp name="Header.name">Authorization</stringProp>
+              <stringProp name="Header.value">Bearer ${access_token}</stringProp>
+            </elementProp>
+          </collectionProp>
+          <stringProp name="TestPlan.comments">공통 헤더. 실제 토큰은 입력하지 않고 Bearer ${access_token} placeholder만 사용.</stringProp>
+        </HeaderManager>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Auth - Login">
+          <stringProp name="TestPlan.comments">기존 부하테스트 Auth 단계. 실제 계정/비밀번호는 placeholder이며 실행 금지.</stringProp>
+          <stringProp name="HTTPSampler.domain">api-account.elice.io</stringProp>
+          <stringProp name="HTTPSampler.protocol">https</stringProp>
+          <stringProp name="HTTPSampler.path">/login/pw</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="login_id" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">${login_id}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">login_id</stringProp>
               </elementProp>
-
-              <!-- Accept -->
-              <elementProp name="" elementType="Header">
-                <stringProp name="Header.name">Accept</stringProp>
-                <stringProp name="Header.value">application/json</stringProp>
+              <elementProp name="password" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">${password}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">password</stringProp>
               </elementProp>
-
-              <!-- Authorization -->
-              <!-- Bearer Token 기반 인증 -->
-              <!-- Bearer Token: 개인별 토큰 추가 (실제 구동 환경이 아니므로 값 x) -->
-              <elementProp name="" elementType="Header">
-                <stringProp name="Header.name">Authorization</stringProp>
-                <stringProp name="Header.value">Bearer [Token]</stringProp>
-              </elementProp>
-
             </collectionProp>
-
-          </HeaderManager>
-
-          <hashTree/>
-
-        </hashTree>
-
-        <!-- ============================================================= -->
-        <!-- View Results Tree                                             -->
-        <!-- ============================================================= -->
-        <!--
-        역할:
-        - 요청/응답 상세 확인
-        - Response Code 확인
-        - Response Body 확인
-        - 인증 오류 확인
-
-        주의:
-        - 실제 대규모 부하 환경에서는 메모리 사용량 증가 가능
-        -->
-
+          </elementProp>
+        </HTTPSamplerProxy>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="API 1 - 과목 정보">
+          <stringProp name="TestPlan.comments">기존 로그 기준 과목/강의 페이지 정보 조회.</stringProp>
+          <stringProp name="HTTPSampler.domain">api-course.elice.io</stringProp>
+          <stringProp name="HTTPSampler.protocol">https</stringProp>
+          <stringProp name="HTTPSampler.path">/lecture_page</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <stringProp name="HTTPSampler.method">GET</stringProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="filter_lecture_id" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">${lecture_id}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">filter_lecture_id</stringProp>
+              </elementProp>
+              <elementProp name="filter_locator_type" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">0</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">filter_locator_type</stringProp>
+              </elementProp>
+              <elementProp name="skip" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">0</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">skip</stringProp>
+              </elementProp>
+              <elementProp name="count" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">1</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">count</stringProp>
+              </elementProp>
+              <elementProp name="elice_course_id" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">${course_id}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">elice_course_id</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+        </HTTPSamplerProxy>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="API 2 - 시험 입장">
+          <stringProp name="TestPlan.comments">기존 로그 기준 시험 입장 단계. </stringProp>
+          <stringProp name="HTTPSampler.domain">api-rest.elice.io</stringProp>
+          <stringProp name="HTTPSampler.protocol">https</stringProp>
+          <stringProp name="HTTPSampler.path">/org/${org}/user/lecture/test/enter/</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="lecture_id" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">${lecture_id}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">lecture_id</stringProp>
+              </elementProp>
+              <elementProp name="lecture_test_id" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">${lecture_test_id}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">lecture_test_id</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+        </HTTPSamplerProxy>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="API 3 - 시험 시작">
+          <stringProp name="TestPlan.comments">기존 로그 기준 시험 시작 단계. 실행 전 실제 검증 페이지 Network의 body/parameter 확인 필요.</stringProp>
+          <stringProp name="HTTPSampler.domain">api-rest.elice.io</stringProp>
+          <stringProp name="HTTPSampler.protocol">https</stringProp>
+          <stringProp name="HTTPSampler.path">/org/${org}/user/lecture/test/start/</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="lecture_id" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">${lecture_id}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">lecture_id</stringProp>
+              </elementProp>
+              <elementProp name="lecture_test_id" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">${lecture_test_id}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">lecture_test_id</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+        </HTTPSamplerProxy>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="API 4 - 시험 제출">
+          <stringProp name="TestPlan.comments">기존 로그 기준 시험 제출 단계. 제출 payload는 실제 시험 문항 구조에 따라 달라질 수 있어 placeholder 처리.</stringProp>
+          <stringProp name="HTTPSampler.domain">api-rest.elice.io</stringProp>
+          <stringProp name="HTTPSampler.protocol">https</stringProp>
+          <stringProp name="HTTPSampler.path">/org/${org}/user/lecture/test/stop/</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="lecture_id" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">${lecture_id}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">lecture_id</stringProp>
+              </elementProp>
+              <elementProp name="lecture_test_id" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">${lecture_test_id}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">lecture_test_id</stringProp>
+              </elementProp>
+              <elementProp name="answer" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">${test_answer_payload}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">answer</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+        </HTTPSamplerProxy>
+        <hashTree/>
+        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="API 5 - 재응시">
+          <stringProp name="TestPlan.comments">명세서 기준 재응시/초기화 endpoint. 필수 파라미터 lecture_id만 초안에 반영.</stringProp>
+          <stringProp name="HTTPSampler.domain">api-rest.elice.io</stringProp>
+          <stringProp name="HTTPSampler.protocol">https</stringProp>
+          <stringProp name="HTTPSampler.path">/org/${org}/lecture/test/reset/by_self/</stringProp>
+          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+          <stringProp name="HTTPSampler.method">POST</stringProp>
+          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+          <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
+          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+            <collectionProp name="Arguments.arguments">
+              <elementProp name="lecture_id" elementType="HTTPArgument">
+                <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                <stringProp name="Argument.value">${lecture_id}</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+                <boolProp name="HTTPArgument.use_equals">true</boolProp>
+                <stringProp name="Argument.name">lecture_id</stringProp>
+              </elementProp>
+            </collectionProp>
+          </elementProp>
+        </HTTPSamplerProxy>
+        <hashTree/>
         <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree">
-
           <boolProp name="ResultCollector.error_logging">false</boolProp>
-
           <objProp>
             <name>saveConfig</name>
-
-            <!-- 결과 저장 설정 -->
             <value class="SampleSaveConfiguration">
               <time>true</time>
               <latency>true</latency>
@@ -231,37 +318,15 @@ JMeter Spike Traffic Test Scenario Draft
               <idleTime>true</idleTime>
               <connectTime>true</connectTime>
             </value>
-
           </objProp>
-
+          <stringProp name="TestPlan.comments">응답 상세 확인용 Listener. 실제 대규모 실행 시 비활성화 권장.</stringProp>
           <stringProp name="filename"></stringProp>
-
         </ResultCollector>
-
         <hashTree/>
-
-        <!-- ============================================================= -->
-        <!-- Summary Report                                                -->
-        <!-- ============================================================= -->
-        <!--
-        역할:
-        - 성능 지표 요약 확인
-
-        주요 지표:
-        - Average Response Time
-        - P95
-        - TPS
-        - Error Rate
-        -->
-
         <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report">
-
           <boolProp name="ResultCollector.error_logging">false</boolProp>
-
           <objProp>
             <name>saveConfig</name>
-
-            <!-- 결과 저장 설정 -->
             <value class="SampleSaveConfiguration">
               <time>true</time>
               <latency>true</latency>
@@ -291,35 +356,15 @@ JMeter Spike Traffic Test Scenario Draft
               <idleTime>true</idleTime>
               <connectTime>true</connectTime>
             </value>
-
           </objProp>
-
+          <stringProp name="TestPlan.comments">avg, throughput, error 등 요약 지표 확인용 Listener.</stringProp>
           <stringProp name="filename"></stringProp>
-
         </ResultCollector>
-
         <hashTree/>
-
-        <!-- ============================================================= -->
-        <!-- Simple Data Writer                                            -->
-        <!-- ============================================================= -->
-        <!--
-        역할:
-        - 실행 결과(.jtl) 저장
-        - 후속 metric 분석용 로그 저장
-
-        결과 파일:
-        - spike_test_result.jtl
-        -->
-
         <ResultCollector guiclass="SimpleDataWriter" testclass="ResultCollector" testname="Simple Data Writer">
-
           <boolProp name="ResultCollector.error_logging">false</boolProp>
-
           <objProp>
             <name>saveConfig</name>
-
-            <!-- 결과 저장 설정 -->
             <value class="SampleSaveConfiguration">
               <time>true</time>
               <latency>true</latency>
@@ -349,20 +394,12 @@ JMeter Spike Traffic Test Scenario Draft
               <idleTime>true</idleTime>
               <connectTime>true</connectTime>
             </value>
-
           </objProp>
-
-          <!-- .jtl 결과 저장 경로 -->
-          <stringProp name="filename">C:\Users\고현우\OneDrive\Desktop\QA Final Project\elice_lxp_test_team3\part2_load_analysis\jmeter_draft\spike_test_result.jtl</stringProp>
-
+          <stringProp name="TestPlan.comments">실행 시 .jtl 결과 저장용. 현재는 경로만 정의.</stringProp>
+          <stringProp name="filename">part2_load_analysis/jmeter_draft/spike_test_api_spec_user_flow_result.jtl</stringProp>
         </ResultCollector>
-
         <hashTree/>
-
       </hashTree>
-
     </hashTree>
-
   </hashTree>
-
 </jmeterTestPlan>
