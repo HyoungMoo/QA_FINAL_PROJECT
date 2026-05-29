@@ -24,6 +24,17 @@ METRICS_PATH = (
     / "loadtest_analysis_ready_metrics_by_api.csv"
 )
 
+# 활성 사용자(active thread) 구간별 상세 분석에 사용하는 요청 단위 데이터
+# (API별 집계 데이터가 아닌 raw request 기반 데이터)
+REQUESTS_PATH = (
+    BASE_DIR
+    / "data"
+    / "0_preparation_data"
+    / "03_analysis_ready_data"
+    / "loadtest_analysis_ready_requests.csv"
+)
+
+
 # 분석 결과 저장 폴더
 OUTPUT_DIR = (
     BASE_DIR
@@ -203,7 +214,100 @@ def create_team_load_summary(df: pd.DataFrame) -> None:
 
 
 # ---------------------------------------------------------------------------
-# 7. 주요 관찰 대상 API 추출
+# 7. 활성 사용자 구간별 성능 요약
+# ---------------------------------------------------------------------------
+
+def create_active_thread_bucket_summary(df: pd.DataFrame) -> None:
+    """
+    active_threads_group을 10명 단위 구간으로 묶어 성능 지표를 요약한다.
+
+    목적:
+    - 같은 부하 단계 안에서 활성 사용자 수 증가에 따른 p95 변화 확인
+    - 특정 사용자 구간에서 오류율이 증가하는지 확인
+    - 병목이 시작되는 active thread 구간 탐색
+    """
+
+    bucket_df = df.copy()
+
+    bucket_df = bucket_df.dropna(
+        subset=[
+            "active_threads_group",
+            "response_time_ms",
+            "success",
+        ]
+    )
+
+    bucket_df["active_threads_group"] = pd.to_numeric(
+        bucket_df["active_threads_group"],
+        errors="coerce",
+    )
+
+    bucket_df["response_time_ms"] = pd.to_numeric(
+        bucket_df["response_time_ms"],
+        errors="coerce",
+    )
+
+    bucket_df = bucket_df.dropna(
+        subset=[
+            "active_threads_group",
+            "response_time_ms",
+        ]
+    )
+
+    bucket_df["active_thread_bucket"] = (
+        ((bucket_df["active_threads_group"] - 1) // 10) * 10 + 1
+    ).astype(int).astype(str) + "~" + (
+        ((bucket_df["active_threads_group"] - 1) // 10) * 10 + 10
+    ).astype(int).astype(str) + "명"
+
+    bucket_df["is_error"] = bucket_df["success"].map(
+        lambda value: not value if pd.notna(value) else pd.NA
+    )
+
+    bucket_summary = (
+        bucket_df.groupby(
+            [
+                "team",
+                "load_level",
+                "api_label",
+                "active_thread_bucket",
+            ],
+            as_index=False,
+        )
+        .agg(
+            sample_count=("response_time_ms", "size"),
+            avg_response_time_ms=("response_time_ms", "mean"),
+            max_response_time_ms=("response_time_ms", "max"),
+            p95_response_time_ms=(
+                "response_time_ms",
+                lambda values: values.quantile(0.95),
+            ),
+            error_count=("is_error", "sum"),
+        )
+    )
+
+    bucket_summary["error_rate"] = (
+        bucket_summary["error_count"] / bucket_summary["sample_count"]
+    )
+
+    bucket_summary = bucket_summary.sort_values(
+        [
+            "team",
+            "load_level",
+            "api_label",
+            "active_thread_bucket",
+        ]
+    ).round(3)
+
+    save_csv(
+        bucket_summary,
+        "05_active_thread_bucket_summary.csv",
+    )
+
+
+
+# ---------------------------------------------------------------------------
+# 8. 주요 관찰 대상 API 추출
 # ---------------------------------------------------------------------------
 
 def create_high_response_candidate_summary(df: pd.DataFrame) -> None:
@@ -244,12 +348,12 @@ def create_high_response_candidate_summary(df: pd.DataFrame) -> None:
 
     save_csv(
         bottleneck_candidates,
-        "05_high_response_candidates.csv",
+        "06_high_response_candidates.csv",
     )
 
 
 # ---------------------------------------------------------------------------
-# 8. 메인 실행
+# 9. 메인 실행
 # ---------------------------------------------------------------------------
 
 def main() -> None:
@@ -270,6 +374,12 @@ def main() -> None:
         encoding="utf-8-sig",
     )
 
+    # 활성 사용자 구간별(p95, 오류율, TPS) 상세 분석용 요청 데이터 로드
+    request_df = pd.read_csv(
+        REQUESTS_PATH,
+        encoding="utf-8-sig",
+    )
+
     # 분석 실행
     create_p95_top_summary(df)
 
@@ -279,13 +389,15 @@ def main() -> None:
 
     create_team_load_summary(df)
 
+    create_active_thread_bucket_summary(request_df)
+
     create_high_response_candidate_summary(df)
 
     print("[DONE] 성능 지표 요약 파일 생성 완료")
 
 
 # ---------------------------------------------------------------------------
-# 9. 프로그램 시작점
+# 10. 프로그램 시작점
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
