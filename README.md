@@ -4,14 +4,16 @@
 
 본 프로젝트는 학습자와 교육자 권한에서 핵심 API를 검증하고, 응답 구조와 권한 경계를 확인하여 서비스 품질 이슈를 재현 가능한 형태로 정리하는 것을 목표로 합니다.
 
-## 주요 범위
+## 1. 프로젝트 소개
+
+### 주요 범위
 
 - API 기능 테스트 자동화
 - 학습자/교육자 권한별 테스트 시나리오 검증(+권한 경계 테스트)
 - 부하 테스트 결과 분석
 - 발견 이슈 및 개선안 정리
 
-## 테스트 대상
+### 테스트 대상
 
 API 테스트는 아래 기능을 중심으로 진행합니다.
 
@@ -22,7 +24,7 @@ API 테스트는 아래 기능을 중심으로 진행합니다.
 
 권한 경계 테스트는 토큰 이름이 아니라 `계정 + 조직 + 클래스룸 내 역할`을 기준으로 판단합니다.
 
-## 기술 스택
+### 기술 스택
 
 | 구분 | 사용 도구 |
 |---|---|
@@ -30,15 +32,25 @@ API 테스트는 아래 기능을 중심으로 진행합니다.
 | Test Framework | pytest |
 | HTTP Client | requests |
 | Environment | python-dotenv |
+| Test Report | pytest-html, Allure |
+| Test Utility | pytest-xdist, pytest-cov, coverage |
 | Data Analysis | pandas |
 | Excel Reader | openpyxl |
 | Visualization | matplotlib, seaborn |
 | API Manual Test | Postman |
+| Load Test Scenario | JMeter |
+| CI | GitHub Actions |
+| Code Management | GitLab, GitHub |
 
-## 디렉토리 구조
+## 2. 프로젝트 구조
+
+### 디렉토리 구조
 
 ```text
 elice_lxp_test_team3/
+├── .github/
+│   └── workflows/
+│       └── api-test.yml                    # GitHub Actions API 테스트 workflow
 ├── .gitignore
 ├── README.md
 ├── requirements.txt                        # Python 의존성 목록
@@ -58,7 +70,10 @@ elice_lxp_test_team3/
 │   │   │   └── test_schedule.py            # 교육자 권한 수업 일정 API 테스트
 │   │   ├── __init__.py                     # pytest 모듈 충돌 방지를 위한 패키지 인식 파일
 │   │   ├── conftest.py                     # pytest 공통 fixture 및 API client 설정
-│   │   └── test_auth.py                    # 인증/권한 관련 테스트
+│   │   ├── test_permission_boundary.py     # 권한 경계 테스트
+│   │   ├── test_permission_boundary_1.py   # 권한 경계 테스트
+│   │   ├── test_permission_boundary_2.py   # 권한 경계 테스트
+│   │   └── test_permission_boundary_3.py   # 권한 경계 테스트
 │   ├── utils/
 │   │   ├── test_data/
 │   │   │   ├── common_data.py              # 공통 테스트 데이터
@@ -90,14 +105,29 @@ elice_lxp_test_team3/
     │   │   └── 03_analysis_ready_data/     # 실제 분석에 사용할 최종 전처리 데이터
     │   └── 1_analysis_result_data/         # 분석 단계별 결과 데이터
     ├── jmeter_draft/
-    │   └── load_test_scenario_v2.jmx       # JMeter 테스트 플랜 초안
+    │   ├── load_test_scenario_v2.jmx       # JMeter 테스트 플랜 초안
+    │   └── spike_test_scenario_1000_v1.jmx # 1,000명 Spike 테스트 시나리오 초안
     └── reports/
         ├── 1_metric_analysis/              # 지표 분석 리포트
         ├── 2_result_analysis/              # 병목/임계점 분석 리포트
         └── 3_final/                        # 최종 보고 산출물
 ```
 
-## 실행 준비
+### Git 제외 대상
+
+다음 파일과 디렉토리는 Git에 업로드하지 않습니다.
+
+- `.env`
+- Python cache
+- pytest cache
+- 로컬 가상환경
+- 테스트 실행 결과 리포트
+- 제공받은 부하 테스트 원본 로그
+- Part 2 전처리 과정에서 생성되는 CSV 결과
+
+## 3. API 테스트 자동화
+
+### 실행 준비
 
 프로젝트 루트에서 의존성을 설치합니다.
 
@@ -114,7 +144,7 @@ token=
 
 `.env`에는 인증 토큰 등 민감 정보가 포함되므로 Git에 업로드하지 않습니다.
 
-## 테스트 실행
+### 테스트 실행
 
 전체 테스트 실행:
 
@@ -135,21 +165,32 @@ pytest tests/test_student
 pytest tests/test_teacher
 ```
 
+권한 경계 테스트 실행:
+
+```bash
+pytest tests/test_permission_boundary*.py
+```
+
 출력 로그를 함께 확인:
 
 ```bash
 pytest -s
 ```
 
-HTML 리포트 생성:
-
-```bash
-pytest --html=reports/report.html --self-contained-html
-```
-
 ### 테스트 마커
 
-- `smoke`: 빠른 핵심 검증용 마커, 현재 테스트 적용 범위는 확장 예정
+등록된 pytest marker는 `part1_api_automation/pytest.ini`에서 관리합니다.
+
+| Marker | 기준 |
+|---|---|
+| `p0` | 높은 우선순위, 핵심 기능, 기본 접근 가능 여부, 주요 사용자 흐름 |
+| `p1` | 보통 우선순위, 주요 기능의 상세 응답 검증 |
+| `p2` | 낮은 우선순위, 보조 기능, 부가 정보 |
+| `smoke` | 빠른 핵심 동작 확인 |
+| `student` | 학습자 권한 API 테스트 |
+| `teacher` | 교육자 권한 API 테스트 |
+| `auth` | 인증/권한 경계 테스트 |
+| `safety` | 운영 서비스 보호 정책 관련 테스트 |
 
 우선순위별 테스트 실행:
 
@@ -159,22 +200,21 @@ pytest -m p1
 pytest -m p2
 ```
 
-## 테스트 우선순위
+권한/범위별 테스트 실행:
 
-| Marker | 기준 |
-|---|---|
-| `p0` | 높은 우선순위, 핵심 기능, 기본 접근 가능 여부, 주요 사용자 흐름 |
-| `p1` | 보통 우선순위, 주요 기능의 상세 응답 검증 |
-| `p2` | 낮은 우선순위, 보조 기능, 부가 정보 |
+```bash
+pytest -m student
+pytest -m teacher
+pytest -m auth
+```
 
-## 테스트 작성 기준
+### 테스트 작성 기준
 
 테스트 코드는 `Given - When - Then` 흐름을 기준으로 작성합니다.
 
 ```python
 @pytest.mark.p0
 def test_example():
-    # Given-When-Then
     # Given
 
     # When
@@ -193,7 +233,7 @@ def test_example():
 
 일부 API는 HTTP status code가 `200`이어도 body 내부에서 실패 상태가 내려올 수 있으므로, 단순히 `status_code == 200`만으로 성공을 판단하지 않습니다.
 
-## API 요청 정책
+### API 요청 정책
 
 운영 서비스에 영향을 줄 수 있으므로 API 호출은 아래 기준을 따릅니다.
 
@@ -203,7 +243,48 @@ def test_example():
 - `POST`, `PATCH`, `DELETE` API는 데이터 변경 가능성을 먼저 확인
 - 500 에러, 접속 지연, 비정상 응답이 반복되면 즉시 중단하고 기록
 
-## Part 2 Raw Data Preprocessing
+## 4. 테스트 리포팅 및 CI
+
+### pytest HTML 리포트
+
+HTML 리포트 생성:
+
+```bash
+cd part1_api_automation
+pytest --html=reports/report.html --self-contained-html
+```
+
+### Allure 리포트
+
+Allure 리포트 결과 생성:
+
+```bash
+cd part1_api_automation
+pytest --alluredir=reports/allure-results
+```
+
+Allure HTML 리포트 생성 및 열기:
+
+```bash
+allure generate reports/allure-results -o reports/allure-report --clean
+allure open reports/allure-report
+```
+
+Allure CLI는 별도 설치가 필요하며 Java 실행 환경이 필요합니다. Windows에서는 `scoop install allure` 등으로 설치할 수 있습니다.
+
+### GitHub Actions
+
+GitHub Actions workflow는 `.github/workflows/api-test.yml`에서 관리합니다.
+
+- `develop` 브랜치 push 시 API 테스트 실행
+- GitHub Actions 화면에서 `workflow_dispatch`로 수동 실행 가능
+- `TOKEN`, `STUDENT_ID`는 GitHub Actions Secrets로 관리
+- pytest 실행 결과를 `reports/report.html`로 생성
+- 테스트 실패 시에도 결과 확인이 가능하도록 artifact 업로드에 `if: always()` 적용
+
+## 5. 부하 테스트 데이터 분석
+
+### Raw Data 배치
 
 Part 2 부하 테스트 분석은 로컬에 배치한 원본 JMeter 결과 파일을 입력으로 사용합니다.
 원본 로그와 생성 CSV는 Git에 업로드하지 않습니다.
@@ -218,6 +299,8 @@ part2_load_analysis/
             ├── team2_results/    # Team2 XML/CSV raw files
             └── team3_results/    # Team3 XLSX/CSV raw files
 ```
+
+### 전처리 실행
 
 프로젝트 루트에서 아래 명령어를 실행합니다.
 
@@ -242,7 +325,30 @@ part2_load_analysis/data/0_preparation_data/03_analysis_ready_data/
 └── loadtest_analysis_ready_metrics_by_api.csv  # 팀/부하/API별 성능 지표 요약 데이터
 ```
 
-## Git Workflow
+### 분석 스크립트
+
+전처리 이후 아래 순서로 지표 분석, 교차 검증, 시각화, 병목 후보, Go/No-Go 기준을 정리합니다.
+
+```bash
+python .\part2_load_analysis\analysis\1_metric_analysis\01_data_validation.py
+python .\part2_load_analysis\analysis\1_metric_analysis\02_metric_summary.py
+python .\part2_load_analysis\analysis\1_metric_analysis\04_cross_validation.py
+python .\part2_load_analysis\analysis\1_metric_analysis\05_visualization.py
+python .\part2_load_analysis\analysis\2_result_analysis\03_bottleneck_candidates.py
+python .\part2_load_analysis\analysis\2_result_analysis\06_bottleneck_threshold.py
+python .\part2_load_analysis\analysis\2_result_analysis\09_go_nogo_improvement.py
+```
+
+### JMeter 시나리오 초안
+
+`part2_load_analysis/jmeter_draft/`에는 부하 테스트 시나리오 초안이 포함되어 있습니다.
+
+- `load_test_scenario_v2.jmx`: 기본 부하 테스트 플랜 초안
+- `spike_test_scenario_1000_v1.jmx`: 1,000명 Spike Traffic 대비 테스트 시나리오 초안
+
+## 6. 협업 방식
+
+### Git Workflow
 
 기본 브랜치 전략:
 
@@ -270,7 +376,7 @@ git push -u origin feature/작업명
 
 GitLab에서 Merge Request를 생성하고, 코드 리뷰 후 `develop` 브랜치로 병합합니다.
 
-## 코드 리뷰 체크리스트
+### 코드 리뷰 체크리스트
 
 - 테스트 목적이 TC와 일치하는가?
 - API base URL, path, params, headers가 명세와 일치하는가?
@@ -278,15 +384,3 @@ GitLab에서 Merge Request를 생성하고, 코드 리뷰 후 `develop` 브랜�
 - 응답 body 검증이 충분한가?
 - 성공/실패 기준이 명확한가?
 - 민감 정보가 코드에 포함되지 않았는가?
-
-## Git 제외 대상
-
-다음 파일과 디렉토리는 Git에 업로드하지 않습니다.
-
-- `.env`
-- Python cache
-- pytest cache
-- 로컬 가상환경
-- 테스트 실행 결과 리포트
-- 제공받은 부하 테스트 원본 로그
-- Part 2 전처리 과정에서 생성되는 CSV 결과

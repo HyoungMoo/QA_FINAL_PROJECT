@@ -1,10 +1,14 @@
-"""병목 API 및 임계점 도출."""
+"""병목 API 및 임계점 도출.
+
+03 단계에서 추린 후보 API를 대상으로 부하 단계별 지표와 활성 사용자 수 구간별
+지표를 함께 확인해, 실제 병목인지 단순 관찰 대상인지 재판단한다.
+"""
 
 from __future__ import annotations
 
-import os
-from pathlib import Path
+from datetime import datetime
 from io import BytesIO
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -14,15 +18,13 @@ import pandas as pd
 # 1. 경로 설정
 # ---------------------------------------------------------------------------
 
-# 이 파일은 analysis/2_result_analysis/ 아래에 있으므로 parents[2]가
-# part2_load_analysis 폴더를 가리킨다.
 BASE_DIR = Path(__file__).resolve().parents[2]
 
 ANALYSIS_READY_DATA_DIR = BASE_DIR / "data" / "0_preparation_data" / "03_analysis_ready_data"
 RESULT_DATA_DIR = BASE_DIR / "data" / "1_analysis_result_data"
-REPORT_DIR = BASE_DIR / "reports" / "2_result_analysis" / "06_bottleneck_threshold"
 
 METRICS_PATH = ANALYSIS_READY_DATA_DIR / "loadtest_analysis_ready_metrics_by_api.csv"
+REQUESTS_PATH = ANALYSIS_READY_DATA_DIR / "loadtest_analysis_ready_requests.csv"
 CANDIDATE_PATH = (
     RESULT_DATA_DIR
     / "03_bottleneck_candidates"
@@ -30,32 +32,36 @@ CANDIDATE_PATH = (
 )
 
 OUTPUT_DIR = RESULT_DATA_DIR / "06_bottleneck_threshold"
+REPORT_DIR = BASE_DIR / "reports" / "2_result_analysis" / "06_bottleneck_threshold"
+
 THRESHOLD_OUTPUT_PATH = OUTPUT_DIR / "06_bottleneck_threshold.csv"
 SUMMARY_OUTPUT_PATH = OUTPUT_DIR / "06_bottleneck_api_summary.csv"
+ACTIVE_BUCKET_OUTPUT_PATH = OUTPUT_DIR / "06_active_thread_bucket_metrics.csv"
+ACTIVE_TREND_OUTPUT_PATH = OUTPUT_DIR / "06_active_thread_trend_check.csv"
+ACTIVE_FOCUS_OUTPUT_PATH = OUTPUT_DIR / "06_active_thread_trend_check_focus.csv"
 
 
 # ---------------------------------------------------------------------------
 # 2. 판단 기준
 # ---------------------------------------------------------------------------
 
-# 프로젝트 pass 기준. 이 값을 넘으면 명확한 위험으로 본다.
 PASS_AVG_MS = 1000
 PASS_MAX_MS = 5000
 PASS_ERROR_RATE = 0.01
 
-# 03 후보 선정에서 사용한 관찰 기준. 06에서도 "주의 신호"로 재사용한다.
 P95_CAUTION_MS = 500
 MAX_CAUTION_MS = 800
 ERROR_CAUTION_RATE = 0.001
 
-# 부하 증가에 따라 평균/p95가 이 정도 이상 상승하면 악화 추세로 본다.
 AVG_DEGRADATION_PCT = 20
 P95_DEGRADATION_PCT = 20
-
-# 100명 처리량이 10명 대비 5배 미만이면 선형 확장 관점에서 정체 가능성으로 본다.
-# 10명 -> 100명은 부하가 10배이므로, 절반 미만 성장부터 보수적으로 관찰한다.
 TPS_SCALE_MIN_RATIO = 5
 
+ACTIVE_BUCKET_SIZE = 10
+MIN_RELIABLE_BUCKET_SAMPLES = 10
+ACTIVE_P95_INCREASE_RATE = 0.20
+
+LOAD_LEVELS = [10, 30, 50, 70, 100]
 
 REQUIRED_METRIC_COLUMNS = {
     "team",
@@ -71,6 +77,16 @@ REQUIRED_METRIC_COLUMNS = {
     "throughput_per_sec",
 }
 
+REQUIRED_REQUEST_COLUMNS = {
+    "team",
+    "load_level",
+    "api_label",
+    "response_time_ms",
+    "is_error",
+    "elapsed_from_start_sec",
+    "active_threads_group",
+}
+
 REQUIRED_CANDIDATE_COLUMNS = {
     "team",
     "load_level",
@@ -81,7 +97,7 @@ REQUIRED_CANDIDATE_COLUMNS = {
 
 
 # ---------------------------------------------------------------------------
-# 3. 공통 유틸
+# 3. 공통 유틸리티
 # ---------------------------------------------------------------------------
 
 def read_csv(path: Path) -> pd.DataFrame:
@@ -94,6 +110,16 @@ def validate_columns(df: pd.DataFrame, required_columns: set[str], source_name: 
     missing_columns = sorted(required_columns - set(df.columns))
     if missing_columns:
         raise ValueError(f"{source_name} missing columns: {missing_columns}")
+
+
+def normalize_bool_series(series: pd.Series) -> pd.Series:
+    """문자열 False가 True로 해석되는 문제를 막기 위해 명시적으로 bool 변환한다."""
+
+    if series.dtype == bool:
+        return series
+
+    normalized = series.astype(str).str.strip().str.lower()
+    return normalized.isin({"true", "1", "yes", "y", "error", "fail", "failed"})
 
 
 def normalize_metric_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -114,43 +140,75 @@ def normalize_metric_columns(df: pd.DataFrame) -> pd.DataFrame:
     return normalized
 
 
+def normalize_request_columns(df: pd.DataFrame) -> pd.DataFrame:
+    normalized = df.copy()
+    numeric_columns = [
+        "load_level",
+        "response_time_ms",
+        "elapsed_from_start_sec",
+        "active_threads_group",
+    ]
+    for column in numeric_columns:
+        normalized[column] = pd.to_numeric(normalized[column], errors="coerce")
+    normalized["is_error"] = normalize_bool_series(normalized["is_error"])
+    return normalized
+
+
 def reset_output_dirs() -> None:
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    # 이 환경에서는 새 파일 생성과 덮어쓰기는 가능하지만 삭제 권한이 막히는 경우가 있다.
-    # 06 산출물은 고정 파일명을 사용하므로 실행할 때마다 같은 파일을 덮어써 오래된 값이 남지 않게 한다.
+    """06 산출물 폴더 안의 기존 파일만 정리한다."""
+
+    for directory in [OUTPUT_DIR, REPORT_DIR]:
+        directory.mkdir(parents=True, exist_ok=True)
+        for path in directory.iterdir():
+            if path.is_file():
+                try:
+                    path.unlink()
+                except PermissionError:
+                    print(f"[WARN] Output file is locked, skip delete: {path}")
 
 
 def setup_korean_font() -> None:
-    # Windows 환경에서는 Malgun Gothic을 우선 사용한다.
     plt.rcParams["font.family"] = "Malgun Gothic"
     plt.rcParams["axes.unicode_minus"] = False
 
 
-def write_text_safely(path: Path, text: str) -> None:
-    # 일부 Windows ACL 환경에서는 기존 파일을 w 모드로 다시 여는 것은 막히지만,
-    # r+ 모드로 내용을 교체하는 것은 가능하다. 반복 실행을 위해 두 경우를 나눈다.
-    if path.exists():
-        with path.open("r+", encoding="utf-8-sig", newline="") as file:
-            file.seek(0)
-            file.write(text)
-            file.truncate()
-    else:
-        path.write_text(text, encoding="utf-8-sig")
+def save_csv(df: pd.DataFrame, path: Path) -> Path:
+    """CSV를 저장한다. 열려 있는 파일이면 timestamp가 붙은 대체 파일로 저장한다."""
+
+    try:
+        df.to_csv(path, index=False, encoding="utf-8-sig")
+        print(f"[SAVE] {path}")
+        return path
+    except PermissionError:
+        timestamp = datetime.now().strftime("%y%m%d_%H%M%S")
+        fallback_path = path.with_name(f"{path.stem}_{timestamp}{path.suffix}")
+        df.to_csv(fallback_path, index=False, encoding="utf-8-sig")
+        print(f"[WARN] Output file is locked: {path}")
+        print(f"[SAVE] {fallback_path}")
+        return fallback_path
 
 
-def write_bytes_safely(path: Path, content: bytes) -> None:
-    if path.exists():
-        with path.open("r+b") as file:
-            file.seek(0)
-            file.write(content)
-            file.truncate()
-    else:
-        path.write_bytes(content)
+def save_png(fig: plt.Figure, path: Path) -> Path:
+    """PNG를 저장한다. 열려 있는 파일이면 timestamp가 붙은 대체 파일로 저장한다."""
+
+    image_buffer = BytesIO()
+    fig.savefig(image_buffer, format="png", dpi=150)
+
+    try:
+        path.write_bytes(image_buffer.getvalue())
+        print(f"[SAVE] {path}")
+        return path
+    except PermissionError:
+        timestamp = datetime.now().strftime("%y%m%d_%H%M%S")
+        fallback_path = path.with_name(f"{path.stem}_{timestamp}{path.suffix}")
+        fallback_path.write_bytes(image_buffer.getvalue())
+        print(f"[WARN] Output file is locked: {path}")
+        print(f"[SAVE] {fallback_path}")
+        return fallback_path
 
 
 # ---------------------------------------------------------------------------
-# 4. 후보 API 추세 분석
+# 4. 03 후보 API 재검토
 # ---------------------------------------------------------------------------
 
 def get_candidate_api_labels(candidates: pd.DataFrame) -> list[str]:
@@ -170,7 +228,7 @@ def first_load_over_threshold(sub: pd.DataFrame) -> int | None:
     return int(caution_rows.sort_values("load_level").iloc[0]["load_level"])
 
 
-def classify_row(row: pd.Series) -> str:
+def classify_threshold_row(row: pd.Series) -> str:
     if (
         row["avg_response_time_ms"] >= PASS_AVG_MS
         or row["max_response_time_ms"] >= PASS_MAX_MS
@@ -186,7 +244,7 @@ def classify_row(row: pd.Series) -> str:
     return "안정"
 
 
-def build_row_reason(row: pd.Series) -> str:
+def build_threshold_reason(row: pd.Series) -> str:
     reasons: list[str] = []
     if row["avg_response_time_ms"] >= PASS_AVG_MS:
         reasons.append(f"평균 응답시간 {row['avg_response_time_ms']:.1f}ms")
@@ -201,6 +259,32 @@ def build_row_reason(row: pd.Series) -> str:
     return " / ".join(reasons)
 
 
+def build_threshold_rows(metrics: pd.DataFrame, candidate_apis: list[str]) -> pd.DataFrame:
+    threshold_df = metrics[metrics["api_label"].isin(candidate_apis)].copy()
+    threshold_df["risk_level"] = threshold_df.apply(classify_threshold_row, axis=1)
+    threshold_df["risk_reason"] = threshold_df.apply(build_threshold_reason, axis=1)
+
+    output_columns = [
+        "team",
+        "load_level",
+        "api_label",
+        "sample_count",
+        "avg_response_time_ms",
+        "p90_response_time_ms",
+        "p95_response_time_ms",
+        "max_response_time_ms",
+        "std_response_time_ms",
+        "error_rate",
+        "throughput_per_sec",
+        "risk_level",
+        "risk_reason",
+    ]
+    return threshold_df[output_columns].sort_values(
+        ["api_label", "team", "load_level"],
+        ignore_index=True,
+    )
+
+
 def analyze_candidate_trends(metrics: pd.DataFrame, candidate_apis: list[str]) -> pd.DataFrame:
     rows = []
     target_metrics = metrics[metrics["api_label"].isin(candidate_apis)].copy()
@@ -212,19 +296,11 @@ def analyze_candidate_trends(metrics: pd.DataFrame, candidate_apis: list[str]) -
 
         first = sub.iloc[0]
         last = sub.iloc[-1]
-        avg_delta_pct = (
-            (last["avg_response_time_ms"] - first["avg_response_time_ms"])
-            / first["avg_response_time_ms"]
-            * 100
-            if first["avg_response_time_ms"]
-            else 0
+        avg_delta_pct = safe_delta_pct(
+            last["avg_response_time_ms"], first["avg_response_time_ms"]
         )
-        p95_delta_pct = (
-            (last["p95_response_time_ms"] - first["p95_response_time_ms"])
-            / first["p95_response_time_ms"]
-            * 100
-            if first["p95_response_time_ms"]
-            else 0
+        p95_delta_pct = safe_delta_pct(
+            last["p95_response_time_ms"], first["p95_response_time_ms"]
         )
         tps_ratio = (
             last["throughput_per_sec"] / first["throughput_per_sec"]
@@ -250,16 +326,12 @@ def analyze_candidate_trends(metrics: pd.DataFrame, candidate_apis: list[str]) -
 
         if has_degradation and (has_error_signal or has_tps_stall or has_p95_signal):
             final_level = "병목 가능성 높음"
-        elif has_p95_signal or has_max_signal or has_error_signal:
-            final_level = "관찰 대상"
-        else:
-            final_level = "명확한 병목 아님"
-
-        if has_degradation:
             reason = "부하 증가에 따른 응답시간 악화 신호"
         elif has_p95_signal or has_max_signal or has_error_signal:
+            final_level = "관찰 대상"
             reason = "기본 응답시간 또는 순간 위험 신호는 있으나 부하 증가형 악화는 약함"
         else:
+            final_level = "명확한 병목 아님"
             reason = "주요 위험 신호 없음"
 
         rows.append(
@@ -291,34 +363,240 @@ def analyze_candidate_trends(metrics: pd.DataFrame, candidate_apis: list[str]) -
     )
 
 
-def build_threshold_rows(metrics: pd.DataFrame, candidate_apis: list[str]) -> pd.DataFrame:
-    threshold_df = metrics[metrics["api_label"].isin(candidate_apis)].copy()
-    threshold_df["risk_level"] = threshold_df.apply(classify_row, axis=1)
-    threshold_df["risk_reason"] = threshold_df.apply(build_row_reason, axis=1)
+def safe_delta_pct(end_value: float, start_value: float) -> float:
+    if pd.isna(start_value) or start_value == 0:
+        return 0.0
+    return (end_value - start_value) / start_value * 100
 
-    output_columns = [
-        "team",
-        "load_level",
-        "api_label",
-        "sample_count",
-        "avg_response_time_ms",
-        "p90_response_time_ms",
-        "p95_response_time_ms",
-        "max_response_time_ms",
-        "std_response_time_ms",
-        "error_rate",
-        "throughput_per_sec",
-        "risk_level",
-        "risk_reason",
-    ]
-    return threshold_df[output_columns].sort_values(
-        ["api_label", "team", "load_level"],
+
+# ---------------------------------------------------------------------------
+# 5. 활성 사용자 수 구간별 추가 검증
+# ---------------------------------------------------------------------------
+
+def build_active_thread_bucket_label(value: float | int | None) -> str | None:
+    if pd.isna(value) or value <= 0:
+        return None
+
+    bucket_end = int(((int(value) - 1) // ACTIVE_BUCKET_SIZE + 1) * ACTIVE_BUCKET_SIZE)
+    bucket_start = bucket_end - ACTIVE_BUCKET_SIZE + 1
+    return f"{bucket_start}~{bucket_end}"
+
+
+def build_active_thread_bucket_sort_key(label: str | None) -> int:
+    if not label or "~" not in str(label):
+        return 9999
+    return int(str(label).split("~")[0])
+
+
+def build_active_thread_bucket_metrics(
+    requests: pd.DataFrame,
+    candidate_apis: list[str],
+) -> pd.DataFrame:
+    """후보 API에 대해 active_threads_group 10명 단위 구간별 지표를 만든다."""
+
+    target_requests = requests[requests["api_label"].isin(candidate_apis)].copy()
+    target_requests = target_requests.dropna(
+        subset=["team", "load_level", "api_label", "response_time_ms", "active_threads_group"]
+    )
+    target_requests["active_thread_bucket"] = target_requests["active_threads_group"].apply(
+        build_active_thread_bucket_label
+    )
+    target_requests = target_requests.dropna(subset=["active_thread_bucket"])
+
+    grouped = (
+        target_requests.groupby(
+            ["team", "load_level", "api_label", "active_thread_bucket"],
+            dropna=False,
+        )
+        .agg(
+            sample_count=("response_time_ms", "size"),
+            avg_response_time_ms=("response_time_ms", "mean"),
+            p90_response_time_ms=("response_time_ms", lambda x: x.quantile(0.90)),
+            p95_response_time_ms=("response_time_ms", lambda x: x.quantile(0.95)),
+            max_response_time_ms=("response_time_ms", "max"),
+            error_count=("is_error", "sum"),
+            duration_sec=("elapsed_from_start_sec", lambda x: max(x.max() - x.min(), 0)),
+        )
+        .reset_index()
+    )
+
+    grouped["error_rate"] = grouped["error_count"] / grouped["sample_count"]
+    grouped["throughput_per_sec"] = grouped.apply(
+        lambda row: row["sample_count"] / row["duration_sec"]
+        if row["duration_sec"] > 0
+        else pd.NA,
+        axis=1,
+    )
+    grouped["sample_reliability"] = grouped["sample_count"].apply(
+        lambda value: "신뢰 가능" if value >= MIN_RELIABLE_BUCKET_SAMPLES else "낮은 표본"
+    )
+    grouped["active_thread_bucket_start"] = grouped["active_thread_bucket"].apply(
+        build_active_thread_bucket_sort_key
+    )
+
+    return grouped.sort_values(
+        ["api_label", "team", "load_level", "active_thread_bucket_start"],
         ignore_index=True,
     )
 
 
+def classify_active_bucket_row(row: pd.Series) -> str:
+    if (
+        row["max_response_time_ms"] >= PASS_MAX_MS
+        or row["error_rate"] >= PASS_ERROR_RATE
+    ):
+        return "위험"
+    if (
+        row["p95_response_time_ms"] >= P95_CAUTION_MS
+        or row["max_response_time_ms"] >= MAX_CAUTION_MS
+        or row["error_rate"] >= ERROR_CAUTION_RATE
+    ):
+        return "주의"
+    return "안정"
+
+
+def analyze_active_thread_trends(active_bucket_df: pd.DataFrame) -> pd.DataFrame:
+    """구간별 지표가 부하 증가에 따라 악화되는지 요약한다."""
+
+    rows = []
+    working = active_bucket_df.copy()
+    working["bucket_risk_level"] = working.apply(classify_active_bucket_row, axis=1)
+
+    for (team, load_level, api), sub in working.groupby(
+        ["team", "load_level", "api_label"], dropna=False
+    ):
+        sub = sub.sort_values("active_thread_bucket_start").reset_index(drop=True)
+        reliable = sub[sub["sample_reliability"] == "신뢰 가능"].copy()
+        trend_source = reliable if not reliable.empty else sub
+
+        first = trend_source.iloc[0]
+        last = trend_source.iloc[-1]
+        p95_delta_pct = safe_delta_ratio(
+            last["p95_response_time_ms"], first["p95_response_time_ms"]
+        )
+        tps_delta_pct = safe_delta_ratio(
+            last["throughput_per_sec"], first["throughput_per_sec"]
+        )
+        p95_values = trend_source["p95_response_time_ms"].tolist()
+        p95_positive_steps = sum(
+            p95_values[i] < p95_values[i + 1] for i in range(len(p95_values) - 1)
+        )
+        p95_positive_step_rate = (
+            p95_positive_steps / (len(p95_values) - 1)
+            if len(p95_values) > 1
+            else 0
+        )
+
+        reliable_warning_count = int((reliable["bucket_risk_level"] == "주의").sum())
+        reliable_risk_count = int((reliable["bucket_risk_level"] == "위험").sum())
+        reliable_error_count = int((reliable["error_count"] > 0).sum())
+
+        judgement, reason = classify_active_thread_trend(
+            reliable_warning_count=reliable_warning_count,
+            reliable_risk_count=reliable_risk_count,
+            reliable_error_count=reliable_error_count,
+            p95_delta_pct=p95_delta_pct,
+            p95_positive_step_rate=p95_positive_step_rate,
+            p95_max=trend_source["p95_response_time_ms"].max(),
+            max_error_rate=trend_source["error_rate"].max(),
+        )
+
+        rows.append(
+            {
+                "team": team,
+                "load_level": load_level,
+                "api_label": api,
+                "bucket_count": len(sub),
+                "reliable_bucket_count": len(reliable),
+                "total_sample_count": int(sub["sample_count"].sum()),
+                "first_bucket": first["active_thread_bucket"],
+                "last_bucket": last["active_thread_bucket"],
+                "p95_start_ms": round(first["p95_response_time_ms"], 3),
+                "p95_end_ms": round(last["p95_response_time_ms"], 3),
+                "p95_delta_pct": round(p95_delta_pct, 5),
+                "p95_positive_steps": p95_positive_steps,
+                "p95_positive_step_rate": round(p95_positive_step_rate, 5),
+                "p95_max_ms": round(trend_source["p95_response_time_ms"].max(), 3),
+                "max_response_time_ms": round(trend_source["max_response_time_ms"].max(), 3),
+                "tps_start": round(first["throughput_per_sec"], 5)
+                if pd.notna(first["throughput_per_sec"])
+                else pd.NA,
+                "tps_end": round(last["throughput_per_sec"], 5)
+                if pd.notna(last["throughput_per_sec"])
+                else pd.NA,
+                "tps_delta_pct": round(tps_delta_pct, 5),
+                "total_error_count": int(sub["error_count"].sum()),
+                "max_error_rate": round(trend_source["error_rate"].max(), 5),
+                "reliable_warning_bucket_count": reliable_warning_count,
+                "reliable_risk_bucket_count": reliable_risk_count,
+                "reliable_error_bucket_count": reliable_error_count,
+                "bottleneck_judgement": judgement,
+                "reason": reason,
+            }
+        )
+
+    return pd.DataFrame(rows).sort_values(
+        ["api_label", "bottleneck_judgement", "load_level", "team"],
+        ignore_index=True,
+    )
+
+
+def safe_delta_ratio(end_value: float, start_value: float) -> float:
+    if pd.isna(start_value) or start_value == 0 or pd.isna(end_value):
+        return 0.0
+    return (end_value - start_value) / start_value
+
+
+def classify_active_thread_trend(
+    reliable_warning_count: int,
+    reliable_risk_count: int,
+    reliable_error_count: int,
+    p95_delta_pct: float,
+    p95_positive_step_rate: float,
+    p95_max: float,
+    max_error_rate: float,
+) -> tuple[str, str]:
+    """활성 사용자 구간별 추세를 병목 판단 문구로 분류한다."""
+
+    # 단일 구간의 순간 오류만으로 병목을 강하게 의심하면 과대 해석이 된다.
+    # 위험/오류가 반복되고, 동시에 p95가 활성 사용자 증가에 따라 악화될 때만 강한 병목 신호로 본다.
+    if (
+        reliable_risk_count >= 2
+        and reliable_error_count >= 2
+        and p95_delta_pct >= ACTIVE_P95_INCREASE_RATE
+        and p95_positive_step_rate >= 0.5
+    ):
+        return "병목 의심 강함", "위험/오류 구간이 반복되고 p95 증가 추세가 함께 확인됨"
+
+    if reliable_warning_count >= 3 and p95_max >= P95_CAUTION_MS:
+        return "기준 초과 반복", f"주의 이상 구간 {reliable_warning_count}개"
+
+    if p95_delta_pct >= ACTIVE_P95_INCREASE_RATE and p95_positive_step_rate >= 0.5:
+        if p95_max >= P95_CAUTION_MS or max_error_rate >= ERROR_CAUTION_RATE:
+            return "부하 증가형 관찰 필요", "활성 사용자 증가에 따라 p95가 상승하고 기준 신호가 있음"
+        return "기준 내 상대 증가", "p95는 증가하지만 절대 기준은 낮음"
+
+    if reliable_warning_count > 0 or reliable_error_count > 0:
+        return "단일 구간 관찰", "일부 구간에서만 주의 또는 오류가 확인됨"
+
+    return "명확한 병목 신호 없음", "구간별 p95, 오류율 기준에서 주요 신호 없음"
+
+
+def build_active_thread_focus(active_trend_df: pd.DataFrame) -> pd.DataFrame:
+    focus_levels = {
+        "병목 의심 강함",
+        "기준 초과 반복",
+        "부하 증가형 관찰 필요",
+        "단일 구간 관찰",
+        "기준 내 상대 증가",
+    }
+    return active_trend_df[
+        active_trend_df["bottleneck_judgement"].isin(focus_levels)
+    ].reset_index(drop=True)
+
+
 # ---------------------------------------------------------------------------
-# 5. 그래프 생성
+# 6. 그래프 생성
 # ---------------------------------------------------------------------------
 
 def plot_candidate_trends(threshold_df: pd.DataFrame, candidate_apis: list[str]) -> None:
@@ -346,7 +624,6 @@ def plot_candidate_trends(threshold_df: pd.DataFrame, candidate_apis: list[str])
                 linestyle="--",
                 label=f"{team} p95",
             )
-
             axes[1].plot(
                 team_df["load_level"],
                 team_df["error_rate"] * 100,
@@ -369,49 +646,61 @@ def plot_candidate_trends(threshold_df: pd.DataFrame, candidate_apis: list[str])
         axes[1].grid(True, alpha=0.3)
 
         for axis in axes:
-            axis.set_xticks([10, 30, 50, 70, 100])
+            axis.set_xticks(LOAD_LEVELS)
 
         fig.tight_layout()
         safe_api_name = str(api).replace("/", "_").replace(" ", "_")
-        output_path = REPORT_DIR / f"06_{safe_api_name}_threshold_trend.png"
-        image_buffer = BytesIO()
-        fig.savefig(image_buffer, format="png", dpi=150)
-        write_bytes_safely(output_path, image_buffer.getvalue())
+        save_png(fig, REPORT_DIR / f"06_{safe_api_name}_threshold_trend.png")
         plt.close(fig)
 
 
 # ---------------------------------------------------------------------------
-# 6. 저장 및 출력
+# 7. 저장 및 출력
 # ---------------------------------------------------------------------------
 
-def save_outputs(threshold_df: pd.DataFrame, summary_df: pd.DataFrame) -> None:
-    write_text_safely(THRESHOLD_OUTPUT_PATH, threshold_df.to_csv(index=False))
-    write_text_safely(SUMMARY_OUTPUT_PATH, summary_df.to_csv(index=False))
+def save_outputs(
+    threshold_df: pd.DataFrame,
+    summary_df: pd.DataFrame,
+    active_bucket_df: pd.DataFrame,
+    active_trend_df: pd.DataFrame,
+    active_focus_df: pd.DataFrame,
+) -> None:
+    save_csv(threshold_df, THRESHOLD_OUTPUT_PATH)
+    save_csv(summary_df, SUMMARY_OUTPUT_PATH)
+    save_csv(active_bucket_df, ACTIVE_BUCKET_OUTPUT_PATH)
+    save_csv(active_trend_df, ACTIVE_TREND_OUTPUT_PATH)
+    save_csv(active_focus_df, ACTIVE_FOCUS_OUTPUT_PATH)
 
 
-def print_summary(summary_df: pd.DataFrame, threshold_df: pd.DataFrame) -> None:
-    print(f"[SAVE] {THRESHOLD_OUTPUT_PATH}")
-    print(f"[SAVE] {SUMMARY_OUTPUT_PATH}")
-    print(f"[SAVE] {REPORT_DIR}")
+def print_summary(
+    summary_df: pd.DataFrame,
+    threshold_df: pd.DataFrame,
+    active_focus_df: pd.DataFrame,
+) -> None:
     print()
     print("[06 병목/임계점 요약]")
     print(summary_df.to_string(index=False))
     print()
     print("[위험 구간 개수]")
     print(threshold_df["risk_level"].value_counts().to_string())
+    print()
+    print("[활성 사용자 구간 추가 검토]")
+    if active_focus_df.empty:
+        print("추가 관찰 대상 없음")
+    else:
+        print(active_focus_df["bottleneck_judgement"].value_counts().to_string())
 
 
 # ---------------------------------------------------------------------------
-# 7. main
+# 8. main
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    # my_code 내부에서 상대 경로로 실행할 때 Windows 권한 오류가 나는 경우가 있어,
-    # Codex 작업 루트로 cwd를 맞춘 뒤 절대 경로 기반으로 처리한다.
-    os.chdir(BASE_DIR.parents[2])
-
     metrics_df = normalize_metric_columns(read_csv(METRICS_PATH))
     validate_columns(metrics_df, REQUIRED_METRIC_COLUMNS, "metrics data")
+
+    requests_df = normalize_request_columns(read_csv(REQUESTS_PATH))
+    validate_columns(requests_df, REQUIRED_REQUEST_COLUMNS, "requests data")
 
     candidates_df = read_csv(CANDIDATE_PATH)
     candidate_apis = get_candidate_api_labels(candidates_df)
@@ -422,10 +711,19 @@ def main() -> None:
 
     threshold_df = build_threshold_rows(metrics_df, candidate_apis)
     summary_df = analyze_candidate_trends(metrics_df, candidate_apis)
+    active_bucket_df = build_active_thread_bucket_metrics(requests_df, candidate_apis)
+    active_trend_df = analyze_active_thread_trends(active_bucket_df)
+    active_focus_df = build_active_thread_focus(active_trend_df)
 
-    save_outputs(threshold_df, summary_df)
+    save_outputs(
+        threshold_df=threshold_df,
+        summary_df=summary_df,
+        active_bucket_df=active_bucket_df,
+        active_trend_df=active_trend_df,
+        active_focus_df=active_focus_df,
+    )
     plot_candidate_trends(threshold_df, candidate_apis)
-    print_summary(summary_df, threshold_df)
+    print_summary(summary_df, threshold_df, active_focus_df)
 
 
 if __name__ == "__main__":
