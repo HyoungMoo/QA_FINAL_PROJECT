@@ -173,7 +173,7 @@
           <stringProp name="TestPlan.comments">기존 로그 기준 시험 입장 단계. </stringProp>
           <stringProp name="HTTPSampler.domain">api-rest.elice.io</stringProp>
           <stringProp name="HTTPSampler.protocol">https</stringProp>
-          <stringProp name="HTTPSampler.path">/org/${org}/user/lecture/test/enter/</stringProp>
+          <stringProp name="HTTPSampler.path">/org/${org}/lecture/test/enter/</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
