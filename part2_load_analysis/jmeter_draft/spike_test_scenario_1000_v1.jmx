@@ -90,40 +90,11 @@
           <stringProp name="TestPlan.comments">공통 헤더. 실제 토큰은 입력하지 않고 Bearer ${access_token} placeholder만 사용.</stringProp>
         </HeaderManager>
         <hashTree/>
-        <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="Auth - Login">
-          <stringProp name="TestPlan.comments">기존 부하테스트 Auth 단계. 실제 계정/비밀번호는 placeholder이며 실행 금지.</stringProp>
-          <stringProp name="HTTPSampler.domain">api-account.elice.io</stringProp>
-          <stringProp name="HTTPSampler.protocol">https</stringProp>
-          <stringProp name="HTTPSampler.path">/login/pw</stringProp>
-          <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
-          <stringProp name="HTTPSampler.method">POST</stringProp>
-          <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
-          <boolProp name="HTTPSampler.postBodyRaw">false</boolProp>
-          <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
-            <collectionProp name="Arguments.arguments">
-              <elementProp name="login_id" elementType="HTTPArgument">
-                <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                <stringProp name="Argument.value">${login_id}</stringProp>
-                <stringProp name="Argument.metadata">=</stringProp>
-                <boolProp name="HTTPArgument.use_equals">true</boolProp>
-                <stringProp name="Argument.name">login_id</stringProp>
-              </elementProp>
-              <elementProp name="password" elementType="HTTPArgument">
-                <boolProp name="HTTPArgument.always_encode">false</boolProp>
-                <stringProp name="Argument.value">${password}</stringProp>
-                <stringProp name="Argument.metadata">=</stringProp>
-                <boolProp name="HTTPArgument.use_equals">true</boolProp>
-                <stringProp name="Argument.name">password</stringProp>
-              </elementProp>
-            </collectionProp>
-          </elementProp>
-        </HTTPSamplerProxy>
-        <hashTree/>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="API 1 - 과목 정보">
           <stringProp name="TestPlan.comments">기존 로그 기준 과목/강의 페이지 정보 조회.</stringProp>
           <stringProp name="HTTPSampler.domain">api-course.elice.io</stringProp>
           <stringProp name="HTTPSampler.protocol">https</stringProp>
-          <stringProp name="HTTPSampler.path">/lecture_page</stringProp>
+          <stringProp name="HTTPSampler.path">/org/${org}/lecture_page/get/</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">GET</stringProp>
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
@@ -202,7 +173,7 @@
           <stringProp name="TestPlan.comments">기존 로그 기준 시험 시작 단계. 실행 전 실제 검증 페이지 Network의 body/parameter 확인 필요.</stringProp>
           <stringProp name="HTTPSampler.domain">api-rest.elice.io</stringProp>
           <stringProp name="HTTPSampler.protocol">https</stringProp>
-          <stringProp name="HTTPSampler.path">/org/${org}/user/lecture/test/start/</stringProp>
+          <stringProp name="HTTPSampler.path">/org/${org}/lecture/test/start/</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
@@ -231,7 +202,7 @@
           <stringProp name="TestPlan.comments">기존 로그 기준 시험 제출 단계. 제출 payload는 실제 시험 문항 구조에 따라 달라질 수 있어 placeholder 처리.</stringProp>
           <stringProp name="HTTPSampler.domain">api-rest.elice.io</stringProp>
           <stringProp name="HTTPSampler.protocol">https</stringProp>
-          <stringProp name="HTTPSampler.path">/org/${org}/user/lecture/test/stop/</stringProp>
+          <stringProp name="HTTPSampler.path">/org/${org}/lecture/test/stop/</stringProp>
           <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
           <stringProp name="HTTPSampler.method">POST</stringProp>
           <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
