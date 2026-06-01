@@ -10,9 +10,9 @@ DT_END = "2026-06-14T14:59:59.999Z"
 
 class TestSchedulePermission:
 
-    @pytest.mark.p1
+    @pytest.mark.p0
     def test_student_cannot_create_schedule(self, student_client):
-        # 우선순위: P1
+        # 우선순위: P0
         # TC ID: TC-SCH-016
         # Given: 학습자 토큰, 일정 생성 요청 데이터
         # When: POST /schedule 호출
@@ -34,13 +34,13 @@ class TestSchedulePermission:
             f"status_code={response.status_code}, response={response.text}"
         )
 
-    @pytest.mark.p1
+    @pytest.mark.p0
     @pytest.mark.parametrize("method,extra_body", [
         pytest.param("PATCH", {"summary": "hacked"}, id="TC-SCH-017-update"),
         pytest.param("DELETE", {}, id="TC-SCH-018-delete"),
     ])
     def test_student_cannot_modify_schedule(self, student_client, method, extra_body):
-        # 우선순위: P1
+        # 우선순위: P0
         # TC ID: TC-SCH-017 (PATCH), TC-SCH-018 (DELETE)
         # Given: 학습자 토큰, 기존 일정 ID
         # When: PATCH 또는 DELETE /schedule/{id} 호출

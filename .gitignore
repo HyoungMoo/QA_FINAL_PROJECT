@@ -34,6 +34,11 @@ reports/*
 !**/reports/**/
 !**/reports/**/.gitkeep
 
+# Local API response capture scripts
+part1_api_automation/capture_016_018.py
+part1_api_automation/capture_responses.py
+part1_api_automation/capture_teacher_doc.py
+
 # Part 2 raw load-test data (legacy flat layout)
 # Keep folder structure with .gitkeep, but do not upload raw logs.
 part2_load_analysis/data/00_raw_data/**

@@ -92,9 +92,9 @@ class TestSchedule:
         print("일정 개수:", len(data))
         print("첫 번째 일정 summary:", first.get("summary"))
 
-    @pytest.mark.p0
+    @pytest.mark.p1
     def test_schedule_count(self, student_client):
-        # 우선순위: P0
+        # 우선순위: P1
         # TC ID: TC-SCH-002
         # Given-When-Then
         #   Given: 유효한 학습자 토큰, 유효한 classroom_id, 유효한 날짜 범위
@@ -146,9 +146,9 @@ class TestSchedule:
         print("status_code:", response.status_code)
         print("일정 개수(count):", data["count"])
 
-    @pytest.mark.p1
+    @pytest.mark.p0
     def test_schedule_no_token(self):
-        # 우선순위: P1
+        # 우선순위: P0
         # TC ID: TC-SCH-004
         # Given-When-Then
         #   Given: 토큰 없음
@@ -296,6 +296,42 @@ class TestSchedule:
             f"status_code={response.status_code}, response={response.text}"
         )
 
+    @pytest.mark.p2
+    def test_schedule_same_datetime_range(self, student_client):
+        # 우선순위: P2
+        # TC ID: TC-SCH-008
+        # Given-When-Then
+        #   Given: dt_start_ge와 dt_start_le가 동일한 날짜/시각
+        #   When: GET /schedule 호출
+        #   Then: 200 응답, 빈 배열 또는 해당 시점에 정확히 시작하는 일정 반환
+
+        # When: 동일한 시작/종료 경계값으로 API 호출
+        response = student_client.get(
+            "/schedule",
+            params={
+                "classroom_id": common_data.student_classroom_id,
+                "dt_start_ge": "2026-05-15T00:00:00.000Z",
+                "dt_start_le": "2026-05-15T00:00:00.000Z",
+                "count": 40,
+            },
+        )
+
+        # Then: 정상 응답과 배열 body 확인
+        assert response.status_code == 200, (
+            f"동일 날짜 범위 요청 시 200이 아닌 응답이 반환되었습니다. "
+            f"status_code={response.status_code}, response={response.text}"
+        )
+
+        data = response.json()
+        assert isinstance(data, list), (
+            f"응답 body가 list 형식이 아닙니다. "
+            f"type={type(data).__name__}, body={data}"
+        )
+
+        assert len(data) <= 40, (
+            f"응답 일정 개수가 count보다 큽니다. count=40, actual={len(data)}"
+        )
+
     @pytest.mark.p1
     def test_schedule_invalid_date_format(self, student_client):
         # 우선순위: P1
@@ -383,9 +419,9 @@ class TestSchedule:
 
 class TestScheduleIcs:
 
-    @pytest.mark.p0
+    @pytest.mark.p1
     def test_schedule_ics(self, student_client):
-        # 우선순위: P0
+        # 우선순위: P1
         # TC ID: TC-SCH-003
         # Given-When-Then
         #   Given: 유효한 학습자 토큰, 유효한 classroom_id, 날짜 범위, timezone
@@ -436,9 +472,9 @@ class TestScheduleIcs:
         print("content_type:", content_type)
         print("ICS 응답 앞부분:", response.text[:100])
 
-    @pytest.mark.p1
+    @pytest.mark.p0
     def test_schedule_ics_no_token(self):
-        # 우선순위: P1
+        # 우선순위: P0
         # TC ID: TC-SCH-012
         # Given-When-Then
         #   Given: 토큰 없음
@@ -508,9 +544,9 @@ class TestScheduleIcs:
             f"status_code={response.status_code}, response={response.text}"
         )
 
-    @pytest.mark.p1
+    @pytest.mark.p2
     def test_schedule_ics_invalid_timezone(self, student_client):
-        # 우선순위: P1
+        # 우선순위: P2
         # TC ID: TC-SCH-014
         # Given-When-Then
         #   Given: 유효하지 않은 timezone 값
@@ -538,9 +574,9 @@ class TestScheduleIcs:
             f"status_code={response.status_code}, response={response.text}"
         )
 
-    @pytest.mark.p2
+    @pytest.mark.p1
     def test_schedule_ics_no_schedules_in_range(self, student_client):
-        # 우선순위: P2
+        # 우선순위: P1
         # TC ID: TC-SCH-015
         # Given-When-Then
         #   Given: 일정이 없는 날짜 범위

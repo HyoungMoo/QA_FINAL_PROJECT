@@ -139,9 +139,9 @@ class TestTeacherSchedule:
         assert created_schedule_id is not None, "일정 생성에 실패했습니다."
         print(f"\nTC_NO: TC-TSCH-002 | created_schedule_id: {created_schedule_id}")
 
-    @pytest.mark.p1
+    @pytest.mark.p0
     def test_schedule_edit(self, teacher_client, created_schedule_id):
-        # 우선순위: P1
+        # 우선순위: P0
         # TC ID: TC-TSCH-003
         # Given: 유효한 교육자 토큰, 존재하는 schedule_id
         # When: PATCH /schedule/{id} 호출
@@ -162,9 +162,9 @@ class TestTeacherSchedule:
         )
         print(f"\nTC_NO: TC-TSCH-003 | status_code: {response.status_code}")
 
-    @pytest.mark.p1
+    @pytest.mark.p0
     def test_schedule_delete(self, teacher_client):
-        # 우선순위: P1
+        # 우선순위: P0
         # TC ID: TC-TSCH-004
         # Given: 유효한 교육자 토큰, 새로 생성한 schedule_id
         # When: DELETE /schedule/{id} 호출
@@ -197,9 +197,9 @@ class TestTeacherSchedule:
         )
         print(f"\nTC_NO: TC-TSCH-004 | status_code: {response.status_code}")
 
-    @pytest.mark.p1
+    @pytest.mark.p2
     def test_schedule_create_invalid_timezone(self, teacher_client):
-        # 우선순위: P1
+        # 우선순위: P2
         # TC ID: TC-TSCH-005
         # Given: 유효한 교육자 토큰
         # When: POST /schedule에 IANA 형식 timezone 입력
@@ -223,9 +223,9 @@ class TestTeacherSchedule:
         )
         print(f"\nTC_NO: TC-TSCH-005 | status_code: {response.status_code}")
 
-    @pytest.mark.p1
+    @pytest.mark.p0
     def test_unauthorized_create_schedule(self, student_client):
-        # 우선순위: P1
+        # 우선순위: P0
         # TC ID: TC-TSCH-006
         # Given: 학습자 org, 학습자 classroom_id
         # When: POST /schedule 호출
@@ -297,9 +297,9 @@ class TestTeacherSchedule:
         )
         print(f"\nTC_NO: TC-TSCH-008 | status_code: {response.status_code}")
 
-    @pytest.mark.p1
+    @pytest.mark.p2
     def test_schedule_create_date_reversed(self, teacher_client):
-        # 우선순위: P1
+        # 우선순위: P2
         # TC ID: TC-TSCH-009
         # Given: 유효한 교육자 토큰
         # When: POST /schedule에 dt_start가 dt_end보다 늦은 값 입력
