@@ -5,6 +5,8 @@ import uuid
 import pytest
 from utils.test_data import common_data
 
+pytestmark = pytest.mark.teacher
+
 UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$', re.I)
 
 DT_START = "2026-04-16T15:00:00.000Z"

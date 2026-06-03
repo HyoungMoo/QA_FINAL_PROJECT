@@ -1,11 +1,16 @@
+import pytest
+
 from utils.api_client import APIClient
 from utils.test_data import common_data
 from utils.test_data.student_material_data import lecture_case
+
+pytestmark = pytest.mark.student
 
 
 ### Positive Test
 
 
+@pytest.mark.p0
 def test_get_week1_2lecture_material_pdf(rest_student_client):
     # 우선순위 : P0
     # TC ID: TC-STUDENT-COURSE-001
@@ -60,6 +65,7 @@ def test_get_week1_2lecture_material_pdf(rest_student_client):
     )
 
 
+@pytest.mark.p0
 def test_get_week1_2lecture_quiz_material(rest_student_client):
     # 우선순위 : P0
     # TC ID: TC-STUDENT-COURSE-002
@@ -99,6 +105,7 @@ def test_get_week1_2lecture_quiz_material(rest_student_client):
     )
 
 
+@pytest.mark.p0
 def test_submit_week1_2lecture_quiz_correct_answer(rest_student_client):
     # 우선순위 : P0
     # TC ID: TC-STUDENT-COURSE-003
@@ -179,6 +186,7 @@ def test_submit_week1_2lecture_quiz_correct_answer(rest_student_client):
     )
 
 
+@pytest.mark.p1
 def test_submit_week1_2lecture_quiz_wrong_answer(rest_student_client):
     # 우선순위 : P1
     # TC ID: TC-STUDENT-COURSE-004
@@ -259,6 +267,7 @@ def test_submit_week1_2lecture_quiz_wrong_answer(rest_student_client):
     )
 
 
+@pytest.mark.p0
 def test_get_week1_2lecture_exercise_material(rest_student_client):
     # 우선순위 : P0
     # TC ID: TC-STUDENT-COURSE-005
@@ -298,6 +307,7 @@ def test_get_week1_2lecture_exercise_material(rest_student_client):
     )
 
 
+@pytest.mark.p0
 def test_run_week1_2lecture_exercise(rest_student_client):
     # 우선순위 : P0
     # TC ID: TC-STUDENT-COURSE-006
@@ -369,6 +379,7 @@ def test_run_week1_2lecture_exercise(rest_student_client):
     )
 
 
+@pytest.mark.p0
 def test_submit_available_exercise(rest_student_client):
     # 우선순위 : P0
     # TC ID: TC-STUDENT-COURSE-007
@@ -440,6 +451,7 @@ def test_submit_available_exercise(rest_student_client):
     )
 
 
+@pytest.mark.p1
 def test_move_next_lesson_from_material_pdf(rest_student_client):
     # 우선순위 : P1
     # TC ID: TC-STUDENT-COURSE-008
@@ -479,6 +491,7 @@ def test_move_next_lesson_from_material_pdf(rest_student_client):
     )
 
 
+@pytest.mark.p1
 def test_move_previous_lesson_from_quiz(rest_student_client):
     # 우선순위 : P1
     # TC ID: TC-STUDENT-COURSE-009
@@ -523,6 +536,7 @@ def test_move_previous_lesson_from_quiz(rest_student_client):
 ### Negative Test
 
 
+@pytest.mark.p0
 def test_get_material_pdf_without_token(settings):
     # 우선순위 : P0
     # TC ID: TC-STUDENT-COURSE-011
@@ -573,6 +587,7 @@ def test_get_material_pdf_without_token(settings):
     )
 
 
+@pytest.mark.p2
 def test_get_material_pdf_without_material_pdf_id(rest_student_client):
     # 우선순위 : P2
     # TC ID: TC-STUDENT-COURSE-010
@@ -613,6 +628,7 @@ def test_get_material_pdf_without_material_pdf_id(rest_student_client):
     )
 
 
+@pytest.mark.p2
 def test_get_quiz_with_invalid_material_id(rest_student_client):
     # 우선순위 : P2
     # TC ID: TC-STUDENT-COURSE-012
@@ -662,6 +678,7 @@ def test_get_quiz_with_invalid_material_id(rest_student_client):
     )
 
 
+@pytest.mark.p2
 def test_get_exercise_with_invalid_room_id(rest_student_client):
     # 우선순위 : P2
     # TC ID: TC-STUDENT-COURSE-013

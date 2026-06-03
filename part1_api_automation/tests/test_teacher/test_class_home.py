@@ -5,9 +5,10 @@ from utils.test_data import common_data
 
 @pytest.mark.p0
 @pytest.mark.teacher
+@pytest.mark.smoke
 def test_get_course_list_as_educator(teacher_client):
     # 우선순위 : P0
-    # TC ID: TC_TEACHER_CLASSHOME_001
+    # TC ID: TC-TEACHER-CLASSHOME-001
     # Postman에서 성공 확인한 교육자 담당 과목 목록 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 토큰 보유), 교육자 조직 정보 보유
@@ -158,7 +159,7 @@ def test_get_course_list_as_educator(teacher_client):
 
     print("")
     print("")
-    print("TC_NO:TC_TEACHER_CLASSHOME_001")
+    print("TC_NO:TC-TEACHER-CLASSHOME-001")
     print("status_code", response.status_code)
     print("(교육자 과목 목록 수)course_count:", len(body))
     print("(클래스룸 ID)classroom.id:", classroom.get("id"))
@@ -173,7 +174,7 @@ def test_get_course_list_as_educator(teacher_client):
 @pytest.mark.teacher
 def test_update_classroom_name(teacher_client):
     # 우선순위 : P1
-    # TC ID: TC_TEACHER_CLASSHOME_002
+    # TC ID: TC-TEACHER-CLASSHOME-002
     # Postman에서 성공 확인한 교육자 클래스룸 이름 수정 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 토큰 보유), 교육자 조직 정보 보유, 수정 대상 클래스룸 ID 보유
@@ -263,7 +264,7 @@ def test_update_classroom_name(teacher_client):
 
     print("")
     print("")
-    print("TC_NO:TC_TEACHER_CLASSHOME_002")
+    print("TC_NO:TC-TEACHER-CLASSHOME-002")
     print("status_code", response.status_code)
     print("(클래스룸 ID)id:", body["id"])
     print("(요청 클래스룸 이름)name:", classroom_name)
@@ -273,7 +274,7 @@ def test_update_classroom_name(teacher_client):
 @pytest.mark.teacher
 def test_get_classroom_member_count(teacher_client):
     # 우선순위 : P1
-    # TC ID: TC_TEACHER_CLASSHOME_003
+    # TC ID: TC-TEACHER-CLASSHOME-003
     # Postman에서 성공 확인한 교육자 클래스룸 멤버 수 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 토큰 보유), 교육자 조직 정보 보유, 조회 대상 클래스룸 ID 보유
@@ -323,7 +324,7 @@ def test_get_classroom_member_count(teacher_client):
 
     print("")
     print("")
-    print("TC_NO:TC_TEACHER_CLASSHOME_003")
+    print("TC_NO:TC-TEACHER-CLASSHOME-003")
     print("status_code", response.status_code)
     print("(클래스룸 ID)classroom_id:", classroom_id)
     print("(클래스룸 멤버 수)member_count:", body)
