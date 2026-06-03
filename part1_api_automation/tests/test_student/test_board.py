@@ -9,11 +9,14 @@ import pytest
 
 from utils.test_data import common_data
 
+pytestmark = pytest.mark.student
+
 
 @pytest.mark.p1
+@pytest.mark.smoke
 def test_get_board_article_list(student_client):
     # 우선순위 : P1
-    # TC ID: TC_BOARD_001
+    # TC ID: TC-STUDENT-BOARD-001
     # Postman에서 성공 확인한 게시글 목록 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유), 클래스룸 ID 보유
@@ -133,7 +136,7 @@ def test_get_board_article_list(student_client):
 
     print("")
     print("")
-    print("TC_NO:TC_BOARD_001")
+    print("TC_NO:TC-STUDENT-BOARD-001")
     print("status_code", response.status_code)
     print("(게시글 목록 수)article_count:", len(body))
     print("(첫 번째 게시글 ID)id:", first_article["id"])
@@ -144,7 +147,7 @@ def test_get_board_article_list(student_client):
 @pytest.mark.p1
 def test_get_board_article_comment_list(rest_student_client):
     # 우선순위 : P1
-    # TC ID: TC_BOARD_002
+    # TC ID: TC-STUDENT-BOARD-002
     # Postman에서 성공 확인한 게시글 댓글 목록 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유), 게시글 ID 보유
@@ -300,7 +303,7 @@ def test_get_board_article_comment_list(rest_student_client):
 
     print("")
     print("")
-    print("TC_NO:TC_BOARD_002")
+    print("TC_NO:TC-STUDENT-BOARD-002")
     print("status_code", response.status_code)
     print("(댓글 수)article_comment_count:", body["article_comment_count"])
     print("(댓글 목록 수)article_comments_count:", len(body["article_comments"]))
@@ -315,7 +318,7 @@ def test_get_board_article_comment_list(rest_student_client):
 @pytest.mark.p2
 def test_get_file_resource(file_student_client):
     # 우선순위 : P2
-    # TC ID: TC_BOARD_003
+    # TC ID: TC-STUDENT-BOARD-003
     # Postman에서 성공 확인한 파일 리소스 정보 조회 API.
     # Given-When-Then
         # Given : 로그인 상태(유효한 학습자 토큰 보유), 파일 ID 보유
@@ -436,7 +439,7 @@ def test_get_file_resource(file_student_client):
 
     print("")
     print("")
-    print("TC_NO:TC_BOARD_003")
+    print("TC_NO:TC-STUDENT-BOARD-003")
     print("status_code", response.status_code)
     print("(파일 리소스 ID)id:", body["id"])
     print("(파일명)name:", body["name"])

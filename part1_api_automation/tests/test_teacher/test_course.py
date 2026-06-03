@@ -4,9 +4,12 @@ from utils.test_data.student_material_data import (
     teacher_course_case,
 )
 
+pytestmark = pytest.mark.teacher
+
 ### Positive Test
 
 
+@pytest.mark.p0
 def test_teacher_can_create_lecture(rest_teacher_client):
     # 우선순위 : P0
     # TC ID: TC-TEACHER_COURSE-002
@@ -77,6 +80,7 @@ def test_teacher_can_create_lecture(rest_teacher_client):
         f"수업 삭제 실패: {rollback_body}"
     )
 
+@pytest.mark.p0
 def test_teacher_can_edit_lecture(rest_teacher_client):
     # 우선순위 : P0
     # TC ID: TC-TEACHER_COURSE-003
@@ -175,6 +179,7 @@ def test_teacher_can_edit_lecture(rest_teacher_client):
         f"수업 정보 원복 실패: {rollback_body}"
     )
 
+@pytest.mark.p0
 def test_teacher_can_change_lecture_page_visibility(
     rest_teacher_client,
 ):
@@ -263,6 +268,7 @@ def test_teacher_can_change_lecture_page_visibility(
         f"수업자료 공개 상태 원복 실패: {rollback_body}"
     )
 
+@pytest.mark.p0
 def test_teacher_can_create_material_quiz(rest_teacher_client):
     # 우선순위 : P0
     # TC ID: TC-TEACHER_COURSE-008
@@ -395,6 +401,7 @@ def test_teacher_can_create_material_quiz(rest_teacher_client):
                 f"퀴즈 수업자료 삭제 실패: {rollback_body}"
             )
 
+@pytest.mark.p0
 def test_teacher_can_edit_material_pdf(rest_teacher_client):
     # 우선순위 : P0
     # TC ID: TC-TEACHER_COURSE-014
@@ -578,6 +585,7 @@ def test_teacher_can_edit_material_pdf(rest_teacher_client):
             f"PDF 학습자료 원복 실패: {rollback_body}"
         )
 
+@pytest.mark.p1
 def test_teacher_can_delete_lecture_page(rest_teacher_client):
     # 우선순위 : P0
     # TC ID: TC-TEACHER_COURSE-005
@@ -759,6 +767,7 @@ def test_teacher_can_delete_lecture_page(rest_teacher_client):
 
 
 
+@pytest.mark.p1
 def test_teacher_can_clone_lecture(rest_teacher_client):
     # 우선순위 : P1
     # TC ID: TC-TEACHER_COURSE-007
@@ -829,6 +838,7 @@ def test_teacher_can_clone_lecture(rest_teacher_client):
                 f"복제 수업 삭제 실패: {rollback_body}"
             )
 
+@pytest.mark.p1
 def test_teacher_can_move_lecture_page(rest_teacher_client):
     # 우선순위 : P1
     # TC ID: TC-TEACHER_COURSE-004
@@ -954,6 +964,7 @@ def test_teacher_can_move_lecture_page(rest_teacher_client):
             f"수업자료 순서 원복 실패: {rollback_body}"
         )
 
+@pytest.mark.p1
 def test_teacher_can_reset_material_quiz_response(rest_teacher_client):
     # 우선순위 : P1
     # TC ID: TC-TEACHER_COURSE-010
@@ -1018,6 +1029,7 @@ def test_teacher_can_reset_material_quiz_response(rest_teacher_client):
         f"퀴즈 제출 기록 초기화 실패: {reset_body}"
     )
 
+@pytest.mark.p1
 def test_teacher_can_add_course_to_classroom(
     teacher_client,
     rest_teacher_client,
@@ -1135,6 +1147,7 @@ def test_teacher_can_add_course_to_classroom(
                 f"body={rollback_body}"
             )
 
+@pytest.mark.p1
 def test_teacher_can_reorder_course(teacher_client):
     # 우선순위 : P1
     # TC ID: TC-TEACHER_COURSE-012
@@ -1343,7 +1356,7 @@ def test_teacher_can_reorder_course(teacher_client):
 
 ### Negative Test
 
-
+@pytest.mark.p1
 def test_teacher_cannot_create_lecture_without_course_id(rest_teacher_client):
     # 우선순위 : P2
     # TC ID: TC-TEACHER_COURSE-015
@@ -1382,6 +1395,7 @@ def test_teacher_cannot_create_lecture_without_course_id(rest_teacher_client):
         f"course_id 누락 요청이 실패하지 않음: {body}"
     )
 
+@pytest.mark.p1
 def test_teacher_cannot_create_lecture_with_invalid_course_id(rest_teacher_client):
     # 우선순위 : P2
     # TC ID: TC-TEACHER_COURSE-016
@@ -1421,6 +1435,7 @@ def test_teacher_cannot_create_lecture_with_invalid_course_id(rest_teacher_clien
         f"잘못된 course_id 요청이 실패하지 않음: {body}"
     )
 
+@pytest.mark.p1
 def test_teacher_cannot_change_lecture_page_visibility_without_lecture_page_ids(
     rest_teacher_client,
 ):
@@ -1456,6 +1471,7 @@ def test_teacher_cannot_change_lecture_page_visibility_without_lecture_page_ids(
         f"lecture_page_ids 누락 요청이 실패하지 않음: {body}"
     )
 
+@pytest.mark.p1
 def test_teacher_cannot_move_lecture_page_without_new_order_no(rest_teacher_client):
     # 우선순위 : P2
     # TC ID: TC-TEACHER_COURSE-018
@@ -1492,6 +1508,7 @@ def test_teacher_cannot_move_lecture_page_without_new_order_no(rest_teacher_clie
         f"new_order_no 누락 요청이 실패하지 않음: {body}"
     )
 
+@pytest.mark.p1
 def test_teacher_cannot_create_material_quiz_without_options_default(rest_teacher_client):
     # 우선순위 : P2
     # TC ID: TC-TEACHER_COURSE-019
@@ -1540,6 +1557,7 @@ def test_teacher_cannot_create_material_quiz_without_options_default(rest_teache
         f"options_default 누락 요청이 실패하지 않음: {body}"
     )
 
+@pytest.mark.p1
 def test_teacher_cannot_add_invalid_course_to_classroom(teacher_client):
     # 우선순위 : P2
     # TC ID: TC-TEACHER_COURSE-020
@@ -1600,6 +1618,7 @@ def test_teacher_cannot_add_invalid_course_to_classroom(teacher_client):
         f"courses={invalid_added_courses}"
     )
 
+@pytest.mark.p1
 def test_teacher_cannot_clone_lecture_with_invalid_lecture_id(rest_teacher_client):
     # 우선순위 : P2
     # TC ID: TC-TEACHER_COURSE-021

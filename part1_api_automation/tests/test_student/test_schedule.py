@@ -12,10 +12,13 @@ UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]
 DT_START = "2026-04-16T15:00:00.000Z"
 DT_END = "2026-06-14T14:59:59.999Z"
 
+pytestmark = pytest.mark.student
+
 
 class TestSchedule:
 
     @pytest.mark.p0
+    @pytest.mark.smoke
     def test_schedule_list(self, student_client):
         # 우선순위: P0
         # TC ID: TC-SCH-001

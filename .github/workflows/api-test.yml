@@ -2,7 +2,11 @@ name: API Test
 
 on:
   push:
-    branches: [develop]
+    branches:
+      - develop
+      - "feature/**"
+      - "feat/**"
+      - "fix/**"
   workflow_dispatch:
 
 permissions:
@@ -18,18 +22,88 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - run: |
+      - name: Install dependencies
+        run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - run: |
+      - name: Run selected API tests
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+
           mkdir -p reports
-          pytest part1_api_automation --html=reports/report.html --self-contained-html
+
+          REPORT_ARGS=(--html=reports/report.html --self-contained-html)
+
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "[test-scope] manual run: full API test"
+            pytest part1_api_automation "${REPORT_ARGS[@]}"
+            exit 0
+          fi
+
+          if [[ "$EVENT_NAME" == "push" && "$REF_NAME" == "develop" ]]; then
+            echo "[test-scope] develop push: full API test"
+            pytest part1_api_automation "${REPORT_ARGS[@]}"
+            exit 0
+          fi
+
+          if [[ -n "$BEFORE_SHA" && ! "$BEFORE_SHA" =~ ^0+$ ]]; then
+            BASE_SHA="$BEFORE_SHA"
+          else
+            git fetch origin develop --depth=1 || true
+            BASE_SHA="origin/develop"
+          fi
+
+          echo "[diff-base] $BASE_SHA"
+          CHANGED_FILES="$(git diff --name-only "$BASE_SHA" "$GITHUB_SHA" || true)"
+
+          echo "[changed-files]"
+          if [[ -n "$CHANGED_FILES" ]]; then
+            printf '%s\n' "$CHANGED_FILES"
+          else
+            echo "(none)"
+          fi
+
+          COMMON_PATTERN='^part1_api_automation/(pytest\.ini|tests/conftest\.py|utils/(api_client|config|request_helper)\.py|utils/test_data/.*\.py)$'
+
+          if printf '%s\n' "$CHANGED_FILES" | grep -Eq "$COMMON_PATTERN"; then
+            echo "[test-scope] common test infrastructure changed: run p0 or p1"
+            pytest part1_api_automation -m "p0 or p1" "${REPORT_ARGS[@]}"
+            exit 0
+          fi
+
+          CHANGED_TESTS=()
+          while read -r file_path; do
+            if [[ -n "$file_path" && -f "$file_path" ]]; then
+              CHANGED_TESTS+=("$file_path")
+            fi
+          done < <(
+            printf '%s\n' "$CHANGED_FILES" \
+              | grep -E '^part1_api_automation/tests/.*test.*\.py$' \
+              || true
+          )
+
+          if (( ${#CHANGED_TESTS[@]} > 0 )); then
+            echo "[test-scope] changed test files only"
+            printf '  - %s\n' "${CHANGED_TESTS[@]}"
+            pytest "${CHANGED_TESTS[@]}" "${REPORT_ARGS[@]}"
+            exit 0
+          fi
+
+          echo "[test-scope] no direct Part 1 test/common change: run smoke"
+          pytest part1_api_automation -m smoke "${REPORT_ARGS[@]}"
 
       - uses: actions/upload-artifact@v4
         if: always()
