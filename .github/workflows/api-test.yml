@@ -53,6 +53,7 @@ jobs:
             exit 0
           fi
 
+          # develop에 직접 반영된 코드는 전체 API 테스트를 실행한다.
           if [[ "$EVENT_NAME" == "push" && "$REF_NAME" == "develop" ]]; then
             echo "[test-scope] develop push: full API test"
             pytest part1_api_automation "${REPORT_ARGS[@]}"
@@ -76,6 +77,7 @@ jobs:
             echo "(none)"
           fi
 
+          # 공통 fixture/client/test data가 바뀌면 영향 범위가 넓으므로 P0/P1 테스트를 실행한다.
           COMMON_PATTERN='^part1_api_automation/(pytest\.ini|tests/conftest\.py|utils/(api_client|config|request_helper)\.py|utils/test_data/.*\.py)$'
 
           if printf '%s\n' "$CHANGED_FILES" | grep -Eq "$COMMON_PATTERN"; then
@@ -84,6 +86,7 @@ jobs:
             exit 0
           fi
 
+          # 테스트 파일만 바뀐 feature 브랜치는 변경된 테스트 파일만 실행한다.
           CHANGED_TESTS=()
           while read -r file_path; do
             if [[ -n "$file_path" && -f "$file_path" ]]; then
@@ -103,6 +106,7 @@ jobs:
           fi
 
           echo "[test-scope] no direct Part 1 test/common change: run smoke"
+          # Part 1 테스트 코드와 공통 설정 변경이 없으면 최소 smoke 테스트만 실행한다.
           pytest part1_api_automation -m smoke "${REPORT_ARGS[@]}"
 
       - uses: actions/upload-artifact@v4
