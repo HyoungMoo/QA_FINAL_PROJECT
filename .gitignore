@@ -1,14 +1,14 @@
-# Local environment variables and secrets
+# 로컬 환경 변수 및 민감 정보
 .env
 .env.*
 !.env.example
 
-# Python virtual environments
+# Python 가상 환경
 .venv/
 venv/
 env/
 
-# Python cache and test cache
+# Python 캐시 및 테스트 캐시
 __pycache__/
 *.py[cod]
 *$py.class
@@ -18,13 +18,13 @@ __pycache__/
 .coverage
 htmlcov/
 
-# Local editor / OS files
+# 로컬 에디터 및 OS 생성 파일
 .idea/
 .vscode/
 .DS_Store
 Thumbs.db
 
-# Runtime reports generated locally
+# 로컬에서 생성되는 실행 결과 리포트
 reports/*
 !reports/.gitkeep
 !reports/**/
@@ -34,20 +34,20 @@ reports/*
 !**/reports/**/
 !**/reports/**/.gitkeep
 
-# Local API response capture scripts
+# 로컬 API 응답 캡처 스크립트
 part1_api_automation/capture_016_018.py
 part1_api_automation/capture_responses.py
 part1_api_automation/capture_teacher_doc.py
 
-# Part 2 raw load-test data (legacy flat layout)
-# Keep folder structure with .gitkeep, but do not upload raw logs.
+# Part 2 부하 테스트 원본 데이터(기존 단일 구조)
+# .gitkeep으로 폴더 구조는 유지하되 원본 로그는 업로드하지 않는다.
 part2_load_analysis/data/00_raw_data/**
 !part2_load_analysis/data/00_raw_data/
 !part2_load_analysis/data/00_raw_data/**/
 !part2_load_analysis/data/00_raw_data/**/.gitkeep
 
-# Part 2 generated preprocessing outputs (legacy flat layout)
-# These files are recreated by preprocessing scripts.
+# Part 2 전처리 생성 결과(기존 단일 구조)
+# 이 파일들은 전처리 스크립트로 다시 생성된다.
 part2_load_analysis/data/01_sanitized_data/**
 !part2_load_analysis/data/01_sanitized_data/
 !part2_load_analysis/data/01_sanitized_data/**/
@@ -63,8 +63,8 @@ part2_load_analysis/data/03_analysis_ready_data/**
 !part2_load_analysis/data/03_analysis_ready_data/**/
 !part2_load_analysis/data/03_analysis_ready_data/**/.gitkeep
 
-# Part 2 raw load-test data and generated outputs (current grouped layout)
-# Keep folder structure with .gitkeep, but do not upload raw/generated data files.
+# Part 2 부하 테스트 원본 데이터 및 생성 결과(현재 그룹 구조)
+# .gitkeep으로 폴더 구조는 유지하되 원본/생성 데이터 파일은 업로드하지 않는다.
 part2_load_analysis/data/0_preparation_data/00_raw_data/**
 !part2_load_analysis/data/0_preparation_data/00_raw_data/
 !part2_load_analysis/data/0_preparation_data/00_raw_data/**/
