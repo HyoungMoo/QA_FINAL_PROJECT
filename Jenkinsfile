@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         PYTHONIOENCODING = 'utf-8'
-        PYTHON = 'C:\\Users\\khm40\\AppData\\Local\\Programs\\Python\\Python38-32\\python.exe'
+        PYTHON = 'c:\\Users\\khm40\\OneDrive\\바탕 화면\\qa_final_project\\venv\\Scripts\\python.exe'
         ENV_FILE = 'C:\\Users\\khm40\\OneDrive\\바탕 화면\\qa_final_project\\elice_lxp_test_team3\\.env'
     }
 
