@@ -24,10 +24,10 @@ pipeline {
             archiveArtifacts artifacts: 'report.html', allowEmptyArchive: true
         }
         success {
-            echo 'Tests passed!'
+            echo 'All tests passed!'
         }
         failure {
-            echo 'Tests failed!'
+            echo 'Some tests failed!'
         }
     }
 }
