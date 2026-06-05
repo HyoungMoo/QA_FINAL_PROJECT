@@ -1163,7 +1163,7 @@ def test_teacher_can_reorder_course(teacher_client):
             f"/classroom/{common_data.teacher_classroom_id}/course",
             params={
                 "skip": 0,
-                "count": 100,
+                "count": 2000,
             },
         )
 
@@ -1288,7 +1288,7 @@ def test_teacher_can_reorder_course(teacher_client):
             f"/classroom/{common_data.teacher_classroom_id}/course",
             params={
                 "skip": 0,
-                "count": 100,
+                "count": 2000,
             },
         )
 

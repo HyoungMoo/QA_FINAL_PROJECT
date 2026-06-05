@@ -120,7 +120,7 @@ def test_submit_week1_2lecture_quiz_correct_answer(rest_student_client):
         ),
         "answer": (
             None,
-            "[2]",
+            "[1]",
         ),
     }
 
@@ -201,7 +201,7 @@ def test_submit_week1_2lecture_quiz_wrong_answer(rest_student_client):
         ),
         "answer": (
             None,
-            "[1]",
+            "[2]",
         ),
     }
 
