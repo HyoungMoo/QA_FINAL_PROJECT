@@ -17,7 +17,7 @@ pipeline {
         stage('Run Tests') {
             steps {
                 powershell 'Copy-Item $env:ENV_FILE -Destination ".env"'
-                bat '"%PYTHON%" -m pytest part1_api_automation/tests/ -m p0 --html=report.html --self-contained-html -v'
+                bat '"%PYTHON%" -m pytest part1_api_automation/tests/ --html=report.html --self-contained-html -v'
             }
         }
     }
