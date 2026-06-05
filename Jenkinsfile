@@ -4,7 +4,7 @@ pipeline {
     environment {
         PYTHONIOENCODING = 'utf-8'
         PYTHON = 'c:\\Users\\khm40\\OneDrive\\바탕 화면\\qa_final_project\\venv\\Scripts\\python.exe'
-        ENV_FILE = 'C:\\Users\\khm40\\OneDrive\\바탕 화면\\qa_final_project\\elice_lxp_test_team3\\.env'
+        ENV_FILE = 'C:\\jenkins_config\\.env'
     }
 
     stages {
